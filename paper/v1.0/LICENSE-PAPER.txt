@@ -1,0 +1,18 @@
+THE EPISTEMIC OCTAHEDRON — PAPER RIGHTS NOTICE
+
+Copyright © 2026 Raul Miguel Pascual Paras III. All rights reserved.
+
+No licence is granted to reproduce, redistribute, translate, adapt, modify,
+or publish this paper, its source text, diagrams, arrangement, or presentation,
+in whole or substantial part, without prior written permission from the
+copyright holder, except as permitted by applicable law.
+
+Citation, lawful quotation, criticism, review, analysis, testing, and attempted
+refutation are permitted to the extent allowed by applicable law. Such use does
+not imply endorsement by the author.
+
+This notice applies to the Version 1.0 paper and its source materials. Software,
+visualizers, datasets, psychometric instruments, and other downstream works may
+be released separately under different terms.
+
+Canonical paper DOI: https://doi.org/10.5281/zenodo.21688197
