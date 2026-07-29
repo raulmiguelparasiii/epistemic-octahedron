@@ -36,7 +36,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat paper/v1.0/source-parts/main.tex.part-* > paper/v1.0/main.tex
+          cat paper/v1.0/source-parts/main.tex.gz.b64.part-* \
+            | base64 --decode \
+            | gzip --decompress --stdout \
+            > paper/v1.0/main.tex
 
       - name: Download canonical DOI-bearing PDF from Zenodo
         shell: bash
