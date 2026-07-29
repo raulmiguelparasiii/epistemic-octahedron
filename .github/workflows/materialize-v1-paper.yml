@@ -1,0 +1,139 @@
+name: Materialize Version 1.0 paper
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "paper/v1.0/source-parts/**"
+      - ".github/workflows/materialize-v1-paper.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install document tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            jq \
+            poppler-utils \
+            zip \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended
+
+      - name: Reconstruct LaTeX source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat paper/v1.0/source-parts/main.tex.gz.b64.part-* \
+            | base64 --decode \
+            | gzip --decompress --stdout \
+            > paper/v1.0/main.tex
+
+      - name: Download canonical DOI-bearing PDF from Zenodo
+        shell: bash
+        run: |
+          set -euo pipefail
+          record_json="$(curl --fail --location --silent --show-error https://zenodo.org/api/records/21688197)"
+          pdf_url="$(printf '%s' "$record_json" | jq -r '
+            if (.files | type) == "array" then
+              [.files[]
+                | select(((.key // .filename // "") | ascii_downcase | endswith(".pdf")))
+                | (.links.content // .links.self)]
+            elif ((.files.entries? | type) == "object") then
+              [.files.entries | to_entries[]
+                | select((.key | ascii_downcase | endswith(".pdf")))
+                | (.value.links.content // .value.links.self)]
+            else
+              []
+            end
+            | .[0] // empty
+          ')"
+          if [ -z "$pdf_url" ]; then
+            echo "No PDF file was found in Zenodo record 21688197." >&2
+            exit 1
+          fi
+          curl --fail --location --silent --show-error \
+            "$pdf_url" \
+            --output paper/v1.0/Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf
+
+      - name: Recover original figure assets from the canonical PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          mkdir -p paper/v1.0/figures
+          pdfimages -j \
+            paper/v1.0/Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf \
+            "$work/figure"
+          mapfile -t images < <(find "$work" -maxdepth 1 -type f \( -name '*.jpg' -o -name '*.jpeg' \) | sort)
+          if [ "${#images[@]}" -ne 2 ]; then
+            echo "Expected exactly two embedded JPEG figures; found ${#images[@]}." >&2
+            exit 1
+          fi
+          cp "${images[0]}" paper/v1.0/figures/figure1_epistemic_plane.jpeg
+          cp "${images[1]}" paper/v1.0/figures/figure2_epistemic_axis.jpeg
+
+      - name: Compile and verify the source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd paper/v1.0
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+
+          test "$(pdfinfo main.pdf | awk '/^Pages:/ {print $2}')" = "54"
+          test "$(pdfinfo Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf | awk '/^Pages:/ {print $2}')" = "54"
+
+          work="$(mktemp -d)"
+          mkdir -p "$work/canonical" "$work/built"
+          pdftoppm -png -r 72 \
+            Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf \
+            "$work/canonical/page" >/dev/null 2>&1
+          pdftoppm -png -r 72 main.pdf "$work/built/page" >/dev/null 2>&1
+
+          for canonical_page in "$work"/canonical/page-*.png; do
+            built_page="$work/built/$(basename "$canonical_page")"
+            cmp "$canonical_page" "$built_page"
+          done
+
+      - name: Assemble self-contained source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd paper/v1.0
+          rm -f Epistemic_Octahedron_v1.0_Source_Package.zip
+          zip -q -r Epistemic_Octahedron_v1.0_Source_Package.zip \
+            Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf \
+            main.tex \
+            README.md \
+            CITATION.cff \
+            LICENSE-PAPER.txt \
+            figures
+          rm -rf source-parts
+          rm -f main.aux main.log main.out main.toc main.pdf
+
+      - name: Commit verified publication artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add paper/v1.0
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+          git commit -m "Materialize canonical Version 1.0 paper artifacts [skip ci]"
+          git push
