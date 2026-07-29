@@ -52,7 +52,9 @@ jobs:
           grep -Fq 'Raul Miguel Pascual Paras III' LICENSE-PAPER.txt
           grep -Fq 'All rights reserved' LICENSE-PAPER.txt
 
-          if grep -R -I -n -E '42ndMoose|github\.com/42ndMoose' . --exclude-dir=.git; then
+          prior_account='42nd''Moose'
+          prior_url="github.com/${prior_account}"
+          if grep -R -I -n -F -e "$prior_account" -e "$prior_url" . --exclude-dir=.git; then
             echo 'A prior-account identifier was found.' >&2
             exit 1
           fi
