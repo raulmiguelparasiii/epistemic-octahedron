@@ -1,0 +1,116 @@
+name: Verify Version 1.0 paper
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "paper/v1.0/**"
+      - "CITATION.cff"
+      - "LICENSE-PAPER.txt"
+      - ".github/workflows/verify-v1-paper.yml"
+  pull_request:
+    paths:
+      - "paper/v1.0/**"
+      - "CITATION.cff"
+      - "LICENSE-PAPER.txt"
+      - ".github/workflows/verify-v1-paper.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install document tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            poppler-utils \
+            unzip \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended
+
+      - name: Check publication metadata and privacy boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ruby -e "require 'yaml'; YAML.load_file(ARGV[0]); puts 'Valid YAML: ' + ARGV[0]" CITATION.cff
+          ruby -e "require 'yaml'; YAML.load_file(ARGV[0]); puts 'Valid YAML: ' + ARGV[0]" paper/v1.0/CITATION.cff
+
+          grep -Fq '10.5281/zenodo.21688197' CITATION.cff
+          grep -Fq '10.5281/zenodo.21688197' paper/v1.0/CITATION.cff
+          grep -Fq 'Raul Miguel Pascual Paras III' LICENSE-PAPER.txt
+          grep -Fq 'All rights reserved' LICENSE-PAPER.txt
+
+          prior_account='42nd''Moose'
+          prior_url="github.com/${prior_account}"
+          if grep -R -I -n -F -e "$prior_account" -e "$prior_url" . --exclude-dir=.git; then
+            echo 'A prior-account identifier was found.' >&2
+            exit 1
+          fi
+
+      - name: Verify fixed publication checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd paper/v1.0
+          sha256sum --check CHECKSUMS.sha256
+
+      - name: Compile the LaTeX source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd paper/v1.0
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+          pdflatex -interaction=nonstopmode -halt-on-error main.tex
+
+      - name: Compare compiled output with the canonical PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd paper/v1.0
+
+          canonical='Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf'
+          test "$(pdfinfo "$canonical" | awk '/^Pages:/ {print $2}')" = '54'
+          test "$(pdfinfo main.pdf | awk '/^Pages:/ {print $2}')" = '54'
+
+          work="$(mktemp -d)"
+          mkdir -p "$work/canonical" "$work/built"
+          pdftoppm -png -r 72 "$canonical" "$work/canonical/page" >/dev/null 2>&1
+          pdftoppm -png -r 72 main.pdf "$work/built/page" >/dev/null 2>&1
+
+          canonical_count="$(find "$work/canonical" -name 'page-*.png' | wc -l)"
+          built_count="$(find "$work/built" -name 'page-*.png' | wc -l)"
+          test "$canonical_count" = '54'
+          test "$built_count" = '54'
+
+          for canonical_page in "$work"/canonical/page-*.png; do
+            built_page="$work/built/$(basename "$canonical_page")"
+            cmp "$canonical_page" "$built_page"
+          done
+
+      - name: Verify the source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd paper/v1.0
+          archive='Epistemic_Octahedron_v1.0_Source_Package.zip'
+          unzip -t "$archive"
+
+          unzip -Z1 "$archive" | grep -Fqx 'main.tex'
+          unzip -Z1 "$archive" | grep -Fqx 'Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf'
+          unzip -Z1 "$archive" | grep -Fqx 'README.md'
+          unzip -Z1 "$archive" | grep -Fqx 'CITATION.cff'
+          unzip -Z1 "$archive" | grep -Fqx 'LICENSE-PAPER.txt'
+          unzip -Z1 "$archive" | grep -Fqx 'figures/figure1_epistemic_plane.jpeg'
+          unzip -Z1 "$archive" | grep -Fqx 'figures/figure2_epistemic_axis.jpeg'

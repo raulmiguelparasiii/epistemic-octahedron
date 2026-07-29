@@ -13,7 +13,8 @@ DOI: https://doi.org/10.5281/zenodo.21688197
 - `figures/` — required figure assets
 - `CITATION.cff` — machine-readable citation metadata
 - `LICENSE-PAPER.txt` — paper rights notice
-- `Epistemic_Octahedron_v1.0_Source_Package.zip` — self-contained archive of these source materials
+- `CHECKSUMS.sha256` — SHA-256 integrity values for the fixed paper, source, and figures
+- `Epistemic_Octahedron_v1.0_Source_Package.zip` — self-contained archive of the publication materials
 
 ## Build
 
@@ -24,6 +25,16 @@ pdflatex main.tex
 
 A standard TeX Live installation is sufficient. Two passes resolve the table of contents and internal references.
 
-## Integrity and version status
+## Integrity verification
+
+From this directory, verify the fixed files with:
+
+```bash
+sha256sum --check CHECKSUMS.sha256
+```
+
+The repository workflow also compiles the source, confirms both PDFs contain 54 pages, and compares every rendered page of the compiled output against the canonical publication.
+
+## Version status
 
 Version 1.0 is fixed as published on July 29, 2026. Later substantive corrections will be issued as separately versioned records. This directory should not be silently rewritten to represent a later version.

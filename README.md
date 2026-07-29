@@ -50,6 +50,7 @@ The full definitions of \(E_r\), \(P_r\), \(K_r\), \(W_r\), \(S_r\), the balance
 
 ```text
 .
+├── .github/workflows/verify-v1-paper.yml
 ├── README.md
 ├── CITATION.cff
 ├── CHANGELOG.md
@@ -63,6 +64,7 @@ The full definitions of \(E_r\), \(P_r\), \(K_r\), \(W_r\), \(S_r\), the balance
         ├── README.md
         ├── CITATION.cff
         ├── LICENSE-PAPER.txt
+        ├── CHECKSUMS.sha256
         └── figures/
 ```
 
@@ -79,6 +81,17 @@ pdflatex main.tex
 ```
 
 Two passes resolve the table of contents and internal references. The source expects the two image assets in `paper/v1.0/figures/`.
+
+## Integrity verification
+
+The fixed source, PDF, and figure files have committed SHA-256 values:
+
+```bash
+cd paper/v1.0
+sha256sum --check CHECKSUMS.sha256
+```
+
+The repository workflow independently compiles the source, confirms both PDFs contain 54 pages, compares every rendered page against the canonical publication, checks the source archive, validates the citation files as YAML, and rejects prior-account identifiers.
 
 ## Citation
 
