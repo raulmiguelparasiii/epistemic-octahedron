@@ -1,14 +1,27 @@
 cff-version: 1.2.0
-message: "Please cite the Version 1.0 preprint using the metadata below."
-title: "The Epistemic Octahedron: An Objective Surface-Based Model of Philosophical Maturity and Worldview Development"
-type: article
+message: "Please cite the Version 1.0 preprint using the preferred-citation metadata below."
+title: "Epistemic Octahedron Version 1.0 source package"
 authors:
   - family-names: "Paras"
     given-names: "Raul Miguel Pascual"
     name-suffix: "III"
 version: "1.0"
 date-released: "2026-07-29"
-doi: "10.5281/zenodo.21688197"
-url: "https://doi.org/10.5281/zenodo.21688197"
 repository-code: "https://github.com/raulmiguelparasiii/epistemic-octahedron"
-license: "LicenseRef-All-Rights-Reserved"
+url: "https://doi.org/10.5281/zenodo.21688197"
+license-url: "https://github.com/raulmiguelparasiii/epistemic-octahedron/blob/main/LICENSE-PAPER.txt"
+preferred-citation:
+  type: article
+  title: "The Epistemic Octahedron: An Objective Surface-Based Model of Philosophical Maturity and Worldview Development"
+  authors:
+    - family-names: "Paras"
+      given-names: "Raul Miguel Pascual"
+      name-suffix: "III"
+  version: "1.0"
+  date-published: "2026-07-29"
+  status: preprint
+  publisher:
+    name: "Zenodo"
+  doi: "10.5281/zenodo.21688197"
+  url: "https://doi.org/10.5281/zenodo.21688197"
+  license-url: "https://github.com/raulmiguelparasiii/epistemic-octahedron/blob/main/LICENSE-PAPER.txt"
