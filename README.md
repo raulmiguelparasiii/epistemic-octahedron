@@ -20,6 +20,21 @@
 
 The Zenodo record is the canonical, fixed publication. This repository carries the matching paper, its complete source, figures, citation metadata, and downstream implementation work as that work is released.
 
+## Canonical status and open instrumentation
+
+Version 1.0 remains the current canonical form of the discovery. The Epistemic Octahedron is not a rolling community-edited framework. Criticism, testing, comparison, and attempted refutation remain open, but preference, popularity, institutional authority, or a later instrument do not by themselves revise the canonical theory.
+
+Downstream measurement is open to independent development. Any person or organization may create EO-based questionnaires, interview protocols, scoring systems, software, visualizers, datasets, or validation studies. Those operational choices must remain distinguishable from the fixed EO structure and must not imply endorsement, validation, or official status.
+
+Repository policy:
+
+- [Canonical status and reciprocal challenge standard](CANONICAL_STATUS.md)
+- [Open downstream instrumentation policy](EO_INSTRUMENTATION_POLICY.md)
+- [Conformance and status claims](CONFORMANCE.md)
+- [Defensive publication and anti-enclosure intention](DEFENSIVE_PUBLICATION_STATEMENT.md)
+
+These repository policies clarify stewardship of Version 1.0. They do not alter the DOI-bearing paper, create Version 1.1, or change the paper's original rights status.
+
 ## Abstract
 
 The Epistemic Octahedron is a surface-based, three-dimensional model of philosophical maturity and worldview development. It represents empathy versus practicality and wisdom versus knowledge as two horizontal tensions governed by epistemic stability. The coordinate origin is reserved as a pre-philosophical null reference, the lower vertex represents epistemic collapse, and the upper vertex represents objective philosophical maturity.
@@ -52,6 +67,10 @@ The full definitions of \(E_r\), \(P_r\), \(K_r\), \(W_r\), \(S_r\), the balance
 .
 ├── .github/workflows/verify-v1-paper.yml
 ├── README.md
+├── CANONICAL_STATUS.md
+├── EO_INSTRUMENTATION_POLICY.md
+├── CONFORMANCE.md
+├── DEFENSIVE_PUBLICATION_STATEMENT.md
 ├── CITATION.cff
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
@@ -68,7 +87,7 @@ The full definitions of \(E_r\), \(P_r\), \(K_r\), \(W_r\), \(S_r\), the balance
         └── figures/
 ```
 
-Interactive visualizers and later measurement instruments will be placed in separate directories with their own status labels and licensing terms. Their presence in this repository will not alter the rights attached to the paper.
+Interactive visualizers and later measurement instruments will be placed in separate directories with their own status labels and licensing terms. Their presence in this repository will not alter the canonical theory or the rights attached to the paper.
 
 ## Build the paper
 
@@ -101,18 +120,21 @@ GitHub should also expose this citation through the repository’s **Cite this r
 
 ## Correction and refutation
 
-Version 1.0 remains fixed as published. Reports of typographical mistakes, source-build failures, citation problems, formal contradictions, false premises, or materially incomplete structure may be submitted through repository issues. A substantive correction will be released as a new, separately versioned record rather than silently rewriting Version 1.0.
+Version 1.0 remains fixed as published. Reports of typographical mistakes, source-build failures, citation problems, formal contradictions, false premises, missing irreducible functions, or correspondence failures may be submitted through repository issues.
 
-The paper states its own standards for successful criticism and refutation. Copyright does not restrict lawful criticism, analysis, testing, or attempted refutation.
+The reciprocal challenge standard is stated in the paper and summarized in [`CANONICAL_STATUS.md`](CANONICAL_STATUS.md). A substantive correction must be actually demonstrated and will be released as a new, separately versioned record rather than silently rewriting Version 1.0.
+
+Copyright does not restrict lawful criticism, analysis, testing, or attempted refutation.
 
 ## Versioning
 
-- **1.0 — July 29, 2026:** canonical first public release, DOI `10.5281/zenodo.21688197`.
-- Later corrections or substantive revisions will receive explicit version numbers and preserved records.
+- **1.0 — July 29, 2026:** current canonical theory and first public disclosure, DOI `10.5281/zenodo.21688197`.
+- Repository stewardship documents may be clarified without changing the paper version.
+- A later paper version will be issued only for a demonstrated substantive correction or an explicitly identified substantive revision.
 - The DOI-bearing Version 1.0 PDF and matching source in `paper/v1.0/` are immutable historical artifacts.
 
 ## Rights
 
 The paper, its source text, diagrams, arrangement, and presentation are **all rights reserved**. Citation, lawful quotation, criticism, review, analysis, testing, and attempted refutation remain permitted under applicable law. Reproduction, redistribution, translation, adaptation, modification, or republication requires prior written permission except where applicable law provides otherwise.
 
-See [`LICENSE-PAPER.txt`](LICENSE-PAPER.txt). Software, visualizers, datasets, and downstream instruments may be released separately under different terms.
+See [`LICENSE-PAPER.txt`](LICENSE-PAPER.txt). Independently authored downstream instruments, software, visualizers, datasets, and validation studies may be developed under [`EO_INSTRUMENTATION_POLICY.md`](EO_INSTRUMENTATION_POLICY.md). Their development does not authorize reproduction of the protected paper or modification of the canonical theory.
