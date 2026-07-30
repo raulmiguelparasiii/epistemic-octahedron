@@ -7,6 +7,7 @@ on:
     paths:
       - "paper/v1.0/**"
       - "README.md"
+      - "FORMAL_CORE.md"
       - "CANONICAL_STATUS.md"
       - "EO_INSTRUMENTATION_POLICY.md"
       - "CONFORMANCE.md"
@@ -20,6 +21,7 @@ on:
     paths:
       - "paper/v1.0/**"
       - "README.md"
+      - "FORMAL_CORE.md"
       - "CANONICAL_STATUS.md"
       - "EO_INSTRUMENTATION_POLICY.md"
       - "CONFORMANCE.md"
@@ -78,6 +80,7 @@ jobs:
         run: |
           set -euo pipefail
 
+          test -f FORMAL_CORE.md
           test -f CANONICAL_STATUS.md
           test -f EO_INSTRUMENTATION_POLICY.md
           test -f CONFORMANCE.md
@@ -89,6 +92,27 @@ jobs:
           grep -Fq 'no official psychometric instrument, validated EO assessment, or certification programme' CONFORMANCE.md
           grep -Fq 'does not seek exclusive patent control over the EO core' DEFENSIVE_PUBLICATION_STATEMENT.md
           grep -Fq 'These repository policies clarify stewardship of Version 1.0.' README.md
+
+      - name: Check rendered formal-core reference
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          grep -Fq 'not a new version, independent specification, psychometric instrument, or alteration of the theory' FORMAL_CORE.md
+          grep -Fq '\Pi(d):=\frac{d}{\lVert d\rVert_1}' FORMAL_CORE.md
+          grep -Fq '\Phi(r):=' FORMAL_CORE.md
+          grep -Fq '|\Delta_r(E,P)|+|\widetilde S_r|+|\Delta_r(W,K)|' FORMAL_CORE.md
+          grep -Fq '[Read the rendered formal core](FORMAL_CORE.md)' README.md
+          grep -Fq '[`FORMAL_CORE.md`](FORMAL_CORE.md)' CONFORMANCE.md
+
+          test "$(grep -c '^```math$' FORMAL_CORE.md)" -ge 10
+          grep -Fq '```math' README.md
+          grep -Fq '```math' CONFORMANCE.md
+
+          if grep -n '^```tex$' README.md CONFORMANCE.md; then
+            echo 'Reader-facing core equations should use rendered math blocks.' >&2
+            exit 1
+          fi
 
       - name: Verify fixed publication checksums
         shell: bash
