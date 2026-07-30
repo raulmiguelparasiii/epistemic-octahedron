@@ -15,6 +15,7 @@
 
 - [Read the fixed Version 1.0 record on Zenodo](https://doi.org/10.5281/zenodo.21688197)
 - [Open the repository copy of the paper](paper/v1.0/Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf)
+- [Read the rendered formal core](FORMAL_CORE.md)
 - [View the complete LaTeX source](paper/v1.0/main.tex)
 - [See citation metadata](CITATION.cff)
 
@@ -45,21 +46,43 @@ Version 1.0 fixes the geometry, semantic axes, null exception, referent discipli
 
 ## Formal core
 
-The model uses the closed unit ball and boundary of the \(L^1\) norm:
+The model uses the closed unit ball and boundary of the $L^1$ norm:
 
-```tex
-\mathbb O := \{p\in\mathbb R^3 : \|p\|_1\le 1\},
+```math
+\begin{aligned}
+\mathbb O
+&:=
+\left\{
+p\in\mathbb R^3:
+\lVert p\rVert_1\leq1
+\right\},
+\\[4pt]
+\partial\mathbb O
+&:=
+\left\{
+p\in\mathbb R^3:
+\lVert p\rVert_1=1
+\right\}.
+\end{aligned}
+```
+
+For every nonzero semantic displacement $d$, the canonical surface projection is:
+
+```math
+\boxed{
+\Pi(d):=\frac{d}{\lVert d\rVert_1}
+}
+```
+
+For every formed worldview:
+
+```math
+\Phi(r)=(x_r,y_r,z_r)\in\partial\mathbb O,
 \qquad
-\partial\mathbb O := \{p\in\mathbb R^3 : \|p\|_1=1\}.
+|x_r|+|y_r|+|z_r|=1.
 ```
 
-For nonzero semantic displacement \(d\), the canonical surface projection is:
-
-```tex
-\Pi(d) := \frac{d}{\|d\|_1}.
-```
-
-The full definitions of \(E_r\), \(P_r\), \(K_r\), \(W_r\), \(S_r\), the balance function, the pre-philosophical null exception, and the plotting map are stated in the paper. The compact equations are not intended to replace the paper’s semantic definitions.
+The full definitions of $E_r$, $P_r$, $K_r$, $W_r$, $S_r$, structural displacement, the pre-philosophical null exception, the plotting map, exceptional states, and contextual-emphasis conditions are available in the [rendered formal core](FORMAL_CORE.md) and in the canonical paper. The compact equations are not intended to replace the paper’s semantic definitions.
 
 ## Repository structure
 
@@ -67,6 +90,7 @@ The full definitions of \(E_r\), \(P_r\), \(K_r\), \(W_r\), \(S_r\), the balance
 .
 ├── .github/workflows/verify-v1-paper.yml
 ├── README.md
+├── FORMAL_CORE.md
 ├── CANONICAL_STATUS.md
 ├── EO_INSTRUMENTATION_POLICY.md
 ├── CONFORMANCE.md
@@ -110,7 +134,7 @@ cd paper/v1.0
 sha256sum --check CHECKSUMS.sha256
 ```
 
-The repository workflow independently compiles the source, confirms both PDFs contain 54 pages, compares every rendered page against the canonical publication, checks the source archive, validates the citation files as YAML, and rejects prior-account identifiers.
+The repository workflow independently compiles the source, confirms both PDFs contain 54 pages, compares every rendered page against the canonical publication, checks the source archive, validates the citation files as YAML, checks the rendered formal-core reference, and rejects prior-account identifiers.
 
 ## Citation
 
@@ -129,7 +153,7 @@ Copyright does not restrict lawful criticism, analysis, testing, or attempted re
 ## Versioning
 
 - **1.0 — July 29, 2026:** current canonical theory and first public disclosure, DOI `10.5281/zenodo.21688197`.
-- Repository stewardship documents may be clarified without changing the paper version.
+- Repository stewardship and reader-reference documents may be clarified without changing the paper version.
 - A later paper version will be issued only for a demonstrated substantive correction or an explicitly identified substantive revision.
 - The DOI-bearing Version 1.0 PDF and matching source in `paper/v1.0/` are immutable historical artifacts.
 
