@@ -194,7 +194,7 @@ The normalized vertical coordinate is:
 y_r
 =
 \frac{\widetilde S_r}
-{|Δ_r(E,P)|+|\widetilde S_r|+|Δ_r(W,K)|}.
+{|\Delta_r(E,P)|+|\widetilde S_r|+|\Delta_r(W,K)|}.
 ```
 
 The raw orientation $\widetilde S_r$ and the normalized surface coordinate $y_r$ are not interchangeable quantities.
