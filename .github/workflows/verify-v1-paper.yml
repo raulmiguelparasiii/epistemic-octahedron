@@ -1,4 +1,4 @@
-name: Verify Version 1.0 paper
+name: Verify Version 1.0 repository
 
 on:
   push:
@@ -6,12 +6,26 @@ on:
       - main
     paths:
       - "paper/v1.0/**"
+      - "README.md"
+      - "CANONICAL_STATUS.md"
+      - "EO_INSTRUMENTATION_POLICY.md"
+      - "CONFORMANCE.md"
+      - "DEFENSIVE_PUBLICATION_STATEMENT.md"
+      - "CONTRIBUTING.md"
+      - "CHANGELOG.md"
       - "CITATION.cff"
       - "LICENSE-PAPER.txt"
       - ".github/workflows/verify-v1-paper.yml"
   pull_request:
     paths:
       - "paper/v1.0/**"
+      - "README.md"
+      - "CANONICAL_STATUS.md"
+      - "EO_INSTRUMENTATION_POLICY.md"
+      - "CONFORMANCE.md"
+      - "DEFENSIVE_PUBLICATION_STATEMENT.md"
+      - "CONTRIBUTING.md"
+      - "CHANGELOG.md"
       - "CITATION.cff"
       - "LICENSE-PAPER.txt"
       - ".github/workflows/verify-v1-paper.yml"
@@ -58,6 +72,23 @@ jobs:
             echo 'A prior-account identifier was found.' >&2
             exit 1
           fi
+
+      - name: Check canonical governance boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f CANONICAL_STATUS.md
+          test -f EO_INSTRUMENTATION_POLICY.md
+          test -f CONFORMANCE.md
+          test -f DEFENSIVE_PUBLICATION_STATEMENT.md
+
+          grep -Fq 'The current canonical form of the Epistemic Octahedron is Version 1.0' CANONICAL_STATUS.md
+          grep -Fq 'The model remains unwavering when no such defect is demonstrated and corrigible when one is actually demonstrated.' CANONICAL_STATUS.md
+          grep -Fq 'No prior authorization is required to create an independently authored EO-based' EO_INSTRUMENTATION_POLICY.md
+          grep -Fq 'no official psychometric instrument, validated EO assessment, or certification programme' CONFORMANCE.md
+          grep -Fq 'does not seek exclusive patent control over the EO core' DEFENSIVE_PUBLICATION_STATEMENT.md
+          grep -Fq 'These repository policies clarify stewardship of Version 1.0.' README.md
 
       - name: Verify fixed publication checksums
         shell: bash
