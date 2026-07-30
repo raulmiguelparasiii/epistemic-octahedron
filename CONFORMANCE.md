@@ -51,19 +51,41 @@ A work claiming EO conformance should, at minimum:
 
 The canonical geometry is:
 
-```tex
-\mathbb O := \{p\in\mathbb R^3 : \|p\|_1\le 1\},
-\qquad
-\partial\mathbb O := \{p\in\mathbb R^3 : \|p\|_1=1\}.
+```math
+\begin{aligned}
+\mathbb O
+&:=
+\left\{
+p\in\mathbb R^3:
+\lVert p\rVert_1\leq1
+\right\},
+\\[4pt]
+\partial\mathbb O
+&:=
+\left\{
+p\in\mathbb R^3:
+\lVert p\rVert_1=1
+\right\}.
+\end{aligned}
 ```
 
-For nonzero semantic displacement:
+For every nonzero semantic displacement:
 
-```tex
-\Pi(d) := \frac{d}{\|d\|_1}.
+```math
+\Pi(d):=\frac{d}{\lVert d\rVert_1}.
+```
+
+For every formed worldview:
+
+```math
+\Phi(r)=(x_r,y_r,z_r)\in\partial\mathbb O,
+\qquad
+|x_r|+|y_r|+|z_r|=1.
 ```
 
 The origin is reserved for the pre-philosophical null exception. It must not be treated as equivalent to mature balance, neutrality on the surface, or epistemic collapse.
+
+The complete rendered definitions and plotting conditions are collected in [`FORMAL_CORE.md`](FORMAL_CORE.md). The DOI-bearing Version 1.0 paper remains authoritative.
 
 ## Modifications and rival models
 
