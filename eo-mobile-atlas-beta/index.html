@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>EO Mobile Atlas Beta</title>
+  <style>
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f8fafc}
+    iframe{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#f8fafc}
+    #boot{position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font:14px system-ui,sans-serif;color:#64748b;background:#f8fafc}
+  </style>
+</head>
+<body>
+  <div id="boot">Loading EO Mobile Atlas Beta…</div>
+  <iframe id="appFrame" title="EO Mobile Atlas Beta" hidden></iframe>
+  <script>
+    (async()=>{
+      const frame=document.getElementById('appFrame');
+      const boot=document.getElementById('boot');
+      try{
+        if(!('DecompressionStream' in window)) throw new Error('This browser does not support DecompressionStream.');
+        const names=Array.from({length:8},(_,i)=>`core.${String(i+1).padStart(2,'0')}.b64`);
+        const parts=await Promise.all(names.map(async name=>{
+          const response=await fetch(name,{cache:'no-store'});
+          if(!response.ok) throw new Error(`Could not load ${name}`);
+          return (await response.text()).trim();
+        }));
+        const packed=parts.join('');
+        const bytes=Uint8Array.from(atob(packed),c=>c.charCodeAt(0));
+        const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+        const core=await new Response(stream).text();
+        frame.srcdoc=core;
+        frame.hidden=false;
+        boot.remove();
+      }catch(err){
+        boot.textContent='EO Mobile Atlas Beta could not start: '+err.message;
+      }
+    })();
+  </script>
+</body>
+</html>
