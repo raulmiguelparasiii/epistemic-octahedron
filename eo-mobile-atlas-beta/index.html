@@ -32,10 +32,78 @@
         const packed=parts.join('');
         const bytes=Uint8Array.from(atob(packed),c=>c.charCodeAt(0));
         const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-        const coreRaw=await new Response(stream).text();
-        const core=coreRaw
-          .replace('.legend-dot.blank{background:#94a3b8}', '.legend-dot.blank{background:#111111}')
-          .replace('COLOR_BLANK=new THREE.Color(0x94a3b8)', 'COLOR_BLANK=new THREE.Color(0x111111)');
+        let core=await new Response(stream).text();
+
+        core=core.replace('.legend-dot.blank{background:#94a3b8}', '.legend-dot.blank{background:#111111}');
+
+        const markerBlock=/const editorMarkerGeom = new THREE\.SphereGeometry\(0\.026, 10, 7\);[\s\S]*?editorMarkers\.visible=false; editorMarkers\.renderOrder=7; octaGroup\.add\(editorMarkers\);/;
+        const markerReplacement=`const editorMarkerGeom = new THREE.SphereGeometry(0.028, 10, 7);
+    const editorMarkerDummy = new THREE.Object3D();
+    function makeEditorMarkerLayer(color){
+      const material=new THREE.MeshBasicMaterial({color,depthTest:true,depthWrite:false,transparent:true,opacity:1});
+      const mesh=new THREE.InstancedMesh(editorMarkerGeom,material,eoTenthsCoordinates.length);
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      mesh.frustumCulled=false;
+      for(let i=0;i<eoTenthsCoordinates.length;i++){
+        const c=eoTenthsCoordinates[i],p=new THREE.Vector3(c.x,c.y,c.z),n=getOctaSurfaceNormal(p);
+        editorMarkerDummy.position.copy(p).addScaledVector(n,0.024);
+        editorMarkerDummy.scale.setScalar(0.001);
+        editorMarkerDummy.updateMatrix();
+        mesh.setMatrixAt(i,editorMarkerDummy.matrix);
+      }
+      mesh.instanceMatrix.needsUpdate=true;
+      mesh.visible=false;
+      mesh.renderOrder=7;
+      octaGroup.add(mesh);
+      return mesh;
+    }
+    const editorMarkerLayers={
+      yes:makeEditorMarkerLayer(0x22c55e),
+      no:makeEditorMarkerLayer(0xef4444),
+      blank:makeEditorMarkerLayer(0x111111),
+      possible:makeEditorMarkerLayer(0x2563eb),
+      ruled:makeEditorMarkerLayer(0xcbd5e1)
+    };`;
+        if(!markerBlock.test(core)) throw new Error('Editor marker block patch did not match.');
+        core=core.replace(markerBlock,markerReplacement);
+
+        const updateBlock=/function updateInstrumentMarkers\(\)\{[\s\S]*?\n    \}\n\n    function localMarkerPoint/;
+        const updateReplacement=`function updateInstrumentMarkers(){
+      const mode=state.uiMode,q=editorQuestion(),cand=instrumentState.diagnostic.candidates;
+      const inEditor=mode==='editor',inQuestions=mode==='questions';
+      const layers=editorMarkerLayers;
+      for(const layer of Object.values(layers)) layer.visible=false;
+      selectedHalo.visible=false; yesFinalHalo.visible=false; noFinalHalo.visible=false;
+      if(!inEditor&&!inQuestions){ invalidateRender(); return; }
+      if(inEditor){ layers.yes.visible=true; layers.no.visible=true; layers.blank.visible=true; }
+      else { layers.possible.visible=true; layers.ruled.visible=true; }
+      const activeScale={yes:1.18,no:1.18,blank:0.68,possible:1.0,ruled:0.58};
+      for(let i=0;i<eoTenthsCoordinates.length;i++){
+        const c=eoTenthsCoordinates[i],p=new THREE.Vector3(c.x,c.y,c.z),n=getOctaSurfaceNormal(p);
+        let active='blank';
+        if(inEditor){ const a=assignmentOf(q,c.coordinate); active=a==='yes'?'yes':a==='no'?'no':'blank'; }
+        else active=cand.has(c.coordinate)?'possible':'ruled';
+        for(const [name,layer] of Object.entries(layers)){
+          if(!layer.visible) continue;
+          editorMarkerDummy.position.copy(p).addScaledVector(n,0.024);
+          editorMarkerDummy.scale.setScalar(name===active?activeScale[name]:0.001);
+          editorMarkerDummy.updateMatrix();
+          layer.setMatrixAt(i,editorMarkerDummy.matrix);
+        }
+      }
+      for(const layer of Object.values(layers)) if(layer.visible) layer.instanceMatrix.needsUpdate=true;
+      if(inEditor){
+        if(instrumentState.selectedCoordinate) placeHalo(selectedHalo,instrumentState.selectedCoordinate);
+        if(q?.finalYes) placeHalo(yesFinalHalo,q.finalYes);
+        if(q?.finalNo) placeHalo(noFinalHalo,q.finalNo);
+      }
+      invalidateRender();
+    }
+
+    function localMarkerPoint`;
+        if(!updateBlock.test(core)) throw new Error('Editor marker update patch did not match.');
+        core=core.replace(updateBlock,updateReplacement);
+
         frame.srcdoc=core;
         frame.hidden=false;
         boot.remove();
