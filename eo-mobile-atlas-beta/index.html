@@ -34,6 +34,56 @@
         const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
         let core=await new Response(stream).text();
 
+        core=core.replace(
+          '.question-package-row select { min-width:0; flex:1 1 140px; border:1px solid var(--border); background:#fff; border-radius:12px; padding:7px 8px; font:inherit; font-size:11px; }',
+          '.question-package-row select { min-width:0; flex:1 1 140px; border:1px solid var(--border); background:#fff; border-radius:12px; padding:7px 8px; font:inherit; font-size:11px; }\\n    .editor-profile-box{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:end;margin:7px 0}.editor-profile-box label{min-width:0}.editor-profile-box input{width:100%;min-width:0;border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 9px;font:inherit;font-size:12px}.editor-profile-box .profile-label{display:block;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 4px 3px}'
+        );
+
+        core=core.replace(
+`          <div class="instrument-toolbar">
+            <select id="editorPackageSelect" aria-label="Package"></select>
+            <button id="newPackageBtn" type="button">New</button>
+            <label class="editor-file-label" for="packageImportInput">Import</label><input id="packageImportInput" class="editor-file-input" type="file" accept="application/json,.json" />
+            <button id="packageExportBtn" type="button">Export</button>
+          </div>`,
+`          <div class="instrument-toolbar">
+            <select id="editorPackageSelect" aria-label="Profile"></select>
+            <button id="newPackageBtn" type="button">+ Profile</button>
+            <button id="addQuestionTopBtn" type="button">+ Question</button>
+            <label class="editor-file-label" for="packageImportInput">Import</label><input id="packageImportInput" class="editor-file-input" type="file" accept="application/json,.json" />
+            <button id="packageExportBtn" type="button">Export</button>
+          </div>
+          <div class="editor-profile-box">
+            <label><span class="profile-label">Profile name</span><input id="editorPackageName" type="text" autocomplete="off"></label>
+            <div class="instrument-toolbar"><button id="savePackageNameBtn" type="button">Save</button><button id="deletePackageBtn" type="button">Delete</button></div>
+          </div>`
+        );
+
+        core=core.replace(
+          "    const packageExportBtn = document.getElementById('packageExportBtn');",
+          "    const packageExportBtn = document.getElementById('packageExportBtn');\\n    const addQuestionTopBtn = document.getElementById('addQuestionTopBtn');\\n    const editorPackageName = document.getElementById('editorPackageName');\\n    const savePackageNameBtn = document.getElementById('savePackageNameBtn');\\n    const deletePackageBtn = document.getElementById('deletePackageBtn');"
+        );
+
+        core=core.replace(
+          "const q=editorQuestion(); if(!q){editorQuestionFields.innerHTML='<p class=\\\"editor-note\\\">Add a question to begin.</p>';return;}",
+          "const q=editorQuestion(); if(!q){editorQuestionFields.innerHTML='<p class=\\\"editor-note\\\">This profile has no questions yet.</p><div class=\\\"instrument-toolbar\\\"><button id=\\\"emptyAddQuestionBtn\\\" type=\\\"button\\\">+ Add first question</button></div>';document.getElementById('emptyAddQuestionBtn').onclick=addQuestion;return;}"
+        );
+
+        core=core.replace(
+          "function renderEditorUI(){ syncPackageSelects(); const q=editorQuestion(),counts=mappingCounts(q); editorYesCount.textContent=counts.yes;editorNoCount.textContent=counts.no;editorBlankCount.textContent=counts.blank;document.querySelectorAll('[data-paint]').forEach(b=>b.classList.toggle('active',b.dataset.paint===instrumentState.paintMode));renderEditorTree();renderQuestionFields();renderSelectedCoordinate();renderInterpretations(); }",
+          "function renderEditorUI(){ syncPackageSelects(); const p=activePackage(),q=editorQuestion(),counts=mappingCounts(q); editorPackageName.value=p?.name||''; deletePackageBtn.disabled=!p; editorYesCount.textContent=counts.yes;editorNoCount.textContent=counts.no;editorBlankCount.textContent=counts.blank;document.querySelectorAll('[data-paint]').forEach(b=>b.classList.toggle('active',b.dataset.paint===instrumentState.paintMode));renderEditorTree();renderQuestionFields();renderSelectedCoordinate();renderInterpretations(); }"
+        );
+
+        core=core.replace(
+          "function newPackage(){const p={id:qid('pkg'),name:'New question package',description:'',questions:[],interpretations:[]};instrumentState.packages.push(p);instrumentState.packageId=p.id;instrumentState.editorQuestionId='';syncPackageSelects();renderEditorUI();resetBinaryDiagnostic();}",
+          "function newPackage(){const p={id:qid('pkg'),name:'New question package',description:'',questions:[],interpretations:[]};instrumentState.packages.push(p);instrumentState.packageId=p.id;instrumentState.editorQuestionId='';syncPackageSelects();renderEditorUI();resetBinaryDiagnostic();}\\n    function savePackageName(){const p=activePackage();if(!p)return;const name=editorPackageName.value.trim();if(name)p.name=name;syncPackageSelects();renderEditorUI();renderBinaryDiagnostic();}\\n    function deletePackage(){const p=activePackage();if(!p)return;if(!confirm('Delete profile \\\"'+p.name+'\\\"?'))return;instrumentState.packages=instrumentState.packages.filter(x=>x!==p);if(!instrumentState.packages.length)instrumentState.packages.push({id:qid('pkg'),name:'New question package',description:'',questions:[],interpretations:[]});instrumentState.packageId=instrumentState.packages[0].id;instrumentState.editorQuestionId=activePackage().questions[0]?.id||'';instrumentState.selectedCoordinate='';resetBinaryDiagnostic();renderEditorUI();updateInstrumentMarkers();}"
+        );
+
+        core=core.replace(
+          "    newPackageBtn.addEventListener('click', newPackage);",
+          "    newPackageBtn.addEventListener('click', newPackage);\\n    addQuestionTopBtn.addEventListener('click', addQuestion);\\n    savePackageNameBtn.addEventListener('click', savePackageName);\\n    editorPackageName.addEventListener('keydown', e=>{if(e.key==='Enter'){e.preventDefault();savePackageName();}});\\n    deletePackageBtn.addEventListener('click', deletePackage);"
+        );
+
         core=core.replace('.legend-dot.blank{background:#94a3b8}', '.legend-dot.blank{background:#111111}');
 
         const markerBlock=/const editorMarkerGeom = new THREE\.SphereGeometry\(0\.026, 10, 7\);[\s\S]*?editorMarkers\.visible=false; editorMarkers\.renderOrder=7; octaGroup\.add\(editorMarkers\);/;
