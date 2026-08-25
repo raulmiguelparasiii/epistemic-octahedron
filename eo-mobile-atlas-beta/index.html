@@ -19,7 +19,11 @@
       const boot=document.getElementById('boot');
       try{
         if(!('DecompressionStream' in window)) throw new Error('This browser does not support DecompressionStream.');
-        const names=Array.from({length:8},(_,i)=>`core.${String(i+1).padStart(2,'0')}.b64`);
+        const names=[
+          'core.01.b64','core.02.b64','core.03.b64','core.04.b64',
+          'core.05a.b64','core.05b.b64',
+          'core.06.b64','core.07.b64','core.08.b64'
+        ];
         const parts=await Promise.all(names.map(async name=>{
           const response=await fetch(name,{cache:'no-store'});
           if(!response.ok) throw new Error(`Could not load ${name}`);
