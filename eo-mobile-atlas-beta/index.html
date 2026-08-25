@@ -165,6 +165,62 @@
         if(!updateBlock.test(core)) throw new Error('Editor marker update patch did not match.');
         core=core.replace(updateBlock,updateReplacement);
 
+        const diagnosticBlock=/    function candidateSplit\(q,candidates\)\{[\s\S]*?\n    function escapeHtml/;
+        const diagnosticReplacement=`    function candidateSplit(q,candidates){ let yes=[],no=[],blank=[]; for(const key of candidates){const a=assignmentOf(q,key);(a==='yes'?yes:a==='no'?no:blank).push(key);}return{yes,no,blank}; }
+    function validFinalKey(key){ return !!key && eoCoordByKey.has(key); }
+    function directFinalQuestion(q){
+      const hasAssignments=!!Object.keys(q.assignments||{}).length;
+      return !hasAssignments && validFinalKey(q.finalYes) && validFinalKey(q.finalNo) && q.finalYes!==q.finalNo;
+    }
+    function branchResult(q,value,split){
+      const finalKey=value?q.finalYes:q.finalNo;
+      if(validFinalKey(finalKey)) return {terminal:true,finalKey,keep:[finalKey]};
+      return {terminal:false,finalKey:'',keep:value?split.yes:split.no};
+    }
+    function nextBinaryQuestion(){
+      const candidates=instrumentState.diagnostic.candidates, used=new Set(instrumentState.diagnostic.answers.map(a=>a.qid)); let best=null;
+      for(const q of activePackage().questions){
+        if(used.has(q.id)||instrumentState.diagnostic.skipped.has(q.id))continue;
+        const s=candidateSplit(q,candidates),direct=directFinalQuestion(q);
+        if(!direct&&(s.blank.length||!s.yes.length||!s.no.length))continue;
+        const yr=branchResult(q,true,s),nr=branchResult(q,false,s);
+        if(!yr.keep.length||!nr.keep.length)continue;
+        const ySize=yr.terminal?1:yr.keep.length,nSize=nr.terminal?1:nr.keep.length;
+        const worst=Math.max(ySize,nSize), imbalance=Math.abs(ySize-nSize);
+        if(!best||worst<best.worst||(worst===best.worst&&imbalance<best.imbalance))best={q,s,yr,nr,worst,imbalance,direct};
+      }
+      return best;
+    }
+    function answerBinary(value){
+      const next=nextBinaryQuestion(); if(!next)return; const result=value?next.yr:next.nr;
+      instrumentState.diagnostic.answers.push({qid:next.q.id,answer:value,text:next.q.text,finalCoordinate:result.terminal?result.finalKey:''});
+      instrumentState.diagnostic.candidates=new Set(result.keep); renderBinaryDiagnostic(); updateInstrumentMarkers();
+    }
+    function undoBinary(){
+      if(!instrumentState.diagnostic.answers.length)return;
+      instrumentState.diagnostic.answers.pop(); const set=new Set(eoTenthsCoordinates.map(c=>c.coordinate));
+      for(const a of instrumentState.diagnostic.answers){
+        const q=activePackage().questions.find(q=>q.id===a.qid);if(!q)continue;
+        const s=candidateSplit(q,set),result=branchResult(q,a.answer,s); set.clear(); result.keep.forEach(k=>set.add(k));
+        if(result.terminal)break;
+      }
+      instrumentState.diagnostic.candidates=set;renderBinaryDiagnostic();updateInstrumentMarkers();
+    }
+    function renderBinaryDiagnostic(){
+      syncPackageSelects(); const cand=instrumentState.diagnostic.candidates; questionProgressEl.textContent=instrumentState.diagnostic.answers.length+' answered'; questionStatusEl.textContent=String(cand.size); questionUndoBtn.disabled=!instrumentState.diagnostic.answers.length; questionPathEl.hidden=!instrumentState.diagnostic.pathVisible; questionPathEl.style.display=instrumentState.diagnostic.pathVisible?'grid':'none'; questionPathToggleBtn.textContent=instrumentState.diagnostic.pathVisible?'Hide path':'Path'; questionAnswersEl.innerHTML='';
+      questionPathEl.innerHTML=instrumentState.diagnostic.answers.map((a,i)=>'<div>'+(i+1)+'. '+(a.answer?'YES':'NO')+' · '+a.text+(a.finalCoordinate?' → '+a.finalCoordinate:'')+'</div>').join('');
+      if(cand.size===1){ const key=[...cand][0],c=eoCoordByKey.get(key),over=packageInterpretation(c); questionIdEl.textContent='complete'; questionTextEl.textContent=over?.title||c.label; questionCandidateSummary.textContent=over?.text||c.meaning; return; }
+      const next=nextBinaryQuestion(); if(!next){ questionIdEl.textContent='paused'; questionTextEl.textContent='No eligible binary question can split the remaining coordinates.'; questionCandidateSummary.textContent=cand.size+' coordinates remain. Either assign YES/NO for every currently possible point on another question, or set both YES final and NO final on an otherwise unmapped question for a direct two-outcome package.'; return; }
+      const yLabel=next.yr.terminal?'YES → '+next.yr.finalKey:'YES keeps '+next.yr.keep.length;
+      const nLabel=next.nr.terminal?'NO → '+next.nr.finalKey:'NO keeps '+next.nr.keep.length;
+      questionIdEl.textContent=next.q.id; questionTextEl.textContent=next.q.text; questionCandidateSummary.textContent=yLabel+' · '+nLabel+(next.direct?' · direct final split':' · selected by smallest worst branch ('+next.worst+')')+'.';
+      const y=document.createElement('button');y.type='button';y.innerHTML='<span class="answer-label">Yes</span>';y.addEventListener('click',()=>answerBinary(true));const n=document.createElement('button');n.type='button';n.innerHTML='<span class="answer-label">No</span>';n.addEventListener('click',()=>answerBinary(false));questionAnswersEl.append(y,n);
+    }
+
+    function escapeHtml`;
+        if(!diagnosticBlock.test(core)) throw new Error('Binary diagnostic patch did not match.');
+        core=core.replace(diagnosticBlock,diagnosticReplacement);
+
         frame.srcdoc=core;
         frame.hidden=false;
         boot.remove();
