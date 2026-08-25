@@ -32,7 +32,10 @@
         const packed=parts.join('');
         const bytes=Uint8Array.from(atob(packed),c=>c.charCodeAt(0));
         const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-        const core=await new Response(stream).text();
+        const coreRaw=await new Response(stream).text();
+        const core=coreRaw
+          .replace('.legend-dot.blank{background:#94a3b8}', '.legend-dot.blank{background:#111111}')
+          .replace('COLOR_BLANK=new THREE.Color(0x94a3b8)', 'COLOR_BLANK=new THREE.Color(0x111111)');
         frame.srcdoc=core;
         frame.hidden=false;
         boot.remove();
