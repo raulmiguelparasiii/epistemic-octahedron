@@ -1,21 +1,21 @@
-# Changelog
+# Publication history
 
-This file records public releases of the Epistemic Octahedron paper and material changes to official repository stewardship.
+The repository identifies the current paper by canonical DOI rather than by a public-facing paper version label.
 
-## Repository governance clarification — 2026-07-29
+## 2026-08-29
 
-No paper version change.
+Frozen canonical paper: **Epistemic Octahedron: The Objective Model of Philosophical Maturity**.
 
-- Confirmed Version 1.0 as the current canonical theory and fixed first disclosure.
-- Defined the reciprocal structural challenge and canonical correction procedure.
-- Opened downstream instrument, software, visualizer, dataset, and validation development to independent researchers and developers.
-- Defined EO-based, EO-conformant, validated, and official status claims.
-- Recorded the public-disclosure and defensive-publication intention.
-- Preserved the Version 1.0 PDF, source, figures, source archive, checksums, DOI, and original rights status unchanged.
+Canonical DOI: `10.5281/zenodo.22164942`.
 
-## 1.0 — 2026-07-29
+Repository documentation was updated to match the paper's current structural derivation, completion semantics, formal kernel, evidential-identification rules, bounded-referent semantics, and downstream-instrument boundary. Public-facing repository version labels were removed.
 
-- Published the canonical Version 1.0 preprint.
-- Registered DOI `10.5281/zenodo.21688197` through Zenodo.
-- Added the DOI-bearing PDF, complete LaTeX source, required figures, citation metadata, and paper rights notice.
-- Established explicit versioning and correction procedures for later releases.
+## 2026-08-08
+
+Prior fixed DOI record: `10.5281/zenodo.21852645`.
+
+## 2026-07-29
+
+First public DOI record: `10.5281/zenodo.21688197`.
+
+Historical DOI records remain available for provenance. They do not override the frozen canonical paper identified by DOI `10.5281/zenodo.22164942`.
