@@ -14,7 +14,7 @@ An **EO-based** work uses, references, or draws inspiration from the Epistemic O
 
 ### EO-conformant
 
-An **EO-conformant** work claims to preserve the canonical structure while adding a disclosed method of implementation or measurement. Such a claim should be accompanied by enough documentation for independent inspection.
+An **EO-conformant** work claims to preserve the frozen canonical structure while adding a disclosed method of implementation or measurement. Such a claim should be accompanied by enough documentation for independent inspection.
 
 A conformance claim is not equivalent to empirical validation, predictive accuracy, clinical utility, or endorsement by the author.
 
@@ -22,76 +22,67 @@ A conformance claim is not equivalent to empirical validation, predictive accura
 
 A **validated EO instrument** is an empirical claim. It requires a disclosed validation design, appropriate samples and comparison standards, reproducible analysis, stated limitations, and evidence proportionate to the claimed use.
 
-No instrument should use this description merely because it contains EO terminology or an octahedral visualization.
-
 ### Official EO instrument
 
 An **official EO instrument** is a provenance and authorization claim. It applies only when the instrument has been expressly designated as official in this repository or by the author through a verifiable public record.
-
-Independent development is encouraged, but attribution alone does not establish official status.
 
 ## Minimum structural requirements for an EO-conformant claim
 
 A work claiming EO conformance should, at minimum:
 
 1. declare the referent being plotted or assessed;
-2. preserve the octahedral surface constraint for every formed, non-null placement;
-3. preserve the canonical axis semantics: empathy versus practicality, wisdom versus knowledge, and epistemic stability;
-4. preserve the distinction between the pre-philosophical null origin, negative epistemic collapse, and mature integration at the top vertex;
-5. preserve the role of concern for affected persons, practical constraint, informational grounding, contextual discernment, and correction-governed stability;
-6. distinguish contextual emphasis from structural displacement;
-7. distinguish observable expression from the underlying reasoning relevant to the declared referent;
-8. avoid treating coordinates as simple quantities of personality traits;
-9. identify a real displacement condition rather than inferring instability merely from uncertainty, incomplete knowledge, concise expression, contextual emphasis, or the abstract possibility of error;
-10. disclose its evidence rules, scoring, weighting, uncertainty handling, assumptions, and validation method;
-11. identify every modification, extension, simplification, or competing interpretation;
-12. remain open to replication, criticism, error reporting, and correction.
+2. preserve the distinction between whole-worldview referents and plot-eligible bounded referents;
+3. preserve the octahedral completion constraint `|x|+|y|+|z|=1` for completed surface placements;
+4. treat the surface equation as a completion constraint rather than a ray-normalization rule;
+5. preserve the canonical axis semantics: empathy versus practicality, wisdom versus knowledge, and epistemic stability;
+6. preserve the higher-order relations of purpose, meaning, and answerability to reality under pressure;
+7. preserve the distinction between the pre-philosophical null origin, orientation underdetermination, maximal instability at the equator, consolidated negative stability, epistemic collapse, and mature integration at the top vertex;
+8. preserve concern for affected welfare, real-world constraint, informational grounding, contextual interpretation, and reality-governed epistemic stability as the five necessary functions;
+9. distinguish contextual emphasis from structural displacement;
+10. distinguish expression from underlying reasoning and acquisition from integration where those distinctions matter to the referent;
+11. distinguish structural location from evidential identification and use evidence-warranted regions when an exact point is not justified;
+12. avoid treating coordinates as independent quantities of personality traits or as raw scores that may be normalized into EO positions;
+13. preserve the Five-Function Invariance Test and the objective-dominance logic of non-loss plus correction;
+14. preserve referent and scope burden when comparing unequal contributions in shared inquiry;
+15. disclose evidence rules, scoring, weighting, uncertainty handling, assumptions, and validation method for any operational instrument;
+16. identify every modification, extension, simplification, or competing interpretation;
+17. remain open to replication, criticism, error reporting, and correction.
 
 ## Surface and null discipline
 
 The canonical geometry is:
 
 ```math
-\begin{aligned}
-\mathbb O
-&:=
-\left\{
-p\in\mathbb R^3:
-\lVert p\rVert_1\leq1
-\right\},
-\\[4pt]
-\partial\mathbb O
-&:=
-\left\{
-p\in\mathbb R^3:
-\lVert p\rVert_1=1
-\right\}.
-\end{aligned}
-```
-
-For every nonzero semantic displacement:
-
-```math
-\Pi(d):=\frac{d}{\lVert d\rVert_1}.
-```
-
-For every formed worldview:
-
-```math
-\Phi(r)=(x_r,y_r,z_r)\in\partial\mathbb O,
+\mathbb O:=\{p\in\mathbb R^3:\lVert p\rVert_1\le1\},
 \qquad
-|x_r|+|y_r|+|z_r|=1.
+\partial\mathbb O:=\{p\in\mathbb R^3:\lVert p\rVert_1=1\}.
 ```
 
-The origin is reserved for the pre-philosophical null exception. It must not be treated as equivalent to mature balance, neutrality on the surface, or epistemic collapse.
+For a surface-eligible referent:
 
-The complete rendered definitions and plotting conditions are collected in [`FORMAL_CORE.md`](FORMAL_CORE.md). The DOI-bearing Version 1.0 paper remains authoritative.
+```math
+\sigma(r)=\left(\Delta_r(E,P),\Sigma_r,\Delta_r(W,K)\right)\in\partial\mathbb O,
+```
+
+and therefore:
+
+```math
+|\Delta_r(E,P)|+|\Sigma_r|+|\Delta_r(W,K)|=1.
+```
+
+No radial or ray projection is part of the canonical EO semantics. An arbitrary interior triple must not be normalized outward and presented as a completed EO coordinate.
+
+The origin is reserved for whole-agent referents prior to worldview formation. A bounded referent does not map to the origin merely because it is not itself a worldview, and lack of evaluator knowledge does not map a referent to the origin.
+
+When evidence does not determine an exact surface point, the proper output is an evidence-warranted region `\Omega(r\mid e)` or another faithful constrained report rather than invented decimal precision.
+
+The complete rendered definitions and plotting conditions are collected in [`FORMAL_CORE.md`](FORMAL_CORE.md). The authoritative paper is DOI `10.5281/zenodo.22164942`.
 
 ## Modifications and rival models
 
-A work that changes the geometry, axis meanings, null exception, vertical semantics, required functions, or displacement conditions should identify itself as modified, derived, or competing rather than claiming unqualified EO conformance.
+A work that changes the geometry, completion law, axis meanings, null semantics, vertical semantics, required functions, closure test, dominance relation, or referent discipline should identify itself as modified, derived, or competing rather than claiming unqualified EO conformance.
 
-A proposed improvement to the canonical theory belongs under the reciprocal structural challenge process in `CANONICAL_STATUS.md`. An improvement to measurement belongs under the open instrumentation process in `EO_INSTRUMENTATION_POLICY.md`.
+A proposed change to the canonical theory belongs under the reciprocal structural challenge process in [`CANONICAL_STATUS.md`](CANONICAL_STATUS.md). An improvement to measurement belongs under the open instrumentation process in [`EO_INSTRUMENTATION_POLICY.md`](EO_INSTRUMENTATION_POLICY.md).
 
 ## No implied endorsement
 
