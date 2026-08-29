@@ -11,8 +11,8 @@ Citation, lawful quotation, criticism, review, analysis, testing, and attempted
 refutation are permitted to the extent allowed by applicable law. Such use does
 not imply endorsement by the author.
 
-This notice applies to the Version 1.0 paper and its source materials. Software,
+This notice applies to the canonical paper and its source materials. Software,
 visualizers, datasets, psychometric instruments, and other downstream works may
 be released separately under different terms.
 
-Canonical paper DOI: https://doi.org/10.5281/zenodo.21688197
+Canonical paper DOI: https://doi.org/10.5281/zenodo.22164942
