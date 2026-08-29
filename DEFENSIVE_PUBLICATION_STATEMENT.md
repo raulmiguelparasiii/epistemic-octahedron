@@ -2,13 +2,13 @@
 
 ## Public disclosure and priority
 
-The Epistemic Octahedron was publicly disclosed in Version 1.0 on July 29, 2026, under DOI `10.5281/zenodo.21688197`.
+The Epistemic Octahedron was first publicly disclosed on July 29, 2026, under DOI `10.5281/zenodo.21688197`. The frozen canonical paper is now identified by DOI `10.5281/zenodo.22164942`.
 
-The DOI-bearing publication, repository copy, source, figures, checksums, and preserved version history are intended to establish a permanent public record of the discovery, its author, its disclosed structure, and its publication date.
+The DOI-bearing publications, repository materials, source records, figures, checksums, and preserved publication history are intended to establish a permanent public record of the discovery, its author, its disclosed structure, and its publication history.
 
 ## Anti-enclosure intention
 
-Raul Miguel Pascual Paras III does not seek exclusive patent control over the EO core disclosed in the Version 1.0 publication.
+Raul Miguel Pascual Paras III does not seek exclusive patent control over the EO core already publicly disclosed.
 
 The public disclosure is intended to function as a defensive publication against later claims that another person or organization independently originated, exclusively owns, or may privately enclose the same disclosed geometry, semantic structure, definitions, propositions, or instrument-design requirements.
 
