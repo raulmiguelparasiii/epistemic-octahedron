@@ -1,82 +1,40 @@
 # Rendered formal core of the Epistemic Octahedron
 
-**Version 1.0 reader reference**  
-**Canonical publication:** [DOI 10.5281/zenodo.21688197](https://doi.org/10.5281/zenodo.21688197)
+**Canonical publication:** [DOI 10.5281/zenodo.22164942](https://doi.org/10.5281/zenodo.22164942)
 
-This document presents the formal semantic kernel of Version 1.0 in rendered form for convenient reading on GitHub. It is an exact reader-facing reference to the canonical paper, not a new version, independent specification, psychometric instrument, or alteration of the theory.
+This document is a reader-facing rendering of the formal semantic kernel in the canonical paper. If this reference conflicts with the DOI-bearing paper, the paper governs and this reference should be corrected.
 
-If wording or notation in this reference is ever found to conflict with the DOI-bearing Version 1.0 paper, the paper governs and this reference must be corrected.
-
-## Octahedral state-space
+## Octahedral geometry and worldview surface
 
 ```math
 \begin{aligned}
 \mathbb O
-&:=
-\left\{
-p\in\mathbb R^3:
-\lVert p\rVert_1\leq1
-\right\},
-\\[4pt]
+&:=\{p\in\mathbb R^3:\lVert p\rVert_1\le 1\},\\
 \partial\mathbb O
-&:=
-\left\{
-p\in\mathbb R^3:
-\lVert p\rVert_1=1
-\right\},
-\\[4pt]
-\lVert p\rVert_1
-&=|x|+|y|+|z|.
+&:=\{p\in\mathbb R^3:\lVert p\rVert_1=1\},\\
+\lVert p\rVert_1&=|x|+|y|+|z|.
 \end{aligned}
 ```
 
-Only the boundary $\partial\mathbb O$ contains formed-worldview plots. The interior is not plotted space. The origin is reserved for the pre-philosophical null state.
+Only the boundary `\partial\mathbb O` contains completed surface plots of formed whole-worldview referents and plot-eligible bounded referents. The origin is reserved for pure pre-philosophical nullity.
 
-For every nonzero raw interpretive direction $d\in\mathbb R^3\setminus\{0\}$, the canonical $L^1$ ray-projection is:
+The surface constraint is a formation and completion constraint. It is not a normalization instruction. No radial or ray projection is part of the Epistemic Octahedron's semantics.
 
-```math
-\boxed{
-\Pi(d):=\frac{d}{\lVert d\rVert_1}
-}
-```
+## Necessary functions and higher-order relations
 
-Every nonzero ray from the origin intersects the surface once:
-
-```math
-\Pi(d)\in\partial\mathbb O.
-```
-
-## Referent-relative semantic functions
-
-For a declared referent $r$:
+For a declared referent `r`, the five necessary functions are represented semantically by:
 
 ```math
 \begin{aligned}
-E_r
-&:=
-\deg_r(\text{concern for affected persons}),
-\\
-P_r
-&:=
-\deg_r(\text{functional demands, execution, and real-world constraint}),
-\\
-K_r
-&:=
-\deg_r(\text{informational grasp materially grounding }r),
-\\
-W_r
-&:=
-\deg_r(\text{contextual discernment that interprets }K_r,\text{ weighs context, recognizes limits,}
-\\
-&\qquad\text{preserves proportion, anticipates consequences, and governs application}),
-\\
-S_r
-&:=
-\deg_r(\text{coherence, reality-tracking, self-correction, and resistance to delusion under pressure}).
+E_r&:=\deg_r(\text{concern for affected welfare}),\\
+P_r&:=\deg_r(\text{real-world constraint}),\\
+K_r&:=\deg_r(\text{informational grounding}),\\
+W_r&:=\deg_r(\text{contextual interpretation and discernment}),\\
+S_r&:=\deg_r(\text{reality-governed epistemic organization under pressure}).
 \end{aligned}
 ```
 
-Here, $\deg_r$ is a latent semantic degree relative to the declared referent. It does not define a finalized measurement scale.
+`\deg_r` denotes a latent semantic degree relative to the declared referent. It does not define a finalized measurement scale.
 
 Knowledge and wisdom are reciprocal but non-identical:
 
@@ -86,9 +44,20 @@ K_r\xrightarrow{\mathrm{feeds}}W_r,
 W_r\xrightarrow{\mathrm{governs}}K_r.
 ```
 
-## Structural displacement
+The higher-order explanatory semantics are:
 
-For two opposed functions $A$ and $B$:
+```math
+\boxed{
+\begin{aligned}
+E_r\leftrightarrow P_r&:\quad\text{purposive relation},\\
+K_r\leftrightarrow W_r&:\quad\text{meaning-forming relation},\\
+S_r&:\quad\text{reality-answerability under pressure}.
+\end{aligned}}
+```
+
+## Structural displacement and complete semantic coordinate
+
+For opposed functions `A` and `B`:
 
 ```math
 \Delta_r(A,B)\in[-1,1],
@@ -96,181 +65,174 @@ For two opposed functions $A$ and $B$:
 \Delta_r(A,B)=-\Delta_r(B,A).
 ```
 
-$\Delta_r(A,B)$ is the signed unresolved structural displacement of $r$ toward $A$ relative to $B$.
+`\Delta_r(A,B)` is the signed unresolved structural displacement of `r` toward `A` relative to `B`. A zero displacement means that no unresolved structural displacement between the pair is established. It does not imply absence, equal visibility, or equal contextual emphasis.
+
+Let
 
 ```math
-\Delta_r(A,B)=0
+\Sigma_r\in[-1,1]
 ```
 
-means that no unresolved structural displacement is established. It does not mean that both functions are absent, equally visible, or equally emphasized in every context.
+denote the signed epistemic-stability coordinate. Positive values indicate positive epistemic stability, `\Sigma_r=0` marks maximal epistemic instability, and negative values indicate increasingly consolidated negative epistemic stability toward collapse.
 
-Let $\widetilde S_r\in\mathbb R$ be the signed raw epistemic-stability orientation. The raw interpretive direction is:
+For every surface-eligible referent `r\in\mathcal R_{\partial}`:
 
 ```math
-d(r)
+\sigma(r)
 :=
 \left(
 \Delta_r(E,P),
-\widetilde S_r,
+\Sigma_r,
 \Delta_r(W,K)
 \right).
 ```
 
-## Formation boundary and plotting map
+Define represented completion magnitude:
 
 ```math
-F(r):=
-\begin{cases}
-0,&r\text{ has not crossed the worldview-formation boundary},
-\\
-1,&r\text{ is a formed worldview referent}.
-\end{cases}
+\mathcal C(r)
+:=
+|\Delta_r(E,P)|+|\Sigma_r|+|\Delta_r(W,K)|.
 ```
 
-The complete plotting function is:
+A completed EO orientation satisfies:
 
 ```math
 \boxed{
-\Phi(r):=
-\begin{cases}
-(0,0,0),
-&F(r)=0,
-\\[6pt]
-\Pi(d(r)),
-&F(r)=1\text{ and }d(r)\neq(0,0,0).
-\end{cases}
+|\Delta_r(E,P)|+|\Sigma_r|+|\Delta_r(W,K)|=1.
 }
 ```
 
-For every formed worldview:
+The numerical value `1` is the coordinate scale of completed representation. It is not a finite psychological stock of traits.
+
+If `\mathcal C(r)<1`, the description is underresolved rather than a completed worldview coordinate. The underdetermination may belong to the evaluator's specification or, when it belongs to the referent itself, to a real state of formation or re-formation. If `\mathcal C(r)>1`, the triple is incompatible with the completed coordinate semantics. Neither case is repaired by normalizing the triple outward.
+
+## Plot domain and plotting map
+
+Let:
+
+- `\mathcal W_0` be whole-agent referents prior to worldview formation;
+- `\mathcal W_f` be formed whole-worldview referents;
+- `\mathcal B` be plot-eligible bounded referents;
+- `\mathcal R_{\partial}:=\mathcal W_f\cup\mathcal B`;
+- `\mathcal R_{\Phi}:=\mathcal W_0\cup\mathcal R_{\partial}`.
+
+Then:
 
 ```math
+\boxed{
+\Phi:\mathcal R_{\Phi}\longrightarrow\{O\}\cup\partial\mathbb O,
+\qquad
+\Phi(r):=
+\begin{cases}
+O,&r\in\mathcal W_0,\\[4pt]
+\sigma(r),&r\in\mathcal R_{\partial}.
+\end{cases}}
+```
+
+For every surface-eligible referent:
+
+```math
+r\in\mathcal R_{\partial}
+\Longrightarrow
 \Phi(r)=(x_r,y_r,z_r)\in\partial\mathbb O,
 \qquad
 |x_r|+|y_r|+|z_r|=1.
 ```
 
+A bounded referent does not map to the null origin merely because it is not itself a worldview. Lack of evaluator knowledge also does not map a referent to the origin.
+
 ## Fixed directional semantics
 
 ```math
-(+x,-x,+z,-z,+y,-y)
-=
-(E,P,W,K,S^{+},S^{-}).
+(+x,-x,+z,-z,+y,-y)=(E,P,W,K,S^{+},S^{-}).
 ```
 
 Equivalently:
 
-```math
-\begin{aligned}
-+x&=\text{Empathy},
-&-x&=\text{Practicality},
-\\
-+z&=\text{Wisdom},
-&-z&=\text{Knowledge},
-\\
-+y&=\text{positive epistemic stability},
-&-y&=\text{negative epistemic stability}.
-\end{aligned}
+```text
++x = Empathy                 -x = Practicality
++z = Wisdom                  -z = Knowledge
++y = positive stability      -y = negative stability
 ```
 
-## Exceptional reference states
+## Distinguished reference states
 
 ```math
 \begin{aligned}
-O=(0,0,0)
-&:=\text{pre-philosophical null},
-\\[4pt]
-M=(0,1,0)
-&:=\text{mature integration of }E,P,W,K\text{ under maximal positive }S,
-\\[4pt]
-C=(0,-1,0)
-&:=\text{collapse of reality-governed integration and correction}.
+O=(0,0,0)&:=\text{pre-philosophical null},\\
+M=(0,1,0)&:=\text{mature integration under maximal positive stability},\\
+C=(0,-1,0)&:=\text{epistemic collapse}.
 \end{aligned}
 ```
 
-The normalized vertical coordinate is:
+At the peak, `y=1` and the surface equation forces `x=z=0`. The unique point of maximal positive epistemic stability is therefore also the unique point of zero unresolved lateral displacement under positive reality-governed integration.
+
+## Structural reality-friction and answerability display
+
+For any completed surface coordinate `p=(x,y,z)`:
 
 ```math
-y_r
-=
-\frac{\widetilde S_r}
-{|\Delta_r(E,P)|+|\widetilde S_r|+|\Delta_r(W,K)|}.
+F_R(p):=|x|+|z|=1-|y|
 ```
 
-The raw orientation $\widetilde S_r$ and the normalized surface coordinate $y_r$ are not interchangeable quantities.
+is total unresolved lateral displacement, or structural reality-friction in the explanatory reading.
 
-## Contextual emphasis is not structural displacement
-
-For context $c$:
+A normalized display coordinate for vertical reality-answerability is:
 
 ```math
-A(r,c)
-:=
-\left(
-\alpha_E(r,c),
-\alpha_P(r,c),
-\alpha_W(r,c),
-\alpha_K(r,c)
-\right),
+A_R(p):=\frac{y+1}{2}.
 ```
 
-with:
+Therefore:
 
 ```math
-\alpha_i(r,c)\geq0,
-\qquad
-\alpha_E+\alpha_P+\alpha_W+\alpha_K=1.
+F_R(p)=1-|2A_R(p)-1|.
 ```
 
-The visible or operative emphasis distribution is distinct from structural displacement:
+This is a derived projection of the existing EO surface relation. It introduces no new coordinate.
+
+## Structural closure and objective dominance
+
+Let the necessary function set be:
 
 ```math
-A(r,c)
-\neq
-\left(
-\Delta_r(E,P),
-\Delta_r(W,K)
-\right),
+\mathfrak F:=\{E,P,K,W,S\}.
 ```
 
-and therefore:
+A proposed maturity-relevant feature is already structurally represented when its philosophical effect changes one or more members of `\mathfrak F`. A genuinely additional EO dimension would have to establish a further function that is both necessary to formed worldview reasoning and irreducible to every member of `\mathfrak F`.
+
+The Five-Function Invariance Test gives the falsification condition: if two worldview orientations are identical across all five functions and one is nevertheless genuinely philosophically superior to the other relative to the declared referent, the five-function exhaustion claim is false.
+
+Objective dominance is non-loss plus correction: for a fixed referent, a judgment objectively dominates another when it preserves every maturity-relevant success of the other, corrects at least one additional maturity-relevant failure, and introduces no offsetting maturity-relevant failure.
+
+## Evidence-warranted identification
+
+For referent `r` and evidence `e`:
 
 ```math
-\alpha_A(r,c)>\alpha_B(r,c)
-\not\Longrightarrow
-\Delta_r(A,B)\neq0.
+\Omega(r\mid e)
 ```
 
-A peak-level referent may remain at $M$ under strongly asymmetric contextual emphasis, provided every materially relevant pressure continues to govern:
+denotes the set of EO positions still compatible with the established evidence under the fixed semantics.
+
+An exact point may be reported only when:
 
 ```math
-\boxed{
-\Phi(r)=M
-\text{ remains warranted under context }c
-\iff
-\forall q\in\mathcal Q_{r,c},
-\;q\text{ continues to govern}.
-}
+\Omega(r\mid e)=\{p\}
 ```
 
-Departure from the peak requires an actual displacement condition:
+for a single `p`. Otherwise the warranted output is a faithful region, face, sign constraint, vertical gate interval, or underdetermined result. Additional sound evidence can narrow `\Omega(r\mid e)` without changing the referent's actual structural location.
 
-```math
-\Phi(r)\neq M
-\Longrightarrow
-\exists q\in\mathcal Q_{r,c}
-\text{ such that }q
-\text{ is absent, suppressed, distorted, or insulated from correction}.
-```
+## Contextual emphasis
 
-Mere unequal emphasis, limited information, fallibility, compressed expression, or the possibility of future revision does not by itself establish departure from the peak.
+Visible or operative contextual emphasis is distinct from structural displacement. Unequal use of empathy, practicality, wisdom, or knowledge in a particular context does not by itself move a mature referent away from the peak. Departure requires a materially relevant pressure to be absent, suppressed, distorted, or insulated from correction.
 
 ## Source and authority
 
-- [Canonical Version 1.0 PDF](paper/v1.0/Epistemic_Octahedron_Objective_Philosophical_Maturity_v1.0.pdf)
-- [Exact LaTeX source](paper/v1.0/main.tex)
-- [Canonical status and reciprocal challenge standard](CANONICAL_STATUS.md)
+- [Canonical paper on Zenodo](https://doi.org/10.5281/zenodo.22164942)
+- [Canonical status and challenge standard](CANONICAL_STATUS.md)
 - [Open downstream instrumentation policy](EO_INSTRUMENTATION_POLICY.md)
 - [Conformance requirements](CONFORMANCE.md)
 
-The rendered equations above use GitHub's supported mathematical-expression syntax. The underlying equation source remains visible in the raw Markdown and in the canonical LaTeX file.
+The rendered equations above use GitHub's mathematical-expression syntax. The DOI-bearing paper remains authoritative.
