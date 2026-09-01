@@ -221,6 +221,7 @@
         if(!diagnosticBlock.test(core)) throw new Error('Binary diagnostic patch did not match.');
         core=core.replace(diagnosticBlock,diagnosticReplacement);
 
+        core=core.replace('</body>', '<script src="worldview-layer.js"><\/script></body>');
         frame.srcdoc=core;
         frame.hidden=false;
         boot.remove();
