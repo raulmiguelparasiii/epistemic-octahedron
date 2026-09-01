@@ -5,7 +5,8 @@
   const layerBase = new URL('.', (loader && loader.src) || document.baseURI);
   const atlasParts = [
     'worldviews.01.b64','worldviews.02.b64','worldviews.03.b64',
-    'worldviews.04.b64','worldviews.05.b64','worldviews.06.b64'
+    'worldviews.04.b64','worldviews.05.b64','worldviews.06.b64',
+    'worldviews.07.b64','worldviews.08.b64','worldviews.09.b64'
   ].map(name => new URL(name, layerBase).href);
 
   const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
@@ -177,7 +178,8 @@
     for (const label of legacyLabels) {
       for (const node of exactTextNodes(host, label)) {
         const section = sectionForLabel(node, host);
-        if (!section || section.classList.contains('eo-curated-worldview') || section.contains(host.querySelector('.eo-curated-worldview'))) continue;
+        const curated = host.querySelector('.eo-curated-worldview');
+        if (!section || section.classList.contains('eo-curated-worldview') || (curated && section.contains(curated))) continue;
         if (!firstSection) firstSection = section;
         section.classList.add('eo-worldview-legacy-hidden');
       }
