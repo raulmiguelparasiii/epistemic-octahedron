@@ -34,6 +34,8 @@
         const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
         let core=await new Response(stream).text();
 
+        core=core.replace('</head>', '<script src="question-packages.js"><\/script></head>');
+
         core=core.replace(
           '.question-package-row select { min-width:0; flex:1 1 140px; border:1px solid var(--border); background:#fff; border-radius:12px; padding:7px 8px; font:inherit; font-size:11px; }',
 `          .question-package-row select { min-width:0; flex:1 1 140px; border:1px solid var(--border); background:#fff; border-radius:12px; padding:7px 8px; font:inherit; font-size:11px; }
@@ -220,6 +222,37 @@
     function escapeHtml`;
         if(!diagnosticBlock.test(core)) throw new Error('Binary diagnostic patch did not match.');
         core=core.replace(diagnosticBlock,diagnosticReplacement);
+
+        const builtinInstaller=`    function buildBuiltinQuestionPackage(def){
+      const questions=(def.questions||[]).map(d=>{
+        const assignments={};
+        for(const c of eoTenthsCoordinates){
+          const value=Math.round(Number(c[d.axis])*10);
+          const yes=d.direction==='positive'?value>=d.level:value<=-d.level;
+          assignments[c.coordinate]=yes?'yes':'no';
+        }
+        return {id:d.id,text:d.text,assignments,finalYes:'',finalNo:''};
+      });
+      return {id:def.id,name:def.name,description:def.description||'',questions,interpretations:[]};
+    }
+    function installBuiltinQuestionPackages(){
+      const defs=window.EO_BUILTIN_QUESTION_PACKAGES;
+      if(!Array.isArray(defs)||!defs.length)return;
+      const built=defs.map(buildBuiltinQuestionPackage);
+      const builtIds=new Set(built.map(p=>p.id));
+      const existing=(instrumentState.packages||[]).filter(p=>!builtIds.has(p.id));
+      instrumentState.packages=[...built,...existing];
+      instrumentState.packageId=built[0].id;
+      instrumentState.editorQuestionId=built[0].questions[0]?.id||'';
+      instrumentState.selectedCoordinate='';
+      instrumentState.diagnostic.candidates=new Set(eoTenthsCoordinates.map(c=>c.coordinate));
+      instrumentState.diagnostic.answers=[];
+      instrumentState.diagnostic.skipped=new Set();
+    }
+    installBuiltinQuestionPackages();
+
+`;
+        core=core.replace('    function escapeHtml', builtinInstaller+'    function escapeHtml');
 
         core=core.replace('</body>', '<script src="worldview-layer.js"><\/script></body>');
         frame.srcdoc=core;
