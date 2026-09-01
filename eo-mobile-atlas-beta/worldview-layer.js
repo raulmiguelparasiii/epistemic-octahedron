@@ -127,6 +127,8 @@
   };
 
   const findHost = () => {
+    const direct = document.getElementById('worldviewPanel');
+    if (direct) return direct;
     const portraits = exactTextNodes(document, 'Personal portrait');
     const hierarchy = exactTextNodes(document, 'Why this fits the hierarchy');
     for (const a of portraits) {
@@ -143,6 +145,25 @@
   };
 
   const findCoordinate = (host, atlas) => {
+    const x = Number(document.getElementById('coord-x')?.value);
+    const y = Number(document.getElementById('coord-y')?.value);
+    const z = Number(document.getElementById('coord-z')?.value);
+    if ([x,y,z].every(Number.isFinite)) {
+      const l1 = Math.abs(x) + Math.abs(y) + Math.abs(z);
+      if (Math.abs(l1 - 1) > 0.02) return '';
+      const directKey = normalizeCoordinate(`(${x}, ${y}, ${z})`);
+      if (directKey && atlas.has(directKey)) return directKey;
+      let nearestKey = '';
+      let nearestDistance = Infinity;
+      for (const key of atlas.keys()) {
+        const match = key.match(coordinatePattern);
+        if (!match) continue;
+        const [ax,ay,az] = match.slice(1).map(Number);
+        const distance = (x-ax)**2 + (y-ay)**2 + (z-az)**2;
+        if (distance < nearestDistance) { nearestDistance = distance; nearestKey = key; }
+      }
+      if (nearestKey) return nearestKey;
+    }
     const testScope = scope => {
       const candidates = scope.querySelectorAll('span,p,div,strong,b,h1,h2,h3,h4,h5,h6,code');
       for (const el of candidates) {
@@ -174,6 +195,12 @@
   };
 
   const hideLegacy = host => {
+    if (host?.id === 'worldviewPanel') {
+      const curated = host.querySelector('.eo-curated-worldview');
+      const legacy = [...host.children].filter(el => el !== curated && !el.classList.contains('eo-curated-worldview'));
+      for (const el of legacy) el.classList.add('eo-worldview-legacy-hidden');
+      return legacy[0] || null;
+    }
     let firstSection = null;
     for (const label of legacyLabels) {
       for (const node of exactTextNodes(host, label)) {
@@ -185,6 +212,11 @@
       }
     }
     return firstSection;
+  };
+
+  const showLegacy = host => {
+    if (!host) return;
+    for (const el of host.querySelectorAll('.eo-worldview-legacy-hidden')) el.classList.remove('eo-worldview-legacy-hidden');
   };
 
   const detail = (title, html) =>
@@ -357,16 +389,24 @@
     const host = findHost();
     if (!host) return;
     const key = findCoordinate(host, atlas);
-    if (!key) return;
-
     const current = host.querySelector('.eo-curated-worldview');
+    if (!key) {
+      if (current) current.remove();
+      showLegacy(host);
+      return;
+    }
+
     if (current && current.dataset.eoCoordinate === key) {
       hideLegacy(host);
       return;
     }
 
     const item = atlas.get(key);
-    if (!item) return;
+    if (!item) {
+      if (current) current.remove();
+      showLegacy(host);
+      return;
+    }
     if (current) current.remove();
     const firstLegacy = hideLegacy(host);
     const holder = document.createElement('div');
