@@ -72,3 +72,91 @@ window.EO_BUILTIN_QUESTION_PACKAGES = [
     ]
   }
 ];
+
+// Vertical semantic compatibility layer.
+// This changes only user-facing wording. Coordinates, thresholds, candidate
+// partitions, editor mappings, and the 402-point surface remain untouched.
+(() => {
+  'use strict';
+
+  window.EO_VERTICAL_SEMANTICS = Object.freeze({
+    relation: 'Accountability to Reality',
+    positive: 'Answerability',
+    negative: 'Insulation',
+    midpoint: 'Accountability midpoint'
+  });
+
+  const textRewrites = [
+    [/highest possible stability point/gi, 'highest possible accountability point'],
+    [/highest stability range/gi, 'highest accountability range'],
+    [/high positive stability/gi, 'high answerability'],
+    [/positive stability/gi, 'answerability'],
+    [/negative stability/gi, 'insulation'],
+    [/negatively stable/gi, 'increasingly insulated from correction'],
+    [/negative depth/gi, 'insulation depth']
+  ];
+
+  function rewriteText(value) {
+    let out = String(value || '');
+    for (const [pattern, replacement] of textRewrites) out = out.replace(pattern, replacement);
+    return out;
+  }
+
+  function rewriteRegion(value) {
+    return rewriteText(value)
+      .replace(/^Strong Positive\b/i, 'High-answerability')
+      .replace(/^Positive\b/i, 'Answerability-directed')
+      .replace(/^Strong Negative\b/i, 'Deep-insulation')
+      .replace(/^Negative\b/i, 'Insulation-directed')
+      .replace(/^Borderline\b/i, 'Accountability midpoint');
+  }
+
+  function rewriteTextNodes(root) {
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      const next = rewriteText(node.nodeValue);
+      if (next !== node.nodeValue) node.nodeValue = next;
+    }
+  }
+
+  function syncVerticalSemantics() {
+    const negativeLabel = document.getElementById('negativeStabilityLabel');
+    const positiveLabel = document.getElementById('positiveStabilityLabel');
+    if (negativeLabel && negativeLabel.textContent !== 'Insulation') negativeLabel.textContent = 'Insulation';
+    if (positiveLabel && positiveLabel.textContent !== 'Answerability') positiveLabel.textContent = 'Answerability';
+
+    const slider = document.getElementById('stability');
+    if (slider) {
+      slider.setAttribute('aria-label', 'Accountability to reality: insulation to answerability');
+      slider.title = 'Accountability to Reality · Insulation ↔ Answerability';
+    }
+
+    const region = document.getElementById('worldviewRegion');
+    if (region) {
+      const next = rewriteRegion(region.textContent);
+      if (next !== region.textContent) region.textContent = next;
+    }
+
+    const meaning = document.getElementById('worldviewMeaning');
+    if (meaning) {
+      const next = rewriteText(meaning.textContent);
+      if (next !== meaning.textContent) meaning.textContent = next;
+    }
+
+    // The curated 402-coordinate card is generated later by worldview-layer.js.
+    // Rewriting only its rendered text avoids mutating the underlying atlas data.
+    rewriteTextNodes(document.querySelector('.eo-curated-worldview'));
+  }
+
+  function start() {
+    syncVerticalSemantics();
+    const observer = new MutationObserver(syncVerticalSemantics);
+    observer.observe(document.body, { subtree: true, childList: true, characterData: true });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
+})();
