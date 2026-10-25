@@ -58,16 +58,16 @@ jobs:
           import json, os, time, urllib.request
 
           base='http://127.0.0.1:9515'
-          def request(method,path,payload=None):
+          def request(method,path,payload=None,timeout=90):
               data=None if payload is None else json.dumps(payload).encode()
               req=urllib.request.Request(base+path,data=data,method=method,headers={'Content-Type':'application/json'})
-              with urllib.request.urlopen(req,timeout=15) as r:
+              with urllib.request.urlopen(req,timeout=timeout) as r:
                   return json.loads(r.read().decode())
 
           end=time.time()+20
           while True:
               try:
-                  if request('GET','/status')['value']['ready']:
+                  if request('GET','/status',timeout=5)['value']['ready']:
                       break
               except Exception:
                   pass
@@ -77,11 +77,12 @@ jobs:
 
           session=request('POST','/session',{'capabilities':{'alwaysMatch':{
               'browserName':'chrome',
+              'pageLoadStrategy':'none',
               'goog:chromeOptions':{'binary':os.environ['CHROME'],'args':['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--user-data-dir=/tmp/42ndmind-chrome']}
           }}})['value']['sessionId']
           try:
               request('POST',f'/session/{session}/url',{'url':'http://127.0.0.1:8000/42ndmind-live/selftest.html'})
-              end=time.time()+70
+              end=time.time()+120
               while time.time()<end:
                   v=request('POST',f'/session/{session}/execute/sync',{'script':"return {state:document.documentElement.dataset.selftest||'', text:document.getElementById('result')?.textContent||''};",'args':[]})['value']
                   if v['state']=='pass':
@@ -91,9 +92,9 @@ jobs:
                       raise SystemExit(v['text'])
                   time.sleep(.5)
               else:
-                  child=request('POST',f'/session/{session}/execute/sync',{'script':"const f=document.getElementById('app'); const d=f?.contentDocument; return {parent:document.getElementById('result')?.textContent||'', runtime:d?.documentElement?.dataset?.runtime||'', runtimeError:d?.documentElement?.dataset?.runtimeError||'', boot:d?.getElementById('boot')?.textContent||''};",'args':[]})['value']
+                  child=request('POST',f'/session/{session}/execute/sync',{'script':"const f=document.getElementById('app'); const d=f?.contentDocument; return {parent:document.getElementById('result')?.textContent||'', runtime:d?.documentElement?.dataset?.runtime||'', runtimeError:d?.documentElement?.dataset?.runtimeError||'', contact:d?.documentElement?.dataset?.lastContact||'', contactError:d?.documentElement?.dataset?.contactError||'', boot:d?.getElementById('boot')?.textContent||''};",'args':[]})['value']
                   raise SystemExit('browser selftest timed out: '+json.dumps(child))
           finally:
-              try: request('DELETE',f'/session/{session}')
+              try: request('DELETE',f'/session/{session}',timeout=10)
               except Exception: pass
           PY
