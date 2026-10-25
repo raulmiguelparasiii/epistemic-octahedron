@@ -1,0 +1,43 @@
+name: 42ndMind live browser self-test
+
+on:
+  push:
+    paths:
+      - '42ndmind-live/**'
+      - '.github/workflows/42ndmind-live-browser-selftest.yml'
+  workflow_dispatch:
+
+jobs:
+  browser-selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start static server
+        run: |
+          python3 -m http.server 8000 >/tmp/42ndmind-http.log 2>&1 &
+          sleep 2
+      - name: Find Chrome
+        id: chrome
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME"
+          echo "path=$CHROME" >> "$GITHUB_OUTPUT"
+      - name: Run browser self-test
+        env:
+          CHROME: ${{ steps.chrome.outputs.path }}
+        run: |
+          set -o pipefail
+          timeout 90s "$CHROME" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --user-data-dir=/tmp/42ndmind-chrome \
+            --virtual-time-budget=45000 \
+            --dump-dom \
+            http://127.0.0.1:8000/42ndmind-live/selftest.html \
+            > /tmp/42ndmind-dom.html
+          cat /tmp/42ndmind-dom.html
+          grep -q 'data-selftest="pass"' /tmp/42ndmind-dom.html
+          grep -q 'PASS' /tmp/42ndmind-dom.html
