@@ -1,0 +1,95 @@
+name: 42ndMind live public smoke
+
+on:
+  push:
+    paths:
+      - '.github/workflows/42ndmind-live-public-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  public-browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Find Chrome and ChromeDriver
+        id: browser
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          DRIVER="$(command -v chromedriver || command -v google-chrome-driver || true)"
+          test -n "$CHROME"
+          test -n "$DRIVER"
+          echo "chrome=$CHROME" >> "$GITHUB_OUTPUT"
+          echo "driver=$DRIVER" >> "$GITHUB_OUTPUT"
+      - name: Verify deployed Pages host, real runtime fetch, contact, field and persistence
+        env:
+          CHROME: ${{ steps.browser.outputs.chrome }}
+          DRIVER: ${{ steps.browser.outputs.driver }}
+        run: |
+          "$DRIVER" --port=9515 --allowed-origins='*' >/tmp/42ndmind-public-chromedriver.log 2>&1 &
+          python3 - <<'PY'
+          import json, os, time, urllib.request
+
+          base='http://127.0.0.1:9515'
+          public='https://raulmiguelparasiii.github.io/epistemic-octahedron/42ndmind-live/?public-smoke=fff04b7'
+          def request(method,path,payload=None,timeout=90):
+              data=None if payload is None else json.dumps(payload).encode()
+              req=urllib.request.Request(base+path,data=data,method=method,headers={'Content-Type':'application/json'})
+              with urllib.request.urlopen(req,timeout=timeout) as r:
+                  return json.loads(r.read().decode())
+
+          end=time.time()+20
+          while True:
+              try:
+                  if request('GET','/status',timeout=5)['value']['ready']: break
+              except Exception: pass
+              if time.time()>end: raise SystemExit('chromedriver did not become ready')
+              time.sleep(.25)
+
+          session=request('POST','/session',{'capabilities':{'alwaysMatch':{
+              'browserName':'chrome','pageLoadStrategy':'none',
+              'goog:chromeOptions':{'binary':os.environ['CHROME'],'args':['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--user-data-dir=/tmp/42ndmind-public-chrome']}
+          }}})['value']['sessionId']
+          js=lambda script: request('POST',f'/session/{session}/execute/sync',{'script':script,'args':[]})['value']
+          try:
+              request('POST',f'/session/{session}/url',{'url':public})
+              end=time.time()+90
+              while time.time()<end:
+                  s=js("return {runtime:document.documentElement.dataset.runtime||'', error:document.documentElement.dataset.runtimeError||'', boot:document.getElementById('boot')?.textContent||'', disabled:document.getElementById('input')?.disabled};")
+                  if s['runtime']=='failed': raise SystemExit('PUBLIC RUNTIME FAILED: '+json.dumps(s))
+                  if s['runtime']=='ready' and s['disabled'] is False: break
+                  time.sleep(.5)
+              else: raise SystemExit('public runtime did not become ready: '+json.dumps(s))
+
+              before=js("return document.getElementById('order').textContent;")
+              js("document.getElementById('input').value='public browser smoke reality contact'; document.getElementById('send').click(); return true;")
+              end=time.time()+90
+              while time.time()<end:
+                  c=js("return {state:document.documentElement.dataset.lastContact||'', error:document.documentElement.dataset.contactError||'', order:document.getElementById('order').textContent, affected:document.getElementById('affectedCount').textContent, contact:document.getElementById('contact').textContent};")
+                  if c['state']=='failed': raise SystemExit('PUBLIC CONTACT FAILED: '+json.dumps(c))
+                  if c['state']=='ok': break
+                  time.sleep(.5)
+              else: raise SystemExit('public contact did not complete: '+json.dumps(c))
+
+              after=int(c['order'])
+              if 'public browser smoke reality contact' not in c['contact']: raise SystemExit('public contact not rendered')
+              if not (c['affected'].startswith('(') and c['affected'].endswith(')')): raise SystemExit('public affected field count not rendered: '+c['affected'])
+
+              request('POST',f'/session/{session}/refresh',{})
+              end=time.time()+90
+              while time.time()<end:
+                  r=js("return {runtime:document.documentElement.dataset.runtime||'', error:document.documentElement.dataset.runtimeError||'', order:document.getElementById('order')?.textContent||'', persisted:document.getElementById('persisted')?.textContent||'', disabled:document.getElementById('input')?.disabled};")
+                  if r['runtime']=='failed': raise SystemExit('PUBLIC RELOAD RUNTIME FAILED: '+json.dumps(r))
+                  if r['runtime']=='ready' and r['disabled'] is False and r['persisted']=='loaded': break
+                  time.sleep(.5)
+              else: raise SystemExit('public reload did not restore persisted M: '+json.dumps(r))
+              if int(r['order']) != after: raise SystemExit(f"public persisted M mismatch: {after} -> {r['order']}")
+
+              print('PASS')
+              print('public Pages runtime ready; input enabled')
+              print(f'contact completed; lived order {before} -> {after}')
+              print(f'affected field rendered: {c["affected"]}')
+              print(f'IndexedDB reload preserved lived order {r["order"]}')
+          finally:
+              try: request('DELETE',f'/session/{session}',timeout=10)
+              except Exception: pass
+          PY
