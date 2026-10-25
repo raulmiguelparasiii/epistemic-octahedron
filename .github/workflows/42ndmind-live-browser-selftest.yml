@@ -39,27 +39,61 @@ jobs:
         run: |
           python3 -m http.server 8000 >/tmp/42ndmind-http.log 2>&1 &
           sleep 2
-      - name: Find Chrome
-        id: chrome
+      - name: Find Chrome and ChromeDriver
+        id: browser
         run: |
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          DRIVER="$(command -v chromedriver || command -v google-chrome-driver || true)"
           test -n "$CHROME"
-          echo "path=$CHROME" >> "$GITHUB_OUTPUT"
-      - name: Run browser self-test
+          test -n "$DRIVER"
+          echo "chrome=$CHROME" >> "$GITHUB_OUTPUT"
+          echo "driver=$DRIVER" >> "$GITHUB_OUTPUT"
+      - name: Run browser self-test with real time
         env:
-          CHROME: ${{ steps.chrome.outputs.path }}
+          CHROME: ${{ steps.browser.outputs.chrome }}
+          DRIVER: ${{ steps.browser.outputs.driver }}
         run: |
-          set -o pipefail
-          timeout 90s "$CHROME" \
-            --headless=new \
-            --no-sandbox \
-            --disable-gpu \
-            --disable-dev-shm-usage \
-            --user-data-dir=/tmp/42ndmind-chrome \
-            --virtual-time-budget=60000 \
-            --dump-dom \
-            http://127.0.0.1:8000/42ndmind-live/selftest.html \
-            > /tmp/42ndmind-dom.html
-          cat /tmp/42ndmind-dom.html
-          grep -q 'data-selftest="pass"' /tmp/42ndmind-dom.html
-          grep -q 'PASS' /tmp/42ndmind-dom.html
+          "$DRIVER" --port=9515 --allowed-origins='*' >/tmp/42ndmind-chromedriver.log 2>&1 &
+          python3 - <<'PY'
+          import json, os, time, urllib.request
+
+          base='http://127.0.0.1:9515'
+          def request(method,path,payload=None):
+              data=None if payload is None else json.dumps(payload).encode()
+              req=urllib.request.Request(base+path,data=data,method=method,headers={'Content-Type':'application/json'})
+              with urllib.request.urlopen(req,timeout=15) as r:
+                  return json.loads(r.read().decode())
+
+          end=time.time()+20
+          while True:
+              try:
+                  if request('GET','/status')['value']['ready']:
+                      break
+              except Exception:
+                  pass
+              if time.time()>end:
+                  raise SystemExit('chromedriver did not become ready')
+              time.sleep(.25)
+
+          session=request('POST','/session',{'capabilities':{'alwaysMatch':{
+              'browserName':'chrome',
+              'goog:chromeOptions':{'binary':os.environ['CHROME'],'args':['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--user-data-dir=/tmp/42ndmind-chrome']}
+          }}})['value']['sessionId']
+          try:
+              request('POST',f'/session/{session}/url',{'url':'http://127.0.0.1:8000/42ndmind-live/selftest.html'})
+              end=time.time()+70
+              while time.time()<end:
+                  v=request('POST',f'/session/{session}/execute/sync',{'script':"return {state:document.documentElement.dataset.selftest||'', text:document.getElementById('result')?.textContent||''};",'args':[]})['value']
+                  if v['state']=='pass':
+                      print(v['text'])
+                      break
+                  if v['state']=='fail':
+                      raise SystemExit(v['text'])
+                  time.sleep(.5)
+              else:
+                  child=request('POST',f'/session/{session}/execute/sync',{'script':"const f=document.getElementById('app'); const d=f?.contentDocument; return {parent:document.getElementById('result')?.textContent||'', runtime:d?.documentElement?.dataset?.runtime||'', runtimeError:d?.documentElement?.dataset?.runtimeError||'', boot:d?.getElementById('boot')?.textContent||''};",'args':[]})['value']
+                  raise SystemExit('browser selftest timed out: '+json.dumps(child))
+          finally:
+              try: request('DELETE',f'/session/{session}')
+              except Exception: pass
+          PY
