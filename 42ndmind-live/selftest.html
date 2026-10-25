@@ -19,11 +19,13 @@
    if(beforeKnown&&!(after>before))throw new Error(`lived order did not advance (${before} -> ${after})`);
    if(!d.getElementById('contact').textContent.includes('browser selftest reality contact'))throw new Error('contact was not rendered');
    if(!/^\(\d+\)$/.test(d.getElementById('affectedCount').textContent))throw new Error('affected field count was not rendered');
+   const oldDoc=d;
    frame.contentWindow.location.reload();
+   await waitFor(()=>frame.contentDocument&&frame.contentDocument!==oldDoc,'iframe document replacement');
    await ready();d=frame.contentDocument;
    const reloadedText=d.getElementById('order').textContent,reloaded=Number(reloadedText);
    if(!Number.isFinite(reloaded)||reloaded!==after)throw new Error(`persisted M mismatch after reload (${after} -> ${reloadedText})`);
-   if(d.getElementById('persisted').textContent!=='loaded')throw new Error('page did not report loading persisted M');
+   if(d.getElementById('persisted').textContent!=='loaded')throw new Error(`page did not report loading persisted M (reported ${d.getElementById('persisted').textContent})`);
    document.documentElement.dataset.selftest='pass';out.textContent=`PASS\nruntime ready and input enabled\ncontact produced lived order ${after}${beforeKnown?` (from ${before})`:''}\naffected field rendered\nIndexedDB reload preserved order ${reloaded}`;
  }catch(e){document.documentElement.dataset.selftest='fail';out.textContent='FAIL\n'+e.stack;console.error(e)}
 })();
