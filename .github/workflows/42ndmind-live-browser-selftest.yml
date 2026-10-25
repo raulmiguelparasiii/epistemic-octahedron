@@ -12,8 +12,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout site
+        uses: actions/checkout@v4
+        with:
+          path: site
+      - name: Checkout pinned 42ndMind runtime
+        uses: actions/checkout@v4
+        with:
+          repository: raulmiguelparasiii/42ndMind
+          ref: 8a8e25693f9b68b071340b36a99608f5cd8aa815
+          path: mind
+      - name: Stage exact pinned runtime locally for browser verification
+        run: |
+          cp -R mind site/42ndmind-live/runtime
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('site/42ndmind-live/index.html')
+          s=p.read_text()
+          old="const ROOT=`https://cdn.jsdelivr.net/gh/raulmiguelparasiii/42ndMind@${RUNTIME_SHA}/`;"
+          if old not in s:
+              raise SystemExit('production runtime ROOT line not found')
+          p.write_text(s.replace(old,"const ROOT='./runtime/';"))
+          PY
       - name: Start static server
+        working-directory: site
         run: |
           python3 -m http.server 8000 >/tmp/42ndmind-http.log 2>&1 &
           sleep 2
@@ -34,7 +56,7 @@ jobs:
             --disable-gpu \
             --disable-dev-shm-usage \
             --user-data-dir=/tmp/42ndmind-chrome \
-            --virtual-time-budget=45000 \
+            --virtual-time-budget=60000 \
             --dump-dom \
             http://127.0.0.1:8000/42ndmind-live/selftest.html \
             > /tmp/42ndmind-dom.html
