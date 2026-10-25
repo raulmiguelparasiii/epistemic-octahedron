@@ -2,8 +2,8 @@
 (async()=>{
  const out=document.getElementById('result'),frame=document.getElementById('app');
  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
- async function waitFor(fn,label,ms=45000){const end=Date.now()+ms;while(Date.now()<end){try{const v=fn();if(v)return v}catch{}await sleep(100)}throw new Error('timeout: '+label)}
- async function ready(){return waitFor(()=>{const d=frame.contentDocument;if(!d)return false;const s=d.documentElement.dataset.runtime;if(s==='failed')throw new Error('runtime failed: '+(d.documentElement.dataset.runtimeError||'unknown'));return s==='ready'&&d.getElementById('input')&&!d.getElementById('input').disabled},'runtime ready')}
+ async function waitFor(fn,label,ms=45000){const end=Date.now()+ms;while(Date.now()<end){const v=fn();if(v)return v;await sleep(100)}const d=frame.contentDocument,boot=d?.getElementById('boot')?.textContent||'no boot text';throw new Error(`timeout: ${label}; child runtime=${d?.documentElement?.dataset?.runtime||'unset'}; boot=${boot}`)}
+ async function ready(){return waitFor(()=>{const d=frame.contentDocument;if(!d)return false;const s=d.documentElement.dataset.runtime;if(s==='failed')throw new Error('runtime failed: '+(d.documentElement.dataset.runtimeError||d.getElementById('boot')?.textContent||'unknown'));return s==='ready'&&d.getElementById('input')&&!d.getElementById('input').disabled},'runtime ready')}
  try{
    await ready();
    let d=frame.contentDocument;
@@ -11,7 +11,7 @@
    if(!Number.isFinite(before))throw new Error('initial lived order is not numeric');
    const input=d.getElementById('input'),send=d.getElementById('send');
    input.value='browser selftest reality contact';send.click();
-   await waitFor(()=>d.documentElement.dataset.lastContact==='ok','contact completion');
+   await waitFor(()=>{if(d.documentElement.dataset.lastContact==='failed')throw new Error('contact failed: '+(d.documentElement.dataset.contactError||'unknown'));return d.documentElement.dataset.lastContact==='ok'},'contact completion');
    const after=Number(d.getElementById('order').textContent);
    if(!(after>before))throw new Error(`lived order did not advance (${before} -> ${after})`);
    if(!d.getElementById('contact').textContent.includes('browser selftest reality contact'))throw new Error('contact was not rendered');
