@@ -7,21 +7,24 @@
  try{
    await ready();
    let d=frame.contentDocument;
-   const before=Number(d.getElementById('order').textContent);
-   if(!Number.isFinite(before))throw new Error('initial lived order is not numeric');
+   const beforeText=d.getElementById('order').textContent;
+   const before=Number(beforeText);
+   const beforeKnown=Number.isFinite(before)&&beforeText.trim()!=='';
    const input=d.getElementById('input'),send=d.getElementById('send');
+   if(input.disabled||send.disabled)throw new Error('contact controls are still disabled after runtime ready');
    input.value='browser selftest reality contact';send.click();
    await waitFor(()=>{if(d.documentElement.dataset.lastContact==='failed')throw new Error('contact failed: '+(d.documentElement.dataset.contactError||'unknown'));return d.documentElement.dataset.lastContact==='ok'},'contact completion');
-   const after=Number(d.getElementById('order').textContent);
-   if(!(after>before))throw new Error(`lived order did not advance (${before} -> ${after})`);
+   const afterText=d.getElementById('order').textContent,after=Number(afterText);
+   if(!Number.isFinite(after)||afterText.trim()==='')throw new Error('lived order did not become numeric after first contact');
+   if(beforeKnown&&!(after>before))throw new Error(`lived order did not advance (${before} -> ${after})`);
    if(!d.getElementById('contact').textContent.includes('browser selftest reality contact'))throw new Error('contact was not rendered');
    if(!/^\(\d+\)$/.test(d.getElementById('affectedCount').textContent))throw new Error('affected field count was not rendered');
    frame.contentWindow.location.reload();
    await ready();d=frame.contentDocument;
-   const reloaded=Number(d.getElementById('order').textContent);
-   if(reloaded!==after)throw new Error(`persisted M mismatch after reload (${after} -> ${reloaded})`);
+   const reloadedText=d.getElementById('order').textContent,reloaded=Number(reloadedText);
+   if(!Number.isFinite(reloaded)||reloaded!==after)throw new Error(`persisted M mismatch after reload (${after} -> ${reloadedText})`);
    if(d.getElementById('persisted').textContent!=='loaded')throw new Error('page did not report loading persisted M');
-   document.documentElement.dataset.selftest='pass';out.textContent=`PASS\nruntime ready\ncontact advanced lived order ${before} -> ${after}\nIndexedDB reload preserved order ${reloaded}`;
+   document.documentElement.dataset.selftest='pass';out.textContent=`PASS\nruntime ready and input enabled\ncontact produced lived order ${after}${beforeKnown?` (from ${before})`:''}\naffected field rendered\nIndexedDB reload preserved order ${reloaded}`;
  }catch(e){document.documentElement.dataset.selftest='fail';out.textContent='FAIL\n'+e.stack;console.error(e)}
 })();
 </script></body></html>
