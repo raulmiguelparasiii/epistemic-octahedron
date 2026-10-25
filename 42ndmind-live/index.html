@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>42ndMind — Live M</title>
 <style>
-:root{color-scheme:dark;--bg:#080b10;--panel:#101620;--panel2:#0c1119;--line:#263244;--text:#e8edf4;--muted:#8f9bad;--hot:#dbeafe;--contact:#fbbf24;--affected:#60a5fa;--support:#a78bfa;--participating:#34d399;--danger:#fb7185}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}body{padding:18px}.wrap{max-width:1500px;margin:auto}.top{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}.title{font:700 24px/1.1 system-ui,sans-serif;margin:0}.sub{color:var(--muted);margin-top:7px;max-width:900px}.formula{font-size:18px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;white-space:nowrap}.status{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.pill{border:1px solid var(--line);background:var(--panel2);padding:5px 9px;border-radius:999px;color:var(--muted)}.pill b{color:var(--text)}.grid{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(430px,1.4fr);gap:14px}@media(max-width:900px){.grid{grid-template-columns:1fr}}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}.hd{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}.hd h2{font:650 13px system-ui,sans-serif;letter-spacing:.03em;margin:0}.body{padding:12px}.controls textarea{width:100%;min-height:92px;resize:vertical;background:#070b11;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}button,.filelabel{background:#172133;color:var(--text);border:1px solid #324158;border-radius:8px;padding:8px 10px;font:600 12px system-ui,sans-serif;cursor:pointer}button:hover,.filelabel:hover{background:#1d2a40}button.danger{border-color:#6e3440;color:#fecdd3}.filelabel input{display:none}.boot{padding:10px 12px;border-radius:9px;background:#0a1018;border:1px solid var(--line);color:var(--muted);margin-bottom:10px}.boot.ok{color:#bbf7d0;border-color:#244b39}.boot.err{color:#fecdd3;border-color:#6e3440}.transcript{max-height:410px;overflow:auto}.turn{padding:9px 0;border-bottom:1px solid #1b2635}.turn:last-child{border:0}.who{color:#93c5fd}.mind{color:#c4b5fd;margin-top:4px}.none{color:#667386}.contactbox{border-left:3px solid var(--contact);padding:8px 10px;background:#0c1118;border-radius:5px;white-space:pre-wrap;word-break:break-word}.fieldgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:1100px){.fieldgrid{grid-template-columns:1fr}}.bucket{background:var(--panel2);border:1px solid var(--line);border-radius:9px;min-height:170px}.bucket h3{font:650 12px system-ui,sans-serif;margin:0;padding:8px 9px;border-bottom:1px solid var(--line)}.facts{max-height:380px;overflow:auto;padding:7px}.fact{padding:6px 7px;margin:5px 0;background:#080d14;border:1px solid #202b3b;border-radius:6px;word-break:break-word;animation:ignite .55s ease-out}.affected .fact{border-left:3px solid var(--affected)}.support .fact{border-left:3px solid var(--support)}.participating .fact{border-left:3px solid var(--participating)}@keyframes ignite{0%{transform:translateY(2px);box-shadow:0 0 0 2px rgba(255,255,255,.2);filter:brightness(1.8)}100%{transform:none;box-shadow:none;filter:none}}.small{font-size:11px;color:var(--muted)}.inspect{max-height:370px;overflow:auto;background:#070b11;border-radius:8px;padding:9px;white-space:pre-wrap;word-break:break-word}.count{font-size:11px;color:var(--muted)}.warning{color:#fda4af}.footer{margin-top:14px;color:var(--muted);font-size:11px}.tabs{display:flex;gap:6px}.tab{padding:5px 8px}.tab.active{background:#273753}.hidden{display:none}
+:root{color-scheme:dark;--bg:#080b10;--panel:#101620;--panel2:#0c1119;--line:#263244;--text:#e8edf4;--muted:#8f9bad;--contact:#fbbf24;--affected:#60a5fa;--support:#a78bfa;--participating:#34d399;--danger:#fb7185}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}body{padding:18px}.wrap{max-width:1500px;margin:auto}.top{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}.title{font:700 24px/1.1 system-ui,sans-serif;margin:0}.sub{color:var(--muted);margin-top:7px;max-width:900px}.formula{font-size:18px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;white-space:nowrap}.status{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.pill{border:1px solid var(--line);background:var(--panel2);padding:5px 9px;border-radius:999px;color:var(--muted)}.pill b{color:var(--text)}.grid{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(430px,1.4fr);gap:14px}@media(max-width:900px){.grid{grid-template-columns:1fr}}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}.hd{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}.hd h2{font:650 13px system-ui,sans-serif;letter-spacing:.03em;margin:0}.body{padding:12px}.controls textarea{width:100%;min-height:92px;resize:vertical;background:#070b11;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}button,.filelabel{background:#172133;color:var(--text);border:1px solid #324158;border-radius:8px;padding:8px 10px;font:600 12px system-ui,sans-serif;cursor:pointer}button:hover,.filelabel:hover{background:#1d2a40}button:disabled{opacity:.45;cursor:not-allowed}button.danger{border-color:#6e3440;color:#fecdd3}.filelabel input{display:none}.boot{padding:10px 12px;border-radius:9px;background:#0a1018;border:1px solid var(--line);color:var(--muted);margin-bottom:10px}.boot.ok{color:#bbf7d0;border-color:#244b39}.boot.err{color:#fecdd3;border-color:#6e3440}.transcript{max-height:410px;overflow:auto}.turn{padding:9px 0;border-bottom:1px solid #1b2635}.turn:last-child{border:0}.who{color:#93c5fd}.mind{color:#c4b5fd;margin-top:4px}.none{color:#667386}.contactbox{border-left:3px solid var(--contact);padding:8px 10px;background:#0c1118;border-radius:5px;white-space:pre-wrap;word-break:break-word}.fieldgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:1100px){.fieldgrid{grid-template-columns:1fr}}.bucket{background:var(--panel2);border:1px solid var(--line);border-radius:9px;min-height:170px}.bucket h3{font:650 12px system-ui,sans-serif;margin:0;padding:8px 9px;border-bottom:1px solid var(--line)}.facts{max-height:380px;overflow:auto;padding:7px}.fact{padding:6px 7px;margin:5px 0;background:#080d14;border:1px solid #202b3b;border-radius:6px;word-break:break-word;animation:ignite .55s ease-out}.affected .fact{border-left:3px solid var(--affected)}.support .fact{border-left:3px solid var(--support)}.participating .fact{border-left:3px solid var(--participating)}@keyframes ignite{0%{transform:translateY(2px);box-shadow:0 0 0 2px rgba(255,255,255,.2);filter:brightness(1.8)}100%{transform:none;box-shadow:none;filter:none}}.small{font-size:11px;color:var(--muted)}.inspect{max-height:370px;overflow:auto;background:#070b11;border-radius:8px;padding:9px;white-space:pre-wrap;word-break:break-word}.count{font-size:11px;color:var(--muted)}.footer{margin-top:14px;color:var(--muted);font-size:11px}.tabs{display:flex;gap:6px}.tab{padding:5px 8px}.tab.active{background:#273753}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
-    <div><h1 class="title">42ndMind — Live M</h1><div class="sub">The browser hosts one persistent M. A contact is passed into the repository runtime; the observer panes display the runtime's returned affected/supporting/participating relations. The panes are diagnostics, not extra cognition.</div></div>
+    <div><h1 class="title">42ndMind — Live M</h1><div class="sub">One persistent M runs in this browser. Each contact is passed into the pinned repository runtime. The observer panes show the runtime's returned affected/supporting/participating relations; they are diagnostics, not extra cognition.</div></div>
     <div class="formula">M<sub>t+1</sub> = C(M<sub>t</sub> ⊕ R<sub>t+1</sub>)</div>
   </div>
   <div class="status">
@@ -23,7 +23,6 @@
     <span class="pill">rules <b id="rulesCount">—</b></span>
     <span class="pill">persisted <b id="persisted">—</b></span>
   </div>
-
   <div class="grid">
     <div>
       <section class="panel controls">
@@ -32,105 +31,84 @@
           <div id="boot" class="boot">Loading the actual 42ndMind modules…</div>
           <textarea id="input" placeholder="Say something to M…" disabled></textarea>
           <div class="row">
-            <button id="send" disabled>Contact M</button>
-            <button id="fresh" class="danger" disabled>Fresh M</button>
-            <button id="export" disabled>Export M</button>
+            <button id="send" disabled>Contact M</button><button id="fresh" class="danger" disabled>Fresh M</button><button id="export" disabled>Export M</button>
             <label class="filelabel">Import M<input id="import" type="file" accept="application/json,.json"></label>
           </div>
         </div>
       </section>
-
-      <section class="panel" style="margin-top:14px">
-        <div class="hd"><h2>Conversation / lived surface contacts</h2><span class="count" id="turnCount">0 turns</span></div>
-        <div class="body transcript" id="transcript"><div class="none">No contacts yet in this browser session.</div></div>
-      </section>
-
-      <section class="panel" style="margin-top:14px">
-        <div class="hd"><h2>Current contact</h2></div>
-        <div class="body"><div id="contact" class="contactbox none">None yet.</div></div>
-      </section>
+      <section class="panel" style="margin-top:14px"><div class="hd"><h2>Conversation / lived surface contacts</h2><span class="count" id="turnCount">0 turns</span></div><div class="body transcript" id="transcript"><div class="none">No contacts yet in this browser session.</div></div></section>
+      <section class="panel" style="margin-top:14px"><div class="hd"><h2>Current contact</h2></div><div class="body"><div id="contact" class="contactbox none">None yet.</div></div></section>
     </div>
-
     <div>
-      <section class="panel">
-        <div class="hd"><h2>Derived live relational field</h2><span class="count">observer view A(M; current contact)</span></div>
-        <div class="body">
-          <div class="fieldgrid">
-            <div class="bucket affected"><h3>Affected now <span id="affectedCount" class="count"></span></h3><div id="affected" class="facts"><div class="none">—</div></div></div>
-            <div class="bucket support"><h3>Supporting <span id="supportCount" class="count"></span></h3><div id="support" class="facts"><div class="none">—</div></div></div>
-            <div class="bucket participating"><h3>Participating <span id="participatingCount" class="count"></span></h3><div id="participating" class="facts"><div class="none">—</div></div></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel" style="margin-top:14px">
-        <div class="hd"><h2>Inspection</h2><div class="tabs"><button class="tab active" data-tab="being">Being</button><button class="tab" data-tab="field">Field JSON</button><button class="tab" data-tab="current">M.current</button></div></div>
-        <div class="body"><pre id="inspect" class="inspect">—</pre></div>
-      </section>
+      <section class="panel"><div class="hd"><h2>Derived live relational field</h2><span class="count">observer view A(M; current contact)</span></div><div class="body"><div class="fieldgrid">
+        <div class="bucket affected"><h3>Affected now <span id="affectedCount" class="count"></span></h3><div id="affected" class="facts"><div class="none">—</div></div></div>
+        <div class="bucket support"><h3>Supporting <span id="supportCount" class="count"></span></h3><div id="support" class="facts"><div class="none">—</div></div></div>
+        <div class="bucket participating"><h3>Participating <span id="participatingCount" class="count"></span></h3><div id="participating" class="facts"><div class="none">—</div></div></div>
+      </div></div></section>
+      <section class="panel" style="margin-top:14px"><div class="hd"><h2>Inspection</h2><div class="tabs"><button class="tab active" data-tab="being">Being</button><button class="tab" data-tab="field">Field JSON</button><button class="tab" data-tab="current">M.current</button></div></div><div class="body"><pre id="inspect" class="inspect">—</pre></div></section>
     </div>
   </div>
-  <div class="footer">Pinned runtime: <span id="runtimeFull"></span>. This host does not claim the pinned architecture is AGI or conceptually certified; it makes its actual state transitions inspectable. M is stored only in this browser's IndexedDB unless exported.</div>
+  <div class="footer">Pinned runtime: <span id="runtimeFull"></span>. This host does not claim the pinned architecture is AGI or conceptually certified; it exposes its actual transitions. M is stored only in this browser's IndexedDB unless exported.</div>
 </div>
 <script>
 (async()=>{
 'use strict';
 const RUNTIME_SHA='8a8e25693f9b68b071340b36a99608f5cd8aa815';
 const ROOT=`https://cdn.jsdelivr.net/gh/raulmiguelparasiii/42ndMind@${RUNTIME_SHA}/`;
-const DB_NAME='42ndMindLiveM', STORE='state', KEY='canonical-M';
-const $=id=>document.getElementById(id);
-$('runtimeFull').textContent=RUNTIME_SHA;
-
+const DB_NAME='42ndMindLiveM',STORE='state',KEY='canonical-M';
+const $=id=>document.getElementById(id);$('runtimeFull').textContent=RUNTIME_SHA;
 function boot(msg,kind=''){const el=$('boot');el.textContent=msg;el.className='boot '+kind}
 function stable(v){try{return JSON.stringify(v)}catch{return String(v)}}
 function fmtObj(v){if(v&&typeof v==='object'&&Object.keys(v).length===1&&v.ref!==undefined)return `→ ${v.ref}`;return typeof v==='string'?v:stable(v)}
 function fmtFact(f){return `${fmtObj(f?.subject)}  ${fmtObj(f?.relation)}  ${fmtObj(f?.object)}`}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-
 function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE)};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
-async function dbGet(){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly');const r=tx.objectStore(STORE).get(KEY);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)})}
+async function dbGet(){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),r=tx.objectStore(STORE).get(KEY);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)})}
 async function dbPut(v){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,KEY);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 async function dbClear(){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(KEY);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 
-// Minimal browser CommonJS loader. It fetches the pinned repository source, recursively
-// preloads only relative requires, then evaluates those exact modules from cache.
-const source=new Map(), modules=new Map(), deps=new Map();
-function normalize(from,spec){const base=new URL(from,'https://loader.invalid/');let p=new URL(spec,base).pathname.slice(1);if(!/\.[cm]?js$/.test(p))p+='.js';return p}
-async function fetchSource(path){if(source.has(path))return source.get(path);const url=ROOT+path;const r=await fetch(url,{cache:'force-cache'});if(!r.ok)throw new Error(`runtime fetch ${r.status}: ${path}`);const text=await r.text();source.set(path,text);return text}
-async function preload(path,seen=new Set()){
- if(seen.has(path))return;seen.add(path);const text=await fetchSource(path);const found=[];const re=/require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;let m;
- while((m=re.exec(text))){const spec=m[1];if(spec.startsWith('.'))found.push([spec,normalize(path,spec)]);else throw new Error(`browser host encountered non-relative runtime dependency "${spec}" in ${path}`)}
- deps.set(path,found);await Promise.all(found.map(([,p])=>preload(p,seen)));
+// Exact synchronous SHA-256 compatibility for the one Node builtin used by the pinned runtime.
+const K256=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function rotr(x,n){return (x>>>n)|(x<<(32-n))}
+function sha256Hex(text){
+ const bytes=new TextEncoder().encode(String(text)),n=bytes.length,total=Math.ceil((n+9)/64)*64,data=new Uint8Array(total);data.set(bytes);data[n]=0x80;const dv=new DataView(data.buffer),bits=n*8;dv.setUint32(total-8,Math.floor(bits/4294967296),false);dv.setUint32(total-4,bits>>>0,false);
+ let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;const w=new Uint32Array(64);
+ for(let off=0;off<total;off+=64){for(let i=0;i<16;i++)w[i]=dv.getUint32(off+i*4,false);for(let i=16;i<64;i++){const a=w[i-15],b=w[i-2],s0=(rotr(a,7)^rotr(a,18)^(a>>>3))>>>0,s1=(rotr(b,17)^rotr(b,19)^(b>>>10))>>>0;w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0}let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;for(let i=0;i<64;i++){const S1=(rotr(e,6)^rotr(e,11)^rotr(e,25))>>>0,ch=((e&f)^((~e)&g))>>>0,t1=(h+S1+ch+K256[i]+w[i])>>>0,S0=(rotr(a,2)^rotr(a,13)^rotr(a,22))>>>0,maj=((a&b)^(a&c)^(b&c))>>>0,t2=(S0+maj)>>>0;h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0}h0=(h0+a)>>>0;h1=(h1+b)>>>0;h2=(h2+c)>>>0;h3=(h3+d)>>>0;h4=(h4+e)>>>0;h5=(h5+f)>>>0;h6=(h6+g)>>>0;h7=(h7+h)>>>0}
+ return [h0,h1,h2,h3,h4,h5,h6,h7].map(x=>(x>>>0).toString(16).padStart(8,'0')).join('')
 }
-function instantiate(path){if(modules.has(path))return modules.get(path).exports;const module={exports:{}};modules.set(path,module);const text=source.get(path);if(text===undefined)throw new Error(`module not preloaded: ${path}`);const req=spec=>{if(!spec.startsWith('.'))throw new Error(`unsupported require: ${spec}`);return instantiate(normalize(path,spec))};const dirname=path.includes('/')?path.slice(0,path.lastIndexOf('/')):'';const fn=new Function('require','module','exports','__filename','__dirname',`${text}\n//# sourceURL=${ROOT+path}`);fn(req,module,module.exports,path,dirname);return module.exports}
+function cryptoCompat(){return{createHash(algo){if(String(algo).toLowerCase()!=='sha256')throw new Error(`browser crypto shim supports only sha256, got ${algo}`);let text='';return{update(chunk){if(typeof chunk!=='string')throw new Error('browser crypto shim expects string hash input');text+=chunk;return this},digest(enc){if(enc!=='hex')throw new Error(`browser crypto shim supports only hex digest, got ${enc}`);return sha256Hex(text)}}}}}
+const BUILTINS=new Map([['crypto',cryptoCompat()],['node:crypto',cryptoCompat()]]);
 
-let LiveMind=null,M=null,last=null,sessionTurns=[];
-function updateStats(){
- $('whole').textContent=M?.whole??'—';$('order').textContent=M?.structure?.lived_contact_order??'—';$('factsCount').textContent=M?.knowledge?.facts?.length??0;$('rulesCount').textContent=M?.knowledge?.rules?.length??0;
+// Minimal browser CommonJS loader over the pinned source tree.
+const source=new Map(),modules=new Map();
+function normalize(from,spec){const base=new URL(from,'https://loader.invalid/');let p=new URL(spec,base).pathname.slice(1);if(!/\.[cm]?js$/.test(p))p+='.js';return p}
+async function fetchSource(path){if(source.has(path))return source.get(path);const r=await fetch(ROOT+path,{cache:'force-cache'});if(!r.ok)throw new Error(`runtime fetch ${r.status}: ${path}`);const text=await r.text();source.set(path,text);return text}
+async function preload(path,seen=new Set()){
+ if(seen.has(path))return;seen.add(path);const text=await fetchSource(path),found=[],re=/require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;let m;
+ while((m=re.exec(text))){const spec=m[1];if(spec.startsWith('.'))found.push(normalize(path,spec));else if(!BUILTINS.has(spec))throw new Error(`unhandled runtime dependency "${spec}" in ${path}`)}
+ await Promise.all(found.map(p=>preload(p,seen)));
 }
+function instantiate(path){if(modules.has(path))return modules.get(path).exports;const module={exports:{}};modules.set(path,module);const text=source.get(path);if(text===undefined)throw new Error(`module not preloaded: ${path}`);const req=spec=>{if(BUILTINS.has(spec))return BUILTINS.get(spec);if(!spec.startsWith('.'))throw new Error(`unhandled runtime dependency: ${spec}`);return instantiate(normalize(path,spec))};const dirname=path.includes('/')?path.slice(0,path.lastIndexOf('/')):'';const fn=new Function('require','module','exports','__filename','__dirname','process',`${text}\n//# sourceURL=${ROOT+path}`);fn(req,module,module.exports,path,dirname,{env:{},browser:true});return module.exports}
+
+let LiveMind=null,M=null,last=null,sessionTurns=[],inspectTab='being';
+function updateStats(){$('whole').textContent=M?.whole??'—';$('order').textContent=M?.structure?.lived_contact_order??'—';$('factsCount').textContent=M?.knowledge?.facts?.length??0;$('rulesCount').textContent=M?.knowledge?.rules?.length??0}
 function renderFacts(id,countId,xs){const el=$(id),arr=Array.isArray(xs)?xs:[];$(countId).textContent=`(${arr.length})`;el.innerHTML=arr.length?arr.slice(0,250).map(f=>`<div class="fact">${esc(fmtFact(f))}</div>`).join(''):'<div class="none">none</div>';if(arr.length>250)el.insertAdjacentHTML('beforeend',`<div class="small">+ ${arr.length-250} more</div>`)}
-let inspectTab='being';
-function renderInspection(){let v=inspectTab==='field'?last?.field:inspectTab==='current'?M?.current:last?.being;$('inspect').textContent=v?JSON.stringify(v,null,2):'—'}
-function renderLast(){
- const f=last?.field||{};renderFacts('affected','affectedCount',f.affected_facts);renderFacts('support','supportCount',f.supporting_facts);renderFacts('participating','participatingCount',f.participating_facts);renderInspection();
-}
+function renderInspection(){const v=inspectTab==='field'?last?.field:inspectTab==='current'?M?.current:last?.being;$('inspect').textContent=v?JSON.stringify(v,null,2):'—'}
+function renderLast(){const f=last?.field||{};renderFacts('affected','affectedCount',f.affected_facts);renderFacts('support','supportCount',f.supporting_facts);renderFacts('participating','participatingCount',f.participating_facts);renderInspection()}
 function renderTranscript(){const el=$('transcript');$('turnCount').textContent=`${sessionTurns.length} turns`;if(!sessionTurns.length){el.innerHTML='<div class="none">No contacts yet in this browser session.</div>';return}el.innerHTML=sessionTurns.map(t=>`<div class="turn"><div><span class="who">MIGUEL:</span> ${esc(t.input)}</div><div class="mind"><span>M:</span> ${t.expression?esc(t.expression):'<span class="none">&lt;no expressed reply&gt;</span>'}</div></div>`).join('');el.scrollTop=el.scrollHeight}
 async function persist(){await dbPut(M);$('persisted').textContent=new Date().toLocaleTimeString()}
-async function contact(text){
- const c={surface:{input:text,source:'miguel',target:'self'}};$('contact').classList.remove('none');$('contact').textContent=JSON.stringify(c,null,2);
- last=LiveMind.step(M,c);sessionTurns.push({input:text,expression:last.expression??null});updateStats();renderLast();renderTranscript();await persist();
-}
+async function contact(text){const c={surface:{input:text,source:'miguel',target:'self'}};$('contact').classList.remove('none');$('contact').textContent=JSON.stringify(c,null,2);last=LiveMind.step(M,c);sessionTurns.push({input:text,expression:last.expression??null});updateStats();renderLast();renderTranscript();await persist()}
 function freshState(){M=LiveMind.one(4,1);last=null;sessionTurns=[];updateStats();renderLast();renderTranscript();$('contact').textContent='None yet.';$('contact').classList.add('none')}
-
+function setReady(ready){$('input').disabled=!ready;$('send').disabled=!ready;$('fresh').disabled=!ready;$('export').disabled=!ready}
 try{
  boot('Loading pinned 42ndMind runtime…');await preload('agi/live-mind.js');LiveMind=instantiate('agi/live-mind.js');if(!LiveMind||typeof LiveMind.step!=='function'||typeof LiveMind.one!=='function')throw new Error('live-mind.js did not expose one()/step()');
  const stored=await dbGet();if(stored&&stored.whole===1){M=stored;boot('Loaded the same persisted M from this browser.','ok');$('persisted').textContent='loaded'}else{freshState();await persist();boot('Born: fresh one-M individual created and persisted in this browser.','ok')}
- updateStats();renderLast();$('input').disabled=false;$('send').disabled=false;$('fresh').disabled=false;$('export').disabled=false;$('input').focus();
-}catch(e){console.error(e);boot(`Runtime failed to load: ${e.message}`,'err')}
-
-$('send').onclick=async()=>{const text=$('input').value.trim();if(!text||!M)return;$('send').disabled=true;try{await contact(text);$('input').value=''}catch(e){console.error(e);boot(`Contact failed: ${e.message}`,'err')}finally{$('send').disabled=false;$('input').focus()}};
+ updateStats();renderLast();setReady(true);$('input').focus();document.documentElement.dataset.runtime='ready';
+}catch(e){console.error(e);setReady(false);document.documentElement.dataset.runtime='failed';document.documentElement.dataset.runtimeError=e.message;boot(`Runtime failed to load: ${e.message}`,'err')}
+$('send').onclick=async()=>{const text=$('input').value.trim();if(!text||!M)return;$('send').disabled=true;try{await contact(text);$('input').value='';document.documentElement.dataset.lastContact='ok'}catch(e){console.error(e);document.documentElement.dataset.lastContact='failed';document.documentElement.dataset.contactError=e.message;boot(`Contact failed: ${e.message}`,'err')}finally{$('send').disabled=false;$('input').focus()}};
 $('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('send').click()}});
 $('fresh').onclick=async()=>{if(!LiveMind||!confirm('Create a fresh M and replace the browser-persisted individual? Export first if you want to keep it.'))return;await dbClear();freshState();await persist();boot('Fresh one-M individual created.','ok')};
-$('export').onclick=()=>{if(!M)return;const blob=new Blob([JSON.stringify(M)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`42ndMind-M-order-${M?.structure?.lived_contact_order??0}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('export').onclick=()=>{if(!M)return;const blob=new Blob([JSON.stringify(M)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`42ndMind-M-order-${M?.structure?.lived_contact_order??0}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const x=JSON.parse(await file.text());if(!x||x.whole!==1)throw new Error('file is not one whole M');M=x;last=null;sessionTurns=[];await persist();updateStats();renderLast();renderTranscript();boot(`Imported and persisted ${file.name}.`,'ok')}catch(err){boot(`Import failed: ${err.message}`,'err')}finally{e.target.value=''}};
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');inspectTab=b.dataset.tab;renderInspection()});
 })();
