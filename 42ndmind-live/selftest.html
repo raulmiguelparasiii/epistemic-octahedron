@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><title>42ndMind live browser selftest</title></head><body><pre id="result">RUNNING</pre><iframe id="app" src="./index.html?browser-selftest=1" style="width:1200px;height:900px"></iframe><script>
+(async()=>{
+ const out=document.getElementById('result'),frame=document.getElementById('app');
+ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+ async function waitFor(fn,label,ms=45000){const end=Date.now()+ms;while(Date.now()<end){try{const v=fn();if(v)return v}catch{}await sleep(100)}throw new Error('timeout: '+label)}
+ async function ready(){return waitFor(()=>{const d=frame.contentDocument;if(!d)return false;const s=d.documentElement.dataset.runtime;if(s==='failed')throw new Error('runtime failed: '+(d.documentElement.dataset.runtimeError||'unknown'));return s==='ready'&&d.getElementById('input')&&!d.getElementById('input').disabled},'runtime ready')}
+ try{
+   await ready();
+   let d=frame.contentDocument;
+   const before=Number(d.getElementById('order').textContent);
+   if(!Number.isFinite(before))throw new Error('initial lived order is not numeric');
+   const input=d.getElementById('input'),send=d.getElementById('send');
+   input.value='browser selftest reality contact';send.click();
+   await waitFor(()=>d.documentElement.dataset.lastContact==='ok','contact completion');
+   const after=Number(d.getElementById('order').textContent);
+   if(!(after>before))throw new Error(`lived order did not advance (${before} -> ${after})`);
+   if(!d.getElementById('contact').textContent.includes('browser selftest reality contact'))throw new Error('contact was not rendered');
+   if(!/^\(\d+\)$/.test(d.getElementById('affectedCount').textContent))throw new Error('affected field count was not rendered');
+   frame.contentWindow.location.reload();
+   await ready();d=frame.contentDocument;
+   const reloaded=Number(d.getElementById('order').textContent);
+   if(reloaded!==after)throw new Error(`persisted M mismatch after reload (${after} -> ${reloaded})`);
+   if(d.getElementById('persisted').textContent!=='loaded')throw new Error('page did not report loading persisted M');
+   document.documentElement.dataset.selftest='pass';out.textContent=`PASS\nruntime ready\ncontact advanced lived order ${before} -> ${after}\nIndexedDB reload preserved order ${reloaded}`;
+ }catch(e){document.documentElement.dataset.selftest='fail';out.textContent='FAIL\n'+e.stack;console.error(e)}
+})();
+</script></body></html>
