@@ -1,98 +1,129 @@
 (() => {
   'use strict';
 
-  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  const near = (a,b,t=.00001) => Math.abs(a-b)<=t;
-  const surface = p => p && Math.abs(p.reduce((n,v)=>n+Math.abs(v),0)-1)<=.025;
-  const nfmt = n => near(n,0)?'0':near(Math.abs(n),1/3)?(n<0?'-1/3':'1/3'):near(Math.abs(n),.5)?(n<0?'-.5':'.5'):near(Math.abs(n),1)?(n<0?'-1':'1'):String(Math.round(n*1000)/1000);
-  const cfmt = p => `(${p.map(nfmt).join(', ')})`;
+  const E=.00001, near=(a,b,t=E)=>Math.abs(a-b)<=t;
+  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const surface=p=>p&&Math.abs(p.reduce((n,v)=>n+Math.abs(v),0)-1)<=.025;
+  const fmt=n=>near(n,0)?'0':near(Math.abs(n),1/3,.001)?(n<0?'-1/3':'1/3'):near(Math.abs(n),.5)?(n<0?'-.5':'.5'):near(Math.abs(n),1)?(n<0?'-1':'1'):String(Math.round(n*1000)/1000);
+  const cfmt=p=>`(${p.map(fmt).join(', ')})`;
+
+  const PAPER={
+    Maturity:{c:[0,1,0],d:'A worldview in which concern and constraint, information and interpretation are fully integrated, while materially relevant reality retains maximal corrective authority.'},
+    Collapse:{c:[0,-1,0],d:'A worldview so fully insulated that materially relevant reality no longer retains corrective authority over its organized whole.'},
+    Humanitarianism:{c:[.5,.5,0],d:'A worldview that gives unusual priority to affected welfare while still allowing real constraints and consequences to correct it.'},
+    Sentimentalism:{c:[1,0,0],d:'A worldview in which concern for affected welfare settles judgment before real constraints have been adequately integrated.'},
+    Moralism:{c:[.5,-.5,0],d:'A worldview in which concern has begun protecting itself through moral justification, so practical counterpressure increasingly loses authority.'},
+    Pragmatism:{c:[-.5,.5,0],d:'A worldview that gives unusual priority to feasibility, consequence, and what can actually work, while affected welfare still retains corrective authority.'},
+    Instrumentalism:{c:[-1,0,0],d:'A worldview in which things are primarily judged by whether they function, achieve an end, solve the problem, or produce the desired result, before affected welfare has been adequately integrated.'},
+    Expediency:{c:[-.5,-.5,0],d:'A worldview in which effectiveness increasingly overrides affected welfare, so what achieves the objective begins to justify itself.'},
+    Contextualism:{c:[0,.5,.5],d:'A worldview that gives unusual weight to context, proportion, implication, application, and the larger picture while information can still force revision.'},
+    Narrativism:{c:[0,0,1],d:'A worldview in which the explanatory frame or larger interpretation settles meaning before adequate informational grounding has been integrated.'},
+    'Narrative Dogmatism':{c:[0,-.5,.5],d:'A worldview in which the explanatory frame increasingly controls what contrary information is allowed to mean.'},
+    Empiricism:{c:[0,.5,-.5],d:'A worldview that gives unusual authority to observation, evidence, and informational grounding while context can still correct what the evidence appears to establish.'},
+    Literalism:{c:[0,0,-1],d:'A worldview in which represented facts, rules, statements, data, or propositions are treated as sufficient before their context, proportion, implications, and application have been adequately integrated.'},
+    Doctrinalism:{c:[0,-.5,-.5],d:'A worldview in which accepted facts, rules, classifications, or propositions have hardened so that contextual reinterpretation increasingly loses corrective authority.'},
+    Humanism:{c:[1/3,1/3,1/3],d:'A worldview organized strongly around human welfare and interpretive meaning while factual grounding and practical constraint remain underintegrated but still capable of correction.'},
+    Idealism:{c:[.5,0,.5],d:'A worldview in which concern and interpretive meaning settle judgment before informational grounding and practical constraint have been adequately integrated.'},
+    Utopianism:{c:[1/3,-1/3,1/3],d:'A worldview in which a morally compelling interpretation of how reality should be increasingly protects itself against inconvenient facts and constraints.'},
+    Realism:{c:[-1/3,1/3,1/3],d:'A worldview that gives unusual weight to circumstances, limits, incentives, consequences, and practical possibility while affected welfare and informational grounding still retain corrective authority.'},
+    Cynicism:{c:[-.5,0,.5],d:'A worldview in which interpretation of motives and circumstances combines with practical calculation before sufficient concern or informational grounding has been integrated.'},
+    Machiavellianism:{c:[-1/3,-1/3,1/3],d:'A worldview in which strategic interpretation and practical effectiveness increasingly insulate themselves from corrective welfare and evidence.'},
+    Rationalism:{c:[-1/3,1/3,-1/3],d:'A worldview organized strongly around explicit reasons, factual structure, feasibility, and workable order while affected welfare and broader interpretation remain underintegrated but still corrective.'},
+    Technicism:{c:[-.5,0,-.5],d:'A worldview that approaches reality primarily as factual and operational problems to be solved, before human welfare and contextual meaning have been adequately integrated.'},
+    Reductionism:{c:[-1/3,-1/3,-1/3],d:'A worldview in which the factual-operational model becomes increasingly insulated, so whatever does not fit that model loses corrective authority.'},
+    'Empirical Humanism':{c:[1/3,1/3,-1/3],d:'A worldview organized strongly around factual grounding and affected welfare while contextual interpretation and practical constraint remain underintegrated but still capable of correction.'},
+    'Moral Literalism':{c:[.5,0,-.5],d:'A worldview in which morally significant facts, principles, rules, or claims are applied before sufficient context and feasibility have been integrated.'},
+    Fundamentalism:{c:[1/3,-1/3,-1/3],d:'A worldview in which morally charged truths become increasingly protected against contextual and practical correction.'}
+  };
+
+  const F=[
+    {id:'E',v:[1,0],n:['Humanitarianism','Sentimentalism','Moralism']},
+    {id:'P',v:[-1,0],n:['Pragmatism','Instrumentalism','Expediency']},
+    {id:'W',v:[0,1],n:['Contextualism','Narrativism','Narrative Dogmatism']},
+    {id:'K',v:[0,-1],n:['Empiricism','Literalism','Doctrinalism']},
+    {id:'EW',v:[.5,.5],n:['Humanism','Idealism','Utopianism']},
+    {id:'PW',v:[-.5,.5],n:['Realism','Cynicism','Machiavellianism']},
+    {id:'PK',v:[-.5,-.5],n:['Rationalism','Technicism','Reductionism']},
+    {id:'EK',v:[.5,-.5],n:['Empirical Humanism','Moral Literalism','Fundamentalism']}
+  ];
 
   const style=document.createElement('style');
-  style.textContent=`
-    .eo-worldview-old{display:none!important}.eo-worldview-paper{margin:8px 0 4px;color:var(--text,#0f172a)}
-    .eo-worldview-paper *{box-sizing:border-box}.eo-worldview-paper h2{margin:0;font-size:21px;line-height:1.12;letter-spacing:-.025em}
-    .eo-worldview-coordinate{margin:4px 0 12px;font-size:10.5px;color:var(--muted,#64748b);font-variant-numeric:tabular-nums}
-    .eo-worldview-prose p{margin:0 0 10px;font-size:13px;line-height:1.56}.eo-worldview-prose p:first-child{font-size:14px;line-height:1.52}
-    .eo-worldview-structure{border-top:1px solid var(--border,#e2e8f0);margin-top:12px}.eo-worldview-structure>summary{cursor:pointer;list-style:none;padding:10px 1px;font-size:11px;font-weight:800;color:var(--muted,#475569)}
-    .eo-worldview-structure>summary::-webkit-details-marker{display:none}.eo-worldview-structure>summary::after{content:'+';float:right;font-size:14px;font-weight:500}.eo-worldview-structure[open]>summary::after{content:'–'}
-    .eo-worldview-structure-body{padding:0 1px 10px;font-size:11.5px;line-height:1.55}.eo-worldview-structure-body p{margin:0 0 8px}
-    .eo-worldview-reference{margin-top:12px;padding-top:10px;border-top:1px solid var(--border,#e2e8f0)}.eo-worldview-reference label{display:block;margin-bottom:5px;font-size:10.5px;font-weight:800;color:var(--muted,#475569)}
-    .eo-worldview-reference select{width:100%;min-height:34px;padding:6px 8px;border:1px solid var(--border,#cbd5e1);border-radius:8px;background:var(--panel,#fff);color:var(--text,#0f172a);font:inherit}
-    .eo-worldview-reference-body{margin-top:11px}.eo-worldview-reference-body h3{margin:0;font-size:16px}.eo-worldview-reference-body p{font-size:11.75px;line-height:1.55}
-    @media(max-width:520px){.eo-worldview-paper h2{font-size:20px}.eo-worldview-prose p{font-size:12.75px}.eo-worldview-prose p:first-child{font-size:13.5px}}
-  `;
+  style.textContent=`.eo-worldview-old{display:none!important}.eo-worldview-paper{margin:8px 0 4px;color:var(--text,#0f172a)}.eo-worldview-paper *{box-sizing:border-box}.eo-worldview-paper h2{margin:0;font-size:21px;line-height:1.12;letter-spacing:-.025em}.eo-worldview-coordinate{margin:4px 0 12px;font-size:10.5px;color:var(--muted,#64748b);font-variant-numeric:tabular-nums}.eo-worldview-prose p{margin:0 0 10px;font-size:13px;line-height:1.56}.eo-worldview-prose p:first-child{font-size:14px;line-height:1.52}.eo-worldview-structure{border-top:1px solid var(--border,#e2e8f0);margin-top:12px}.eo-worldview-structure>summary{cursor:pointer;list-style:none;padding:10px 1px;font-size:11px;font-weight:800;color:var(--muted,#475569)}.eo-worldview-structure>summary::-webkit-details-marker{display:none}.eo-worldview-structure>summary::after{content:'+';float:right;font-size:14px;font-weight:500}.eo-worldview-structure[open]>summary::after{content:'–'}.eo-worldview-structure-body{padding:0 1px 10px;font-size:11.5px;line-height:1.55}.eo-worldview-structure-body p{margin:0 0 8px}@media(max-width:520px){.eo-worldview-paper h2{font-size:20px}.eo-worldview-prose p{font-size:12.75px}.eo-worldview-prose p:first-child{font-size:13.5px}}`;
   (document.head||document.documentElement).appendChild(style);
 
   const host=()=>document.getElementById('worldviewPanel');
   const point=()=>{
     const p=['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id)?.value));
-    if(p.every(Number.isFinite)&&surface(p)) return p;
-    const h=host(); if(!h) return null;
+    if(p.every(Number.isFinite)&&surface(p))return p;
+    const h=host(); if(!h)return null;
     for(const el of h.querySelectorAll('code,span,p,div,strong')){
-      if(el.closest('.eo-worldview-paper')) continue;
+      if(el.closest('.eo-worldview-paper'))continue;
       const m=el.textContent?.replace(/−/g,'-').match(/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/);
-      if(m){const q=m.slice(1).map(Number); if(surface(q)) return q;}
+      if(m){const q=m.slice(1).map(Number);if(surface(q))return q;}
     }
     return null;
   };
 
-  const exact=(p,a)=>a.find(v=>v.coordinate.every((n,i)=>near(n,p[i])))||null;
-  const dist=(p,a)=>Math.sqrt(a.coordinate.reduce((s,n,i)=>s+(p[i]-n)**2,0));
-  const closest=(p,a)=>[...a].sort((m,n)=>dist(p,m)-dist(p,n)).slice(0,3).map(v=>v.name);
+  const exactName=p=>Object.entries(PAPER).find(([,a])=>a.c.every((n,i)=>near(n,p[i],.001)))?.[0]||'';
+  const phase=y=>near(y,0)?1:y>0?0:2;
+  const family=p=>{
+    const [x,,z]=p,L=Math.abs(x)+Math.abs(z); if(L<E)return null;
+    const q=[x/L,z/L];
+    return [...F].sort((a,b)=>(Math.abs(q[0]-a.v[0])+Math.abs(q[1]-a.v[1]))-(Math.abs(q[0]-b.v[0])+Math.abs(q[1]-b.v[1])))[0];
+  };
+  const name=p=>exactName(p)||(family(p)?.n[phase(p[1])])||(p[1]>0?'Maturity':'Collapse');
 
-  const horizontal=(x,z)=>{
-    const ax=Math.abs(x),az=Math.abs(z),e=.0001;
-    if(ax<e&&az<e) return ['No unresolved purpose or meaning displacement is represented horizontally.','The coordinate is therefore distinguished by accountability alone: integration at the peak and correction-resistant consolidation at the lower vertex.'];
-    if(ax>=e&&az<e) return x>0
-      ? ['Concern for affected welfare carries more of purpose than practical constraint. Feasibility, tradeoff, consequence, scarcity, or implementation therefore govern less than the situation warrants.','The recurring failure is allowing what ought to help people to settle too much of the judgment before the conditions through which help must actually succeed have done equal work.']
-      : ['Practical constraint carries more of purpose than concern for affected welfare. Feasibility, efficiency, execution, or operational success therefore govern more than the human cost warrants.','The recurring failure is allowing what works to determine too much of what should count as success.'];
-    if(az>=e&&ax<e) return z>0
-      ? ['Contextual interpretation carries more of meaning than informational grounding. Pattern, motive, implication, significance, or the larger picture therefore outrun what the available information can fully support.','The recurring failure is overreading: an explanation begins doing work that the evidence has not yet earned.']
-      : ['Informational grounding carries more of meaning than contextual interpretation. Facts, records, measurements, rules, or explicit propositions therefore govern more than circumstance, proportion, implication, and application warrant.','The recurring failure is misapplication: accurate representation is treated as though it already contains the context needed to determine what the information means here.'];
-    const lead=ax>az?'The purpose displacement is larger.':az>ax?'The meaning displacement is larger.':'The two displacements carry the unresolved load together.';
-    if(x>0&&z>0) return [`Concern for affected welfare and contextual interpretation reinforce one another. ${lead} Human significance and what ought to matter can therefore outrun practical constraint and informational grounding.`,'The worldview can confuse the meaningfulness of a vision with its truth, evidential support, or practical viability.'];
-    if(x<0&&z<0) return [`Practical constraint and informational grounding reinforce one another. ${lead} Mechanism, explicit representation, feasibility, and operational coherence can therefore outrun welfare and contextual meaning.`,'The worldview can become highly competent inside a model while overlooking materially relevant realities that are difficult to quantify, formalize, or optimize.'];
-    if(x<0&&z>0) return [`Practical constraint combines with contextual interpretation. ${lead} Incentives, motive, power, circumstance, tradeoff, and what is likely to work can therefore outrun direct informational grounding and affected welfare.`,'The worldview can read difficult realities sharply while overestimating how inevitable, justified, or universal those realities are.'];
-    return [`Concern for affected welfare combines with informational grounding. ${lead} A real harm, rule, fact, or evidentially supported concern can therefore outrun contextual interpretation and practical feasibility.`,'The worldview can be right about both the harm and the evidence while still reaching an inadequate judgment about application, compromise, timing, or what can actually improve the situation.'];
+  const horizontal=(p,f)=>{
+    const [x,,z]=p,ax=Math.abs(x),az=Math.abs(z);
+    const m={
+      E:['Affected welfare carries the unresolved purposive relation, so practical constraint, feasibility, tradeoff, and consequence enter with less governing weight than the situation warrants.','The recurring danger is allowing the moral force of helping people to settle too much of the judgment before the conditions through which help must actually succeed have done equal work.'],
+      P:['Practical constraint carries the unresolved purposive relation, so feasibility, efficiency, execution, and operational success enter with more governing weight than affected welfare warrants.','The recurring danger is allowing what works to determine too much of what should count as success.'],
+      W:['Contextual interpretation carries the unresolved meaning relation, so pattern, motive, implication, significance, and the larger picture outrun the informational grounding that has been integrated.','The recurring danger is overreading: an explanation can become more compelling than the evidence that is supposed to discipline it.'],
+      K:['Informational grounding carries the unresolved meaning relation, so facts, measurements, rules, and explicit propositions outrun context, proportion, implication, and application.','The recurring danger is misapplication: accurate representation is treated as though it already contains the interpretation required to know what the information means here.'],
+      EW:['Affected welfare and contextual interpretation reinforce one another. What ought to matter and what the situation is taken to mean carry the stance together, while practical constraint and informational grounding remain underintegrated.','The worldview can be humane and meaning-rich while confusing the moral force or significance of a vision with its factual support or practical viability.'],
+      PW:['Practical constraint and contextual interpretation reinforce one another. Incentives, circumstance, motive, tradeoff, power, and what is likely to work carry the stance, while direct welfare and informational grounding remain underintegrated.','The worldview can read difficult realities sharply while overestimating how inevitable, justified, or universal those realities are.'],
+      PK:['Practical constraint and informational grounding reinforce one another. Mechanism, explicit reasons, factual structure, feasibility, and workable order carry the stance, while affected welfare and broader interpretation remain underintegrated.','The worldview can become highly competent inside a model while overlooking materially relevant realities that resist quantification, formalization, or optimization.'],
+      EK:['Affected welfare and informational grounding reinforce one another. A real harm, rule, fact, principle, or evidentially supported concern carries the stance, while contextual interpretation and practical feasibility remain underintegrated.','The worldview can be right about both the harm and the evidence while still reaching an inadequate judgment about application, compromise, timing, or what can actually improve the situation.']
+    };
+    let [a,b]=m[f.id];
+    if(f.id.length===2&&!near(ax,az,.001))a+=` Within this mixed family, ${ax>az?(x>0?'concern':'constraint'):(z>0?'interpretation':'information')} carries the larger share of the unresolved horizontal load.`;
+    return[a,b];
   };
 
-  const vertical=y=>y>.75
-    ? 'Reality retains very strong corrective authority. This remains below Maturity because some purpose or meaning displacement is unresolved, but materially relevant evidence, consequence, welfare, constraint, or context can still revise the judgment.'
-    : y>.4 ? 'Answerability still governs clearly. The favored relation can bias judgment, but failure, contradiction, consequence, or a neglected counterpart retains enough authority to force genuine revision.'
-    : y>0 ? 'The position remains answerability-directed, although corrective authority is comparatively weak. Reality can still defeat the existing stance, but the unresolved relation makes correction work harder.'
-    : near(y,0) ? 'Judgment has formed at the accountability midpoint before the materially relevant counterpart pressures have been integrated. This is a completed one-sided stance rather than mere indecision.'
-    : y>-.4 ? 'The stance has crossed into insulation. Omitted pressures no longer merely arrive late; they increasingly lose permission to reorganize the judgment, so correction can be reframed or discounted to preserve the existing orientation.'
-    : y>-.75 ? 'Insulation now has clear governing advantage. Contradiction, harm, failed prediction, or counterpressure can increasingly be rationalized inside the stance instead of revising it.'
-    : 'The position lies deep in the insulation-directed half. Its smaller lateral displacement does not indicate near-integration; horizontal narrowing here is produced by correction-resistant consolidation as the worldview approaches Collapse.';
-
-  const lower=(x,z,s)=>{
-    const p=[];
-    if(x>.0001)p.push('practical objections can be recast as indifference or moral failure');
-    if(x<-.0001)p.push('human cost can be rationalized as the price of effectiveness');
-    if(z>.0001)p.push('contrary information can be reinterpreted until it serves the explanatory frame');
-    if(z<-.0001)p.push('context can be classified away when it threatens accepted facts, rules, or doctrine');
-    return p.length?`${s} Under pressure, ${p.join('; ')}.`:s;
+  const vertical=y=>{
+    if(near(y,0))return 'This is equatorial prejudice: the stance is fully formed, but the unresolved horizontal relation carries the judgment without net answerability or insulation. The missing counterpart has not been integrated, yet it has not been structurally excluded either.';
+    if(y>=.8)return 'Reality retains very strong corrective authority. The remaining bias is narrow and readily revisable, but any unresolved horizontal displacement still keeps this position below Maturity.';
+    if(y>=.6)return 'Answerability clearly governs. Contradiction, failed consequence, neglected welfare, practical impossibility, or missing context can still reorganize the worldview rather than merely being explained away.';
+    if(y>=.4)return 'The stance remains corrigible, though the favored relation has enough weight to bias judgment before all relevant pressures have been integrated.';
+    if(y>=.2)return 'Correction still has net authority, but it must work against a substantial unresolved preference. The worldview can revise, although it does not yet meet reality from an integrated position.';
+    if(y>0)return 'Corrigibility is thin but still real. Reality can still defeat the stance, but the unresolved relation strongly controls what gets noticed first and what must fight to be admitted.';
+    if(y<=-.8)return 'The stance is deep in insulation. Its shrinking horizontal displacement must not be mistaken for integration: the apparent settlement is produced by correction-resistant consolidation as the worldview approaches Collapse.';
+    if(y<=-.6)return 'Insulation clearly governs. Contradiction, harm, failed prediction, or counterpressure can increasingly be absorbed without forcing structural revision.';
+    if(y<=-.4)return 'The worldview is becoming self-protecting. Missing pressures are not merely underweighted; they are increasingly recoded as irrelevant, hostile, naive, immoral, subjective, or otherwise unfit to govern the conclusion.';
+    if(y<=-.2)return 'Insulation has gained the advantage. Reality can still make contact, but the existing stance increasingly controls the terms under which correction is allowed to count.';
+    return 'The stance has just crossed below the accountability midpoint. Counterpressure still appears, but it is beginning to lose authority to reorganize the judgment.';
   };
 
-  const intermediate=p=>{const [x,y,z]=p,[intro,outcome]=horizontal(x,z);return{name:'Orientation',coordinate:p,paragraphs:[intro,vertical(y),y<0?lower(x,z,outcome):outcome]};};
-  const formal=p=>{const [x,y,z]=p;return `Formally: ${near(x,0)?'no unresolved signed purpose displacement':x>0?'purpose displaced toward affected welfare':'purpose displaced toward practical constraint'}; ${near(y,0)?'accountability midpoint':y>0?'answerability-directed accountability':'insulation-directed accountability'}; ${near(z,0)?'no unresolved signed meaning displacement':z>0?'meaning displaced toward contextual interpretation':'meaning displaced toward informational grounding'}.`;};
-  const options=a=>a.map((v,i)=>`<option value="${i}">${esc(v.name)}</option>`).join('');
+  const relation=(p,n)=>{
+    const a=PAPER[n].c,y=p[1],ay=a[1];
+    if(phase(y)===0)return y>ay+.001?`Compared with the exact ${n} archetype at ${cfmt(a)}, this point is more answerable and carries less unresolved horizontal load.`:y<ay-.001?`Compared with the exact ${n} archetype at ${cfmt(a)}, this point lies nearer the accountability midpoint and carries more unresolved horizontal load.`:`This point belongs to the ${n} family but distributes the unresolved horizontal load differently from the distinguished anchor at ${cfmt(a)}.`;
+    if(phase(y)===2)return y<ay-.001?`Compared with the exact ${n} archetype at ${cfmt(a)}, this point is deeper in insulation. Its smaller horizontal load reflects correction-resistant consolidation, not integration.`:y>ay+.001?`Compared with the exact ${n} archetype at ${cfmt(a)}, this point is nearer the accountability midpoint and less fully consolidated by insulation.`:`This point belongs to the ${n} family but distributes the unresolved horizontal load differently from the distinguished anchor at ${cfmt(a)}.`;
+    return `The exact ${n} archetype is the distinguished point at ${cfmt(a)}. This decile coordinate is an intermediate expression of the same structural family.`;
+  };
 
-  const card=(item,p,a,isExact)=>`<article class="eo-worldview-paper" data-point="${esc(cfmt(p))}"><h2>${esc(item.name)}</h2><div class="eo-worldview-coordinate">${esc(cfmt(item.coordinate||p))}</div><div class="eo-worldview-prose">${item.paragraphs.map(t=>`<p>${esc(t)}</p>`).join('')}</div><details class="eo-worldview-structure"><summary>Structure</summary><div class="eo-worldview-structure-body"><p>${esc(formal(p))}</p><p>Only Maturity at (0, 1, 0) is structurally mature. Strong expression of concern, constraint, information, or interpretation does not by itself establish displacement; displacement begins when a materially relevant counterpart loses proportional governing authority.</p>${isExact?'':`<p>Closest distinguished positions: ${esc(closest(p,a).join(', '))}.</p>`}<p>The coordinate describes the declared referent. A bounded stance does not by itself establish the whole person&#39;s worldview.</p><div class="eo-worldview-reference"><label>Archetype reference</label><select aria-label="View a distinguished worldview archetype"><option value="">Choose an archetype</option>${options(a)}</select><div class="eo-worldview-reference-body"></div></div></div></details></article>`;
+  const formal=p=>`Formally: ${near(p[0],0)?'no unresolved signed purpose displacement':p[0]>0?'purpose displaced toward affected welfare':'purpose displaced toward practical constraint'}; ${near(p[1],0)?'accountability midpoint':p[1]>0?'answerability-directed accountability':'insulation-directed accountability'}; ${near(p[2],0)?'no unresolved signed meaning displacement':p[2]>0?'meaning displaced toward contextual interpretation':'meaning displaced toward informational grounding'}.`;
 
-  const ref=(box,a)=>{box.innerHTML=a?`<h3>${esc(a.name)}</h3><div class="eo-worldview-coordinate">${esc(cfmt(a.coordinate))}</div>${a.paragraphs.map(t=>`<p>${esc(t)}</p>`).join('')}`:'';};
-  const archetypes=[{"name":"Maturity","coordinate":[0,1,0],"paragraphs":["Maturity is the condition in which concern and constraint no longer compete for control of purpose, and information and interpretation no longer compete for control of meaning. All four can exert their proper pressure without one having to suppress another, while correction remains fully authoritative over the resulting judgment."]},{"name":"Welfarism","coordinate":[0.5,0.5,0],"paragraphs":["Welfarism appears when affected welfare begins carrying more of purpose than practical constraint can justify."]},{"name":"Sentimentalism","coordinate":[1,0,0],"paragraphs":["At the equator, that imbalance becomes Sentimentalism."]},{"name":"Moralism","coordinate":[0.5,-0.5,0],"paragraphs":["Below the equator, the same orientation hardens into Moralism."]},{"name":"Pragmatism","coordinate":[-0.5,0.5,0],"paragraphs":["Across the same purposive relation lies Pragmatism."]},{"name":"Instrumentalism","coordinate":[-1,0,0],"paragraphs":["At the equator this becomes Instrumentalism."]},{"name":"Expediency","coordinate":[-0.5,-0.5,0],"paragraphs":["Further downward lies Expediency."]},{"name":"Interpretivism","coordinate":[0,0.5,0.5],"paragraphs":["Interpretivism begins when context, implication, motive, pattern, significance, or the larger picture carry more meaning than the available information can fully support."]},{"name":"Narrativism","coordinate":[0,0,1],"paragraphs":["At the equator sits Narrativism."]},{"name":"Dogmatism","coordinate":[0,-0.5,0.5],"paragraphs":["Below the equator, interpretation becomes Dogmatism."]},{"name":"Evidentialism","coordinate":[0,0.5,-0.5],"paragraphs":["The opposite imbalance is Evidentialism."]},{"name":"Literalism","coordinate":[0,0,-1],"paragraphs":["At the equator, this becomes Literalism."]},{"name":"Doctrinalism","coordinate":[0,-0.5,-0.5],"paragraphs":["Below the equator lies Doctrinalism."]},{"name":"Romanticism","coordinate":[0.3333333333333333,0.3333333333333333,0.3333333333333333],"paragraphs":["Romanticism combines concern with interpretation."]},{"name":"Idealism","coordinate":[0.5,0,0.5],"paragraphs":["At the equator, this becomes Idealism."]},{"name":"Fanaticism","coordinate":[0.3333333333333333,-0.3333333333333333,0.3333333333333333],"paragraphs":["Below the equator, the cause becomes Fanaticism."]},{"name":"Rationalism","coordinate":[-0.3333333333333333,0.3333333333333333,-0.3333333333333333],"paragraphs":["Opposite Romanticism is Rationalism in this structural sense."]},{"name":"Technicism","coordinate":[-0.5,0,-0.5],"paragraphs":["At the equator lies Technicism."]},{"name":"Reductionism","coordinate":[-0.3333333333333333,-0.3333333333333333,-0.3333333333333333],"paragraphs":["Below that lies Reductionism."]},{"name":"Realism","coordinate":[-0.3333333333333333,0.3333333333333333,0.3333333333333333],"paragraphs":["Realism combines practical constraint with contextual interpretation."]},{"name":"Cynicism","coordinate":[-0.5,0,0.5],"paragraphs":["At the equator, the pattern becomes Cynicism."]},{"name":"Machiavellianism","coordinate":[-0.3333333333333333,-0.3333333333333333,0.3333333333333333],"paragraphs":["Below the equator, this becomes Machiavellianism."]},{"name":"Advocacy","coordinate":[0.3333333333333333,0.3333333333333333,-0.3333333333333333],"paragraphs":["Opposite Realism is Advocacy."]},{"name":"Purism","coordinate":[0.5,0,-0.5],"paragraphs":["At the equator appears Purism."]},{"name":"Fundamentalism","coordinate":[0.3333333333333333,-0.3333333333333333,-0.3333333333333333],"paragraphs":["Below the equator, the structure becomes Fundamentalism."]},{"name":"Collapse","coordinate":[0,-1,0],"paragraphs":["Collapse is not merely the worst opinion, the strongest ideology, or the greatest factual error."]}];
+  const card=p=>{
+    const ex=exactName(p),n=name(p),f=family(p);
+    let paras;
+    if(ex)paras=[PAPER[ex].d,ex==='Maturity'?'Full answerability leaves no unresolved horizontal displacement. This is the unique mature stance.':ex==='Collapse'?'Full insulation also forces horizontal displacement to zero, but through correction-resistant consolidation rather than integration.':`This is the paper's exact ${ex} archetype at ${cfmt(PAPER[ex].c)}.`];
+    else {const [h1,h2]=horizontal(p,f);paras=[h1,vertical(p[1]),`${h2} ${relation(p,n)}`];}
+    return `<article class="eo-worldview-paper" data-point="${esc(cfmt(p))}"><h2>${esc(n)}</h2><div class="eo-worldview-coordinate">${esc(cfmt(p))}</div><div class="eo-worldview-prose">${paras.map(t=>`<p>${esc(t)}</p>`).join('')}</div><details class="eo-worldview-structure"><summary>Structure</summary><div class="eo-worldview-structure-body"><p>${esc(formal(p))}</p><p>${ex?'This is an exact distinguished archetype in the paper.':'The visible name identifies the paper-grounded worldview family for this intermediate decile coordinate; the coordinate remains the exact structural reading.'}</p><p>Only Maturity at (0, 1, 0) is structurally mature. Strong expression of concern, constraint, information, or interpretation does not by itself establish displacement; displacement begins when a materially relevant counterpart loses proportional governing authority.</p><p>The coordinate describes the declared referent. A bounded stance does not by itself establish the whole person&#39;s worldview.</p></div></details></article>`;
+  };
+
   let queued=false;
-
-  const render=()=>{
-    queued=false; const h=host(),p=point(); if(!h||!p||!archetypes.length)return;
-    const key=cfmt(p),old=h.querySelector('.eo-worldview-paper'); if(old?.dataset.point===key)return;
-    [...h.children].forEach(el=>{if(!el.classList.contains('eo-worldview-paper'))el.classList.add('eo-worldview-old');});
-    old?.remove(); const a=exact(p,archetypes),baseItem=intermediate(p),item=a?{...a,paragraphs:[...a.paragraphs,...baseItem.paragraphs.slice(1)]}:baseItem,wrap=document.createElement('div'); wrap.innerHTML=card(item,p,archetypes,!!a); h.prepend(wrap.firstElementChild);
-  };
+  const render=()=>{queued=false;const h=host(),p=point();if(!h||!p)return;const k=cfmt(p),old=h.querySelector('.eo-worldview-paper');if(old?.dataset.point===k)return;[...h.children].forEach(el=>{if(!el.classList.contains('eo-worldview-paper'))el.classList.add('eo-worldview-old');});old?.remove();const w=document.createElement('div');w.innerHTML=card(p);h.prepend(w.firstElementChild);};
   const schedule=()=>{if(!queued){queued=true;requestAnimationFrame(render);}};
-  document.addEventListener('change',e=>{const s=e.target.closest?.('.eo-worldview-reference select');if(!s)return;const box=s.parentElement.querySelector('.eo-worldview-reference-body');if(s.value===''){ref(box,null);return;}ref(box,archetypes[Number(s.value)]||null);},true);
-
   new MutationObserver(schedule).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','class','style']});
   document.addEventListener('click',schedule,true);document.addEventListener('input',schedule,true);document.addEventListener('change',schedule,true);schedule();
 })();
