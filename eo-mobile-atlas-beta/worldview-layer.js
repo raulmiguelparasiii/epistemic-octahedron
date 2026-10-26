@@ -10,7 +10,7 @@
   const clamp01=v=>Math.max(0,Math.min(1,v));
   const rgb=([r,g,b])=>`rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
   const mix=(a,b,t)=>rgb([lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)]);
-  const Y_BLUE=[37,99,235],Y_GREY=[100,116,139],Y_RED=[239,68,68];
+  const Y_BLUE=[45,62,163],Y_GREY=[66,66,66],Y_RED=[147,47,47];
   const yColor=y=>y>=0?mix(Y_GREY,Y_BLUE,clamp01(y)):mix(Y_GREY,Y_RED,clamp01(-y));
 
   const PAPER={
