@@ -1,445 +1,105 @@
 (() => {
   'use strict';
 
-  const loader = document.currentScript;
-  const layerBase = new URL('.', (loader && loader.src) || document.baseURI);
-  const atlasParts = [
-    'worldviews.01.b64','worldviews.02.b64','worldviews.03.b64',
-    'worldviews.04.b64','worldviews.05.b64','worldviews.06.b64',
-    'worldviews.07.b64','worldviews.08.b64','worldviews.09.b64'
-  ].map(name => new URL(name, layerBase).href);
+  const base = new URL('.', document.currentScript?.src || document.baseURI);
+  const dataUrl = new URL('worldview-archetypes.b64', base).href;
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
+  const near = (a,b,t=.00001) => Math.abs(a-b)<=t;
+  const surface = p => p && Math.abs(p.reduce((n,v)=>n+Math.abs(v),0)-1)<=.025;
+  const nfmt = n => near(n,0)?'0':near(Math.abs(n),1/3)?(n<0?'-1/3':'1/3'):near(Math.abs(n),.5)?(n<0?'-.5':'.5'):near(Math.abs(n),1)?(n<0?'-1':'1'):String(Math.round(n*1000)/1000);
+  const cfmt = p => `(${p.map(nfmt).join(', ')})`;
 
-  const normalizeText = value => String(value || '').replace(/\s+/g, ' ').trim();
-  const coordinatePattern = /^\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)$/;
-  const legacyLabels = [
-    'If this feels like you',
-    'Personal portrait',
-    'Natural strength',
-    'What can slip past you',
-    'Growth without self-erasure',
-    'Epistemic stage',
-    'Orientation family',
-    'Common-language teaching name',
-    'Why this fits the hierarchy'
-  ];
-
-  const strengthLabels = [
-    'What this gets right',
-    'Its real strength',
-    'Where this lens is useful',
-    'What it protects',
-    'The part worth keeping',
-    'Why this can work'
-  ];
-  const slipLabels = [
-    'What can go missing',
-    'The pressure that arrives late',
-    'Where it can drift',
-    'What reality can still demand',
-    'The neglected counterweight',
-    'Where the frame can overreach'
-  ];
-  const growthLabels = [
-    'What better looks like',
-    'How this moves upward',
-    'The next correction',
-    'How it matures',
-    'Growth without losing the strength',
-    'What opens the frame'
-  ];
-
-  const style = document.createElement('style');
-  style.textContent = `
-    .eo-worldview-legacy-hidden{display:none!important}
-    .eo-curated-worldview{margin:8px 0 4px;padding:2px 0 0;color:var(--text,#0f172a)}
-    .eo-curated-worldview *{box-sizing:border-box}
-    .eo-curated-head{display:grid;gap:4px;margin-bottom:9px}
-    .eo-curated-kicker{font-size:9px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--muted,#64748b)}
-    .eo-curated-title{margin:0;font-size:19px;line-height:1.12;letter-spacing:-.02em}
-    .eo-curated-alias{font-size:11px;color:var(--muted,#64748b);font-weight:650}
-    .eo-curated-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
-    .eo-curated-chip{display:inline-flex;align-items:center;min-height:22px;padding:3px 7px;border:1px solid var(--border,#e2e8f0);border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.02em;color:var(--muted,#64748b);background:var(--panel,#fff)}
-    .eo-curated-lead,.eo-curated-body{margin:0 0 9px;font-size:13px;line-height:1.52}
-    .eo-curated-lead{font-size:14px;line-height:1.48}
-    .eo-curated-callout{margin:8px 0;padding:9px 10px;border:1px solid var(--border,#e2e8f0);border-radius:12px;background:color-mix(in srgb,var(--panel,#fff) 92%,var(--muted,#64748b) 8%)}
-    .eo-curated-callout strong{display:block;margin-bottom:3px;font-size:10px;letter-spacing:.055em;text-transform:uppercase}
-    .eo-curated-callout p{margin:0;font-size:12px;line-height:1.5}
-    .eo-curated-callout.pressure{border-style:dashed}
-    .eo-curated-quote{margin:8px 0 10px;padding-left:10px;border-left:2px solid var(--border,#cbd5e1);font-size:13px;line-height:1.5}
-    .eo-curated-details{border-top:1px solid var(--border,#e2e8f0);margin-top:8px}
-    .eo-curated-details details{border-bottom:1px solid var(--border,#e2e8f0);padding:0}
-    .eo-curated-details summary{cursor:pointer;list-style:none;padding:9px 1px;font-size:11px;font-weight:800;color:var(--muted,#475569)}
-    .eo-curated-details summary::-webkit-details-marker{display:none}
-    .eo-curated-details summary::after{content:'+';float:right;font-size:14px;font-weight:500}
-    .eo-curated-details details[open] summary::after{content:'–'}
-    .eo-curated-detail-body{padding:0 1px 10px;font-size:11.5px;line-height:1.52}
-    .eo-curated-detail-body p{margin:0 0 8px}
-    .eo-curated-detail-body p:last-child{margin-bottom:0}
-    .eo-curated-detail-label{font-weight:800}
-    @media (max-width:520px){
-      .eo-curated-title{font-size:18px}
-      .eo-curated-lead{font-size:13.5px}
-    }
+  const style=document.createElement('style');
+  style.textContent=`
+    .eo-worldview-old{display:none!important}.eo-worldview-paper{margin:8px 0 4px;color:var(--text,#0f172a)}
+    .eo-worldview-paper *{box-sizing:border-box}.eo-worldview-paper h2{margin:0;font-size:21px;line-height:1.12;letter-spacing:-.025em}
+    .eo-worldview-coordinate{margin:4px 0 12px;font-size:10.5px;color:var(--muted,#64748b);font-variant-numeric:tabular-nums}
+    .eo-worldview-prose p{margin:0 0 10px;font-size:13px;line-height:1.56}.eo-worldview-prose p:first-child{font-size:14px;line-height:1.52}
+    .eo-worldview-structure{border-top:1px solid var(--border,#e2e8f0);margin-top:12px}.eo-worldview-structure>summary{cursor:pointer;list-style:none;padding:10px 1px;font-size:11px;font-weight:800;color:var(--muted,#475569)}
+    .eo-worldview-structure>summary::-webkit-details-marker{display:none}.eo-worldview-structure>summary::after{content:'+';float:right;font-size:14px;font-weight:500}.eo-worldview-structure[open]>summary::after{content:'–'}
+    .eo-worldview-structure-body{padding:0 1px 10px;font-size:11.5px;line-height:1.55}.eo-worldview-structure-body p{margin:0 0 8px}
+    .eo-worldview-reference{margin-top:12px;padding-top:10px;border-top:1px solid var(--border,#e2e8f0)}.eo-worldview-reference label{display:block;margin-bottom:5px;font-size:10.5px;font-weight:800;color:var(--muted,#475569)}
+    .eo-worldview-reference select{width:100%;min-height:34px;padding:6px 8px;border:1px solid var(--border,#cbd5e1);border-radius:8px;background:var(--panel,#fff);color:var(--text,#0f172a);font:inherit}
+    .eo-worldview-reference-body{margin-top:11px}.eo-worldview-reference-body h3{margin:0;font-size:16px}.eo-worldview-reference-body p{font-size:11.75px;line-height:1.55}
+    @media(max-width:520px){.eo-worldview-paper h2{font-size:20px}.eo-worldview-prose p{font-size:12.75px}.eo-worldview-prose p:first-child{font-size:13.5px}}
   `;
-  (document.head || document.documentElement).appendChild(style);
+  (document.head||document.documentElement).appendChild(style);
 
-  const visible = el => {
-    if (!el || !el.isConnected) return false;
-    const cs = getComputedStyle(el);
-    return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0' && el.getClientRects().length > 0;
-  };
-
-  const escapeHtml = value => String(value || '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-
-  const normalizeCoordinate = text => {
-    const m = normalizeText(text).replace(/−/g,'-').match(coordinatePattern);
-    if (!m) return '';
-    const nums = m.slice(1).map(Number);
-    if (nums.some(n => !Number.isFinite(n))) return '';
-    return `(${nums.map(n => n.toFixed(1)).join(', ')})`;
-  };
-
-  const extractCoordinate = text => {
-    const cleaned = normalizeText(text).replace(/−/g,'-');
-    const m = cleaned.match(/\(\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*\)/);
-    return m ? normalizeCoordinate(m[0]) : '';
-  };
-
-  const commonAncestor = (a,b) => {
-    if (!a || !b) return null;
-    const seen = new Set();
-    for (let n=a; n; n=n.parentElement) seen.add(n);
-    for (let n=b; n; n=n.parentElement) if (seen.has(n)) return n;
+  const host=()=>document.getElementById('worldviewPanel');
+  const point=()=>{
+    const p=['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id)?.value));
+    if(p.every(Number.isFinite)&&surface(p)) return p;
+    const h=host(); if(!h) return null;
+    for(const el of h.querySelectorAll('code,span,p,div,strong')){
+      if(el.closest('.eo-worldview-paper')) continue;
+      const m=el.textContent?.replace(/−/g,'-').match(/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/);
+      if(m){const q=m.slice(1).map(Number); if(surface(q)) return q;}
+    }
     return null;
   };
 
-  const exactTextNodes = (root, label) => {
-    const wanted = normalizeText(label).toLowerCase();
-    const nodes = [];
-    const all = root.querySelectorAll('h1,h2,h3,h4,h5,h6,label,strong,b,span,p,div,dt,summary');
-    for (const el of all) {
-      if (!visible(el)) continue;
-      if (normalizeText(el.textContent).toLowerCase() === wanted) nodes.push(el);
-    }
-    return nodes;
+  const exact=(p,a)=>a.find(v=>v.coordinate.every((n,i)=>near(n,p[i])))||null;
+  const dist=(p,a)=>Math.sqrt(a.coordinate.reduce((s,n,i)=>s+(p[i]-n)**2,0));
+  const closest=(p,a)=>[...a].sort((m,n)=>dist(p,m)-dist(p,n)).slice(0,3).map(v=>v.name);
+
+  const horizontal=(x,z)=>{
+    const ax=Math.abs(x),az=Math.abs(z),e=.0001;
+    if(ax<e&&az<e) return ['No unresolved purpose or meaning displacement is represented horizontally.','The coordinate is therefore distinguished by accountability alone: integration at the peak and correction-resistant consolidation at the lower vertex.'];
+    if(ax>=e&&az<e) return x>0
+      ? ['Concern for affected welfare carries more of purpose than practical constraint. Feasibility, tradeoff, consequence, scarcity, or implementation therefore govern less than the situation warrants.','The recurring failure is allowing what ought to help people to settle too much of the judgment before the conditions through which help must actually succeed have done equal work.']
+      : ['Practical constraint carries more of purpose than concern for affected welfare. Feasibility, efficiency, execution, or operational success therefore govern more than the human cost warrants.','The recurring failure is allowing what works to determine too much of what should count as success.'];
+    if(az>=e&&ax<e) return z>0
+      ? ['Contextual interpretation carries more of meaning than informational grounding. Pattern, motive, implication, significance, or the larger picture therefore outrun what the available information can fully support.','The recurring failure is overreading: an explanation begins doing work that the evidence has not yet earned.']
+      : ['Informational grounding carries more of meaning than contextual interpretation. Facts, records, measurements, rules, or explicit propositions therefore govern more than circumstance, proportion, implication, and application warrant.','The recurring failure is misapplication: accurate representation is treated as though it already contains the context needed to determine what the information means here.'];
+    const lead=ax>az?'The purpose displacement is larger.':az>ax?'The meaning displacement is larger.':'The two displacements carry the unresolved load together.';
+    if(x>0&&z>0) return [`Concern for affected welfare and contextual interpretation reinforce one another. ${lead} Human significance and what ought to matter can therefore outrun practical constraint and informational grounding.`,'The worldview can confuse the meaningfulness of a vision with its truth, evidential support, or practical viability.'];
+    if(x<0&&z<0) return [`Practical constraint and informational grounding reinforce one another. ${lead} Mechanism, explicit representation, feasibility, and operational coherence can therefore outrun welfare and contextual meaning.`,'The worldview can become highly competent inside a model while overlooking materially relevant realities that are difficult to quantify, formalize, or optimize.'];
+    if(x<0&&z>0) return [`Practical constraint combines with contextual interpretation. ${lead} Incentives, motive, power, circumstance, tradeoff, and what is likely to work can therefore outrun direct informational grounding and affected welfare.`,'The worldview can read difficult realities sharply while overestimating how inevitable, justified, or universal those realities are.'];
+    return [`Concern for affected welfare combines with informational grounding. ${lead} A real harm, rule, fact, or evidentially supported concern can therefore outrun contextual interpretation and practical feasibility.`,'The worldview can be right about both the harm and the evidence while still reaching an inadequate judgment about application, compromise, timing, or what can actually improve the situation.'];
   };
 
-  const findHost = () => {
-    const direct = document.getElementById('worldviewPanel');
-    if (direct) return direct;
-    const portraits = exactTextNodes(document, 'Personal portrait');
-    const hierarchy = exactTextNodes(document, 'Why this fits the hierarchy');
-    for (const a of portraits) {
-      for (const b of hierarchy) {
-        const host = commonAncestor(a,b);
-        if (host && host !== document.body && visible(host)) return host;
-      }
-    }
-    const anchor = portraits[0] || hierarchy[0];
-    if (!anchor) return null;
-    let host = anchor.parentElement;
-    while (host && host !== document.body && normalizeText(host.textContent).length < 220) host = host.parentElement;
-    return host && host !== document.body ? host : anchor.parentElement;
+  const vertical=y=>y>.75
+    ? 'Reality retains very strong corrective authority. This remains below Maturity because some purpose or meaning displacement is unresolved, but materially relevant evidence, consequence, welfare, constraint, or context can still revise the judgment.'
+    : y>.4 ? 'Answerability still governs clearly. The favored relation can bias judgment, but failure, contradiction, consequence, or a neglected counterpart retains enough authority to force genuine revision.'
+    : y>0 ? 'The position remains answerability-directed, although corrective authority is comparatively weak. Reality can still defeat the existing stance, but the unresolved relation makes correction work harder.'
+    : near(y,0) ? 'Judgment has formed at the accountability midpoint before the materially relevant counterpart pressures have been integrated. This is a completed one-sided stance rather than mere indecision.'
+    : y>-.4 ? 'The stance has crossed into insulation. Omitted pressures no longer merely arrive late; they increasingly lose permission to reorganize the judgment, so correction can be reframed or discounted to preserve the existing orientation.'
+    : y>-.75 ? 'Insulation now has clear governing advantage. Contradiction, harm, failed prediction, or counterpressure can increasingly be rationalized inside the stance instead of revising it.'
+    : 'The position lies deep in the insulation-directed half. Its smaller lateral displacement does not indicate near-integration; horizontal narrowing here is produced by correction-resistant consolidation as the worldview approaches Collapse.';
+
+  const lower=(x,z,s)=>{
+    const p=[];
+    if(x>.0001)p.push('practical objections can be recast as indifference or moral failure');
+    if(x<-.0001)p.push('human cost can be rationalized as the price of effectiveness');
+    if(z>.0001)p.push('contrary information can be reinterpreted until it serves the explanatory frame');
+    if(z<-.0001)p.push('context can be classified away when it threatens accepted facts, rules, or doctrine');
+    return p.length?`${s} Under pressure, ${p.join('; ')}.`:s;
   };
 
-  const findCoordinate = (host, atlas) => {
-    const x = Number(document.getElementById('coord-x')?.value);
-    const y = Number(document.getElementById('coord-y')?.value);
-    const z = Number(document.getElementById('coord-z')?.value);
-    if ([x,y,z].every(Number.isFinite)) {
-      const l1 = Math.abs(x) + Math.abs(y) + Math.abs(z);
-      if (Math.abs(l1 - 1) > 0.02) return '';
-      const directKey = normalizeCoordinate(`(${x}, ${y}, ${z})`);
-      if (directKey && atlas.has(directKey)) return directKey;
-      let nearestKey = '';
-      let nearestDistance = Infinity;
-      for (const key of atlas.keys()) {
-        const match = key.match(coordinatePattern);
-        if (!match) continue;
-        const [ax,ay,az] = match.slice(1).map(Number);
-        const distance = (x-ax)**2 + (y-ay)**2 + (z-az)**2;
-        if (distance < nearestDistance) { nearestDistance = distance; nearestKey = key; }
-      }
-      if (nearestKey) return nearestKey;
-    }
-    const testScope = scope => {
-      const candidates = scope.querySelectorAll('span,p,div,strong,b,h1,h2,h3,h4,h5,h6,code');
-      for (const el of candidates) {
-        if (!visible(el)) continue;
-        const text = normalizeText(el.textContent);
-        if (text.length > 100 || el.children.length > 2) continue;
-        const key = extractCoordinate(text);
-        if (key && atlas.has(key)) return key;
-      }
-      return '';
-    };
-    let scope = host;
-    for (let i=0; scope && i<5; i++, scope=scope.parentElement) {
-      const key = testScope(scope);
-      if (key) return key;
-    }
-    return testScope(document.body);
+  const intermediate=p=>{const [x,y,z]=p,[intro,outcome]=horizontal(x,z);return{name:'Orientation',coordinate:p,paragraphs:[intro,vertical(y),y<0?lower(x,z,outcome):outcome]};};
+  const formal=p=>{const [x,y,z]=p;return `Formally: ${near(x,0)?'no unresolved signed purpose displacement':x>0?'purpose displaced toward affected welfare':'purpose displaced toward practical constraint'}; ${near(y,0)?'accountability midpoint':y>0?'answerability-directed accountability':'insulation-directed accountability'}; ${near(z,0)?'no unresolved signed meaning displacement':z>0?'meaning displaced toward contextual interpretation':'meaning displaced toward informational grounding'}.`;};
+  const options=a=>a.map((v,i)=>`<option value="${i}">${esc(v.name)}</option>`).join('');
+
+  const card=(item,p,a,isExact)=>`<article class="eo-worldview-paper" data-point="${esc(cfmt(p))}"><h2>${esc(item.name)}</h2><div class="eo-worldview-coordinate">${esc(cfmt(item.coordinate||p))}</div><div class="eo-worldview-prose">${item.paragraphs.map(t=>`<p>${esc(t)}</p>`).join('')}</div><details class="eo-worldview-structure"><summary>Structure</summary><div class="eo-worldview-structure-body"><p>${esc(formal(p))}</p><p>Only Maturity at (0, 1, 0) is structurally mature. Strong expression of concern, constraint, information, or interpretation does not by itself establish displacement; displacement begins when a materially relevant counterpart loses proportional governing authority.</p>${isExact?'':`<p>Closest distinguished positions: ${esc(closest(p,a).join(', '))}.</p>`}<p>The coordinate describes the declared referent. A bounded stance does not by itself establish the whole person&#39;s worldview.</p><div class="eo-worldview-reference"><label>Archetype reference</label><select aria-label="View a distinguished worldview archetype"><option value="">Choose an archetype</option>${options(a)}</select><div class="eo-worldview-reference-body"></div></div></div></details></article>`;
+
+  const ref=(box,a)=>{box.innerHTML=a?`<h3>${esc(a.name)}</h3><div class="eo-worldview-coordinate">${esc(cfmt(a.coordinate))}</div>${a.paragraphs.map(t=>`<p>${esc(t)}</p>`).join('')}`:'';};
+  let archetypes=[],queued=false;
+
+  const render=()=>{
+    queued=false; const h=host(),p=point(); if(!h||!p||!archetypes.length)return;
+    const key=cfmt(p),old=h.querySelector('.eo-worldview-paper'); if(old?.dataset.point===key)return;
+    [...h.children].forEach(el=>{if(!el.classList.contains('eo-worldview-paper'))el.classList.add('eo-worldview-old');});
+    old?.remove(); const a=exact(p,archetypes),item=a||intermediate(p),wrap=document.createElement('div'); wrap.innerHTML=card(item,p,archetypes,!!a); h.prepend(wrap.firstElementChild);
   };
+  const schedule=()=>{if(!queued){queued=true;requestAnimationFrame(render);}};
+  document.addEventListener('change',e=>{const s=e.target.closest?.('.eo-worldview-reference select');if(!s)return;const box=s.parentElement.querySelector('.eo-worldview-reference-body');if(s.value===''){ref(box,null);return;}ref(box,archetypes[Number(s.value)]||null);},true);
 
-  const sectionForLabel = (labelEl, host) => {
-    if (!labelEl) return null;
-    let node = labelEl.parentElement || labelEl;
-    for (let i=0; node && node !== host && i<4; i++, node=node.parentElement) {
-      const txt = normalizeText(node.textContent);
-      if (txt.length >= 40 && txt.length <= 900) return node;
-      if (node.children.length > 8 || txt.length > 1600) break;
-    }
-    return labelEl.parentElement;
-  };
-
-  const hideLegacy = host => {
-    if (host?.id === 'worldviewPanel') {
-      const curated = host.querySelector('.eo-curated-worldview');
-      const legacy = [...host.children].filter(el => el !== curated && !el.classList.contains('eo-curated-worldview'));
-      for (const el of legacy) el.classList.add('eo-worldview-legacy-hidden');
-      return legacy[0] || null;
-    }
-    let firstSection = null;
-    for (const label of legacyLabels) {
-      for (const node of exactTextNodes(host, label)) {
-        const section = sectionForLabel(node, host);
-        const curated = host.querySelector('.eo-curated-worldview');
-        if (!section || section.classList.contains('eo-curated-worldview') || (curated && section.contains(curated))) continue;
-        if (!firstSection) firstSection = section;
-        section.classList.add('eo-worldview-legacy-hidden');
-      }
-    }
-    return firstSection;
-  };
-
-  const showLegacy = host => {
-    if (!host) return;
-    for (const el of host.querySelectorAll('.eo-worldview-legacy-hidden')) el.classList.remove('eo-worldview-legacy-hidden');
-  };
-
-  const detail = (title, html) =>
-    `<details><summary>${escapeHtml(title)}</summary><div class="eo-curated-detail-body">${html}</div></details>`;
-
-  const callout = (label, text, cls='') =>
-    `<div class="eo-curated-callout ${cls}"><strong>${escapeHtml(label)}</strong><p>${escapeHtml(text)}</p></div>`;
-
-  const fieldDetail = (label, text) =>
-    `<p><span class="eo-curated-detail-label">${escapeHtml(label)}:</span> ${escapeHtml(text)}</p>`;
-
-  const renderMain = item => {
-    const n = item.id || 0;
-    const sLabel = strengthLabels[n % strengthLabels.length];
-    const pLabel = slipLabels[(n + 2) % slipLabels.length];
-    const gLabel = growthLabels[(n + 4) % growthLabels.length];
-    const used = new Set(['feel']);
-    let html = '';
-
-    switch (item.layout) {
-      case 'peak':
-        used.add('portrait'); used.add('strength');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += `<p class="eo-curated-body">${escapeHtml(item.portrait)}</p>`;
-        html += callout(sLabel,item.strength);
-        break;
-      case 'collapse':
-        used.add('portrait'); used.add('slip'); used.add('growth');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += `<p class="eo-curated-body">${escapeHtml(item.portrait)}</p>`;
-        html += callout(pLabel,item.slip,'pressure');
-        html += callout(gLabel,item.growth);
-        break;
-      case 'clean':
-        used.add('strength');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += callout(sLabel,item.strength);
-        break;
-      case 'clean-alt':
-        used.add('portrait');
-        html += `<p class="eo-curated-body">${escapeHtml(item.portrait)}</p>`;
-        html += `<div class="eo-curated-quote">${escapeHtml(item.feel)}</div>`;
-        break;
-      case 'clean-compact':
-        used.add('slip');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += callout(pLabel,item.slip,'pressure');
-        break;
-      case 'open':
-        used.add('strength'); used.add('slip');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += callout(sLabel,item.strength);
-        html += callout(pLabel,item.slip,'pressure');
-        break;
-      case 'open-alt':
-        used.add('portrait'); used.add('growth');
-        html += `<p class="eo-curated-body">${escapeHtml(item.portrait)}</p>`;
-        html += callout(gLabel,item.growth);
-        break;
-      case 'open-split':
-        used.add('strength'); used.add('growth');
-        html += callout(sLabel,item.strength);
-        html += `<p class="eo-curated-body">${escapeHtml(item.feel)}</p>`;
-        html += callout(gLabel,item.growth);
-        break;
-      case 'open-portrait':
-        used.add('portrait'); used.add('slip');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += `<p class="eo-curated-body">${escapeHtml(item.portrait)}</p>`;
-        html += callout(pLabel,item.slip,'pressure');
-        break;
-      case 'sensitive':
-      case 'borderline':
-        used.add('slip'); used.add('growth');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += callout(pLabel,item.slip,'pressure');
-        html += callout(gLabel,item.growth);
-        break;
-      case 'sensitive-alt':
-      case 'borderline-alt':
-        used.add('portrait'); used.add('strength');
-        html += `<p class="eo-curated-body">${escapeHtml(item.portrait)}</p>`;
-        html += callout(sLabel,item.strength);
-        break;
-      case 'sensitive-pressure':
-      case 'borderline-pressure':
-        used.add('slip');
-        html += callout(pLabel,item.slip,'pressure');
-        html += `<p class="eo-curated-body">${escapeHtml(item.feel)}</p>`;
-        break;
-      case 'sensitive-growth':
-      case 'borderline-split':
-        used.add('strength'); used.add('growth');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += callout(sLabel,item.strength);
-        html += callout(gLabel,item.growth);
-        break;
-      case 'guarded':
-      case 'fortified':
-      case 'armored':
-        used.add('strength'); used.add('slip');
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-        html += callout(sLabel,item.strength);
-        html += callout(pLabel,item.slip,'pressure');
-        break;
-      case 'guarded-alt':
-      case 'fortified-alt':
-      case 'armored-alt':
-        used.add('portrait'); used.add('slip');
-        html += `<p class="eo-curated-body">${escapeHtml(item.portrait)}</p>`;
-        html += callout(pLabel,item.slip,'pressure');
-        break;
-      case 'guarded-pressure':
-      case 'fortified-pressure':
-      case 'armored-pressure':
-        used.add('slip'); used.add('growth');
-        html += callout(pLabel,item.slip,'pressure');
-        html += `<p class="eo-curated-body">${escapeHtml(item.feel)}</p>`;
-        html += callout(gLabel,item.growth);
-        break;
-      case 'guarded-strength':
-      case 'fortified-portrait':
-      case 'armored-growth':
-        used.add('strength'); used.add('growth');
-        html += callout(sLabel,item.strength);
-        html += `<p class="eo-curated-body">${escapeHtml(item.feel)}</p>`;
-        html += callout(gLabel,item.growth);
-        break;
-      default:
-        html += `<p class="eo-curated-lead">${escapeHtml(item.feel)}</p>`;
-    }
-    return {html,used};
-  };
-
-  const buildCard = item => {
-    const {html:main,used} = renderMain(item);
-    const showAlias = item.id === 1 || item.id === 402 || (item.id % 3 !== 0);
-    const omitted = [];
-    if (!used.has('portrait')) omitted.push(fieldDetail('Full portrait',item.portrait));
-    if (!used.has('strength')) omitted.push(fieldDetail('Strength',item.strength));
-    if (!used.has('slip')) omitted.push(fieldDetail('Pressure it can miss',item.slip));
-    if (!used.has('growth')) omitted.push(fieldDetail('Growth direction',item.growth));
-
-    return `
-      <article class="eo-curated-worldview" data-eo-coordinate="${escapeHtml(item.coordinate)}">
-        <header class="eo-curated-head">
-          <div class="eo-curated-kicker">Worldview at ${escapeHtml(item.coordinate)}</div>
-          <h2 class="eo-curated-title">${escapeHtml(item.teachingName)}</h2>
-          ${showAlias ? `<div class="eo-curated-alias">${escapeHtml(item.portraitName)}</div>` : ''}
-          <div class="eo-curated-meta">
-            <span class="eo-curated-chip">${escapeHtml(item.stage)}</span>
-            ${item.family && item.family !== 'Integration' && item.family !== 'Collapse' ? `<span class="eo-curated-chip">${escapeHtml(item.family)}</span>` : ''}
-          </div>
-        </header>
-        ${main}
-        <div class="eo-curated-details">
-          ${detail('What this displacement means',`<p>${escapeHtml(item.displacement)}</p>`)}
-          ${detail('Why this sits here',`<p>${escapeHtml(item.hierarchy)}</p>`)}
-          ${omitted.length ? detail('Underlying atlas reading',omitted.join('')) : ''}
-        </div>
-      </article>`;
-  };
-
-  let atlas = null;
-  let scheduled = false;
-
-  const sync = () => {
-    scheduled = false;
-    if (!atlas) return;
-    const host = findHost();
-    if (!host) return;
-    const key = findCoordinate(host, atlas);
-    const current = host.querySelector('.eo-curated-worldview');
-    if (!key) {
-      if (current) current.remove();
-      showLegacy(host);
-      return;
-    }
-
-    if (current && current.dataset.eoCoordinate === key) {
-      hideLegacy(host);
-      return;
-    }
-
-    const item = atlas.get(key);
-    if (!item) {
-      if (current) current.remove();
-      showLegacy(host);
-      return;
-    }
-    if (current) current.remove();
-    const firstLegacy = hideLegacy(host);
-    const holder = document.createElement('div');
-    holder.innerHTML = buildCard(item);
-    const card = holder.firstElementChild;
-    if (firstLegacy && firstLegacy.parentElement) firstLegacy.parentElement.insertBefore(card, firstLegacy);
-    else host.appendChild(card);
-  };
-
-  const schedule = () => {
-    if (scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(sync);
-  };
-
-  Promise.all(atlasParts.map(async url => {
-      const r = await fetch(url,{cache:'no-store'});
-      if (!r.ok) throw new Error(`Could not load worldview atlas (${r.status})`);
-      return (await r.text()).trim();
-    }))
-    .then(async parts => {
-      const packed = parts.join('');
-      const bytes = Uint8Array.from(atob(packed), c => c.charCodeAt(0));
-      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-      return JSON.parse(await new Response(stream).text());
-    })
-    .then(rows => {
-      atlas = new Map(rows.map(row => [normalizeCoordinate(row.coordinate), row]));
-      const observer = new MutationObserver(schedule);
-      observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','class','style']});
-      document.addEventListener('click',schedule,true);
-      document.addEventListener('change',schedule,true);
-      schedule();
-    })
-    .catch(err => console.error('[EO worldview atlas]',err));
+  fetch(dataUrl,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(`Could not load worldview archetypes (${r.status})`);return r.text();}).then(async packed=>{
+    const bytes=Uint8Array.from(atob(packed.trim()),c=>c.charCodeAt(0));
+    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    const data=JSON.parse(await new Response(stream).text()); archetypes=data.archetypes||[];
+    if(archetypes.length!==26)console.warn('[EO worldview] expected 26 archetypes, found',archetypes.length);
+    new MutationObserver(schedule).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden','class','style']});
+    document.addEventListener('click',schedule,true);document.addEventListener('input',schedule,true);document.addEventListener('change',schedule,true);schedule();
+  }).catch(err=>console.error('[EO worldview]',err));
 })();
