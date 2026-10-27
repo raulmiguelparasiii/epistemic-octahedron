@@ -73,15 +73,22 @@
       return true;
     }
 
+    function stoneTopBottomQuat(name, yaw) {
+      const targetY = name === 'top' ? WORLD_Z.clone() : WORLD_Z.clone().negate();
+      const targetX = new THREE.Vector3(Math.cos(yaw), Math.sin(yaw), 0).normalize();
+      const targetZ = new THREE.Vector3().crossVectors(targetX, targetY).normalize();
+      const matrix = new THREE.Matrix4().makeBasis(targetX, targetY, targetZ);
+      return new THREE.Quaternion().setFromRotationMatrix(matrix).normalize();
+    }
+
     function stoneRequestView(name, options = {}) {
       const yaw = Number.isFinite(options.yaw) ? options.yaw : Math.PI / 4;
-      let pitch = null;
-      if (name === 'top') pitch = -Math.PI / 2;
-      else if (name === 'bottom') pitch = Math.PI / 2;
-      else if (name === 'side') pitch = 0;
-      else if (name === 'main') pitch = -0.55;
-      if (pitch === null) return false;
-      startSoftSnap(makeCanonicalQuat(yaw, pitch));
+      let quat = null;
+      if (name === 'top' || name === 'bottom') quat = stoneTopBottomQuat(name, yaw);
+      else if (name === 'side') quat = makeCanonicalQuat(yaw, 0);
+      else if (name === 'main') quat = makeCanonicalQuat(yaw, -0.55);
+      if (!quat) return false;
+      startSoftSnap(quat);
       state.panVel.set(0, 0, 0);
       state.target.set(0, 0, 0);
       if (Number.isFinite(options.distance)) {
