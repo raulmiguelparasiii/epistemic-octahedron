@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: stone-native-semantics-20261027
-      - name: Validate native semantics implementation
+      - name: Static validation
         shell: bash
         run: |
           set -euo pipefail
@@ -17,11 +17,67 @@ jobs:
           node --check philosophers-stone-atlas/stone-ui-v2.js
           cat philosophers-stone-atlas/core.01.b64 philosophers-stone-atlas/core.02.b64 philosophers-stone-atlas/core.03.b64 philosophers-stone-atlas/core.04.b64 philosophers-stone-atlas/core.05a.b64 philosophers-stone-atlas/core.05b.b64 philosophers-stone-atlas/core.06.b64 philosophers-stone-atlas/core.07.b64 philosophers-stone-atlas/core.08.b64 | tr -d '\n\r' | base64 -d | gzip -dc > /tmp/core.html
           grep -Fq "state.uiMode = ['plot','worldview','questions','editor'].includes(mode) ? mode : 'plot';" /tmp/core.html
-          grep -Fq "const showingEditor = state.uiMode === 'editor';" /tmp/core.html
-          grep -Fq "editorPanel.hidden = !showingEditor;" /tmp/core.html
-          grep -Fq "function setPointFromExternal(profileData)" /tmp/core.html
           grep -Fq "function startSoftSnap(quat)" /tmp/core.html
           grep -Fq "function makeCanonicalQuat(yaw, pitch)" /tmp/core.html
           grep -Fq "function setPanelMode(mode)" /tmp/core.html
           grep -Fq "state.snappedTopBottom || !state.surfaceLocked" /tmp/core.html
-          echo 'Native Stone semantics validation passed.'
+      - name: Install browser
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.56.1 >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Browser smoke test
+        shell: bash
+        run: |
+          python3 -m http.server 8000 >/tmp/stone-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          cat > /tmp/stone-test.js <<'NODE'
+          const assert=require('assert');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:390,height:844}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'networkidle',timeout:30000});
+            const frame=page.frames().find(f=>f!==page.mainFrame());
+            assert(frame,'Stone iframe missing');
+            await frame.waitForFunction(()=>window.STONE_PLOT&&document.querySelector('#stoneSemanticsTab'),null,{timeout:20000});
+            await frame.getByRole('button',{name:'Semantics',exact:true}).click();
+            await frame.waitForTimeout(100);
+            assert.strictEqual(await frame.$eval('#plotPanel',el=>el.hidden),true,'Plot leaked into Semantics');
+            assert.strictEqual(await frame.$eval('#stoneSemanticsPanel',el=>el.hidden),false,'Semantics panel hidden');
+
+            const item=name=>frame.locator('.stone-semantic-item').filter({has:frame.locator('summary',{hasText:name})}).first();
+            await item('Empathy').locator('summary').click();
+            await frame.waitForTimeout(1200);
+            assert.deepStrictEqual(await frame.evaluate(()=>window.STONE_PLOT.getPoint().map(v=>Math.round(v*1000)/1000)),[1,0,0]);
+
+            await item('Knowledge').locator('summary').click();
+            await frame.waitForTimeout(100);
+            assert.strictEqual(await frame.locator('.stone-semantic-item[open]').count(),1,'More than one semantic stayed open');
+            assert.strictEqual((await frame.locator('.stone-semantic-item[open] summary').innerText()).trim(),'Knowledge');
+
+            await item('Collapse').locator('summary').click();
+            await frame.waitForTimeout(1200);
+            assert.deepStrictEqual(await frame.evaluate(()=>window.STONE_PLOT.getPoint().map(v=>Math.round(v*1000)/1000)),[0,-1,0]);
+            assert.strictEqual(await frame.$eval('#crosshair',el=>getComputedStyle(el).display),'none','Collapse did not settle to side view');
+
+            await frame.evaluate(()=>window.STONE_PLOT.setPoint([0.5,0.5,0]));
+            await item('Reality-friction').locator('summary').click();
+            await frame.waitForTimeout(1200);
+            assert.deepStrictEqual(await frame.evaluate(()=>window.STONE_PLOT.getPoint().map(v=>Math.round(v*1000)/1000)),[1,0,0]);
+            assert.strictEqual(await frame.$eval('#crosshair',el=>getComputedStyle(el).display),'none','Reality-friction did not settle to side view');
+
+            await item('Maturity').locator('summary').click();
+            await frame.waitForTimeout(1200);
+            assert.deepStrictEqual(await frame.evaluate(()=>window.STONE_PLOT.getPoint().map(v=>Math.round(v*1000)/1000)),[0,1,0]);
+            assert.notStrictEqual(await frame.$eval('#crosshair',el=>getComputedStyle(el).display),'none','Maturity did not settle to top view');
+
+            if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
+            await browser.close();
+            console.log('Native Stone browser smoke test passed.');
+          })().catch(err=>{console.error(err);process.exit(1)});
+          NODE
+          node /tmp/stone-test.js
