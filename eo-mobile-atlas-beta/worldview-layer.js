@@ -2,8 +2,9 @@
   'use strict';
 
   const E=.00001, near=(a,b,t=E)=>Math.abs(a-b)<=t;
-  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
   const surface=p=>p&&Math.abs(p.reduce((n,v)=>n+Math.abs(v),0)-1)<=.025;
+  const origin=p=>p&&p.every(v=>near(v,0));
   const fmt=n=>near(n,0)?'0':near(Math.abs(n),1/3,.001)?(n<0?'-1/3':'1/3'):near(Math.abs(n),.5)?(n<0?'-.5':'.5'):near(Math.abs(n),1)?(n<0?'-1':'1'):String(Math.round(n*1000)/1000);
   const cfmt=p=>`(${p.map(fmt).join(', ')})`;
   const lerp=(a,b,t)=>a+(b-a)*t;
@@ -108,18 +109,18 @@
   const host=()=>document.getElementById('worldviewPanel');
   const point=()=>{
     const p=['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id)?.value));
-    if(p.every(Number.isFinite)&&surface(p))return p;
+    if(p.every(Number.isFinite)&&(surface(p)||origin(p)))return p;
     const h=host(); if(!h)return null;
     for(const el of h.querySelectorAll('code,span,p,div,strong')){
       if(el.closest('.eo-worldview-paper'))continue;
       const m=el.textContent?.replace(/−/g,'-').match(/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/);
-      if(m){const q=m.slice(1).map(Number);if(surface(q))return q;}
+      if(m){const q=m.slice(1).map(Number);if(surface(q)||origin(q))return q;}
     }
     return null;
   };
 
   const exactName=p=>Object.entries(PAPER).find(([,a])=>a.c.every((v,i)=>near(v,p[i],.001)))?.[0]||'';
-  const name=p=>near(p[1],1)&&near(p[0],0)&&near(p[2],0)?'Maturity':near(p[1],-1)&&near(p[0],0)&&near(p[2],0)?'Collapse':nearestName(p);
+  const name=p=>origin(p)?'Absence':near(p[1],1)&&near(p[0],0)&&near(p[2],0)?'Maturity':near(p[1],-1)&&near(p[0],0)&&near(p[2],0)?'Collapse':nearestName(p);
 
   const emphasis=(p,t)=>{
     const [x,,z]=p,ax=Math.abs(x),az=Math.abs(z);
@@ -163,6 +164,10 @@
   };
 
   const guidance=(p,n)=>{
+    if(n==='Absence')return[
+      'Begin by establishing genuine contact with the referent. Learn what is known and unknown, what the information means in context, who or what is affected, and what real constraints bear on the matter. Do not manufacture a position before there is enough relevant reality to form one.',
+      'If a stance is being presented despite genuine absence, identify what is producing the performance. Possible motives include belonging, conformity, status, fear of exclusion, imitation, role-performance, compliance, persuasion, concealment, or strategic interest. Deliberately presenting a stance one does not actually hold or understand is misrepresentation; sincere repetition of borrowed language without understanding is not necessarily deception, but it is still not a formed stance. In either case, the correction is to stop performing certainty and acquire genuine contact with the referent.'
+    ];
     if(n==='Maturity')return[
       'Keep reality in charge. Strong emphasis on welfare, practicality, information, or interpretation is compatible with maturity so long as every materially relevant counterpart still retains the authority it warrants. Corrigibility does not require weak conviction: preserve the judgment when reality supports it, qualify it when reality qualifies it, revise it when reality revises it, and abandon it when reality defeats it.',
       'Do not manufacture balance for its own sake. Maturity at (0, 1, 0) is not equal weighting; it is complete integration relative to the referent, with nothing materially relevant neglected, distorted, exaggerated, or insulated from correction.'
@@ -177,12 +182,17 @@
   const card=p=>{
     const n=name(p),ex=exactName(p),t=themeFor(n);
     let paras;
-    if(n==='Maturity')paras=[PAPER.Maturity.d,'Maturity at (0, 1, 0) is the unique point at which no partial tendency has to rule the whole and reality retains maximal authority to correct the judgment.'];
+    if(n==='Absence')paras=[
+      'Absence is the pre-stance condition at (0, 0, 0): the person knows nothing materially relevant about the referent from which a formed judgment could be made. There is not yet a substantive appraisal of affected welfare, real-world constraint, informational grounding, or contextual meaning.',
+      'It is not neutrality, balance, indecision, uncertainty, or maturity. There is simply no formed worldview about that referent yet. An assertion by itself does not change that if no substantive relation to the referent exists behind it.'
+    ];
+    else if(n==='Maturity')paras=[PAPER.Maturity.d,'Maturity at (0, 1, 0) is the unique point at which no partial tendency has to rule the whole and reality retains maximal authority to correct the judgment.'];
     else if(n==='Collapse')paras=[PAPER.Collapse.d,'Contradiction, harm, failure, evidence, and consequence can still be encountered, but they no longer retain reliable authority to reorganize the worldview.'];
     else if(ex===n)paras=[PAPER[n].d,accountability(p[1])];
     else {const [a,b]=emphasis(p,t);paras=[a,accountability(p[1]),b];}
     const g=guidance(p,n);
-    return `<article class="eo-worldview-paper" data-point="${esc(cfmt(p))}" style="--wv-name-color:${esc(yColor(p[1]))}"><h2>${esc(n)}</h2><div class="eo-worldview-coordinate">${esc(cfmt(p))}</div><div class="eo-worldview-prose">${paras.map(v=>`<p>${esc(v)}</p>`).join('')}</div><details class="eo-worldview-guidance"><summary>Guidance</summary><div class="eo-worldview-guidance-body">${g.map(v=>`<p>${esc(v)}</p>`).join('')}</div></details></article>`;
+    const color=n==='Absence'?'#000000':yColor(p[1]);
+    return `<article class="eo-worldview-paper" data-point="${esc(cfmt(p))}" style="--wv-name-color:${esc(color)}"><h2>${esc(n)}</h2><div class="eo-worldview-coordinate">${esc(cfmt(p))}</div><div class="eo-worldview-prose">${paras.map(v=>`<p>${esc(v)}</p>`).join('')}</div><details class="eo-worldview-guidance"><summary>Guidance</summary><div class="eo-worldview-guidance-body">${g.map(v=>`<p>${esc(v)}</p>`).join('')}</div></details></article>`;
   };
 
   let queued=false;
