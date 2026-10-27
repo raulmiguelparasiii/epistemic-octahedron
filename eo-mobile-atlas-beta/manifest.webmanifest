@@ -1,0 +1,10 @@
+{
+  "name": "EO Mobile Atlas Beta",
+  "short_name": "EO Atlas",
+  "id": "./pwa.html",
+  "start_url": "./pwa.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc"
+}
