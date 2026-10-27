@@ -38,6 +38,8 @@ jobs:
           cat > /tmp/stone-test.js <<'NODE'
           const assert=require('assert');
           const {chromium}=require('playwright');
+          const round=p=>p.map(v=>Math.round(v*1000)/1000);
+          const close=(a,b)=>Math.abs(a-b)<0.01;
           (async()=>{
             const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
             const page=await browser.newPage({viewport:{width:390,height:844}});
@@ -55,28 +57,45 @@ jobs:
             const item=name=>frame.locator('.stone-semantic-item').filter({has:frame.locator('summary',{hasText:name})}).first();
             await item('Empathy').locator('summary').click();
             await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(await frame.evaluate(()=>window.STONE_PLOT.getPoint().map(v=>Math.round(v*1000)/1000)),[1,0,0]);
+            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[1,0,0]);
+            let view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
+            assert.strictEqual(view.snappedTopBottom,true,'Empathy did not settle to top view');
+            assert(close(view.distance,5.25),'Empathy did not use zoomed-out distance');
 
             await item('Knowledge').locator('summary').click();
-            await frame.waitForTimeout(100);
+            await frame.waitForTimeout(1200);
             assert.strictEqual(await frame.locator('.stone-semantic-item[open]').count(),1,'More than one semantic stayed open');
             assert.strictEqual((await frame.locator('.stone-semantic-item[open] summary').innerText()).trim(),'Knowledge');
+            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
+            assert.strictEqual(view.snappedTopBottom,true,'Knowledge did not settle to top view');
+            assert(close(view.distance,5.25),'Knowledge did not use zoomed-out distance');
 
             await item('Collapse').locator('summary').click();
             await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(await frame.evaluate(()=>window.STONE_PLOT.getPoint().map(v=>Math.round(v*1000)/1000)),[0,-1,0]);
-            assert.strictEqual(await frame.$eval('#crosshair',el=>getComputedStyle(el).display),'none','Collapse did not settle to side view');
+            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[0,-1,0]);
+            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
+            assert.strictEqual(view.snappedTopBottom,false,'Collapse did not settle to side view');
+            assert(close(view.distance,4.25),'Collapse distance incorrect');
 
             await frame.evaluate(()=>window.STONE_PLOT.setPoint([0.5,0.5,0]));
             await item('Reality-friction').locator('summary').click();
             await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(await frame.evaluate(()=>window.STONE_PLOT.getPoint().map(v=>Math.round(v*1000)/1000)),[1,0,0]);
-            assert.strictEqual(await frame.$eval('#crosshair',el=>getComputedStyle(el).display),'none','Reality-friction did not settle to side view');
+            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[1,0,0]);
+            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
+            assert.strictEqual(view.snappedTopBottom,false,'Reality-friction did not settle to side view');
 
             await item('Maturity').locator('summary').click();
             await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(await frame.evaluate(()=>window.STONE_PLOT.getPoint().map(v=>Math.round(v*1000)/1000)),[0,1,0]);
-            assert.notStrictEqual(await frame.$eval('#crosshair',el=>getComputedStyle(el).display),'none','Maturity did not settle to top view');
+            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[0,1,0]);
+            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
+            assert.strictEqual(view.snappedTopBottom,true,'Maturity did not settle to top view');
+            assert(close(view.distance,4.25),'Maturity distance incorrect');
+
+            await item('Epistemic freedom').locator('summary').click();
+            await frame.waitForTimeout(1200);
+            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[0,1,0]);
+            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
+            assert.strictEqual(view.snappedTopBottom,true,'Epistemic freedom did not settle to top view');
 
             if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
             await browser.close();
