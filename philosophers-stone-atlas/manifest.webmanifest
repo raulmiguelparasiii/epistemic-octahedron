@@ -1,0 +1,8 @@
+{
+  "name": "The Philosopher's Stone",
+  "short_name": "Stone",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc"
+}
