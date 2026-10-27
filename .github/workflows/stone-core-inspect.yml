@@ -1,0 +1,21 @@
+name: Stone core inspect
+on:
+  push:
+    branches: [stone-core-inspect-20261027]
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode core and print camera/state neighborhoods
+        shell: bash
+        run: |
+          cat philosophers-stone-atlas/core.01.b64 philosophers-stone-atlas/core.02.b64 philosophers-stone-atlas/core.03.b64 philosophers-stone-atlas/core.04.b64 philosophers-stone-atlas/core.05a.b64 philosophers-stone-atlas/core.05b.b64 philosophers-stone-atlas/core.06.b64 philosophers-stone-atlas/core.07.b64 philosophers-stone-atlas/core.08.b64 | tr -d '\n\r' | base64 -d | gzip -dc > /tmp/core.html
+          echo '=== camera/view identifiers ==='
+          grep -nE 'camera|Camera|rotation|quaternion|viewPreset|viewButtons|snap|zoom|Orbit|controls|octaGroup|coord-x|coord-y|coord-z|setCoordinate|setView|lookAt' /tmp/core.html | head -n 220 || true
+          echo '=== state declarations ==='
+          grep -nE 'const state|let state|uiMode|targetRotation|rotationTarget|cameraTarget|viewState' /tmp/core.html | head -n 160 || true
+          echo '=== context around octaGroup ==='
+          grep -n -B 15 -A 45 'octaGroup' /tmp/core.html | head -n 260 || true
+          echo '=== context around coordinate inputs ==='
+          grep -n -B 20 -A 55 "coord-x" /tmp/core.html | head -n 260 || true
