@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f8fafc">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>The Philosopher's Stone</title>
+  <style>
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f8fafc}
+    iframe{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#f8fafc}
+    #boot{position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font:14px system-ui,sans-serif;color:#64748b;background:#f8fafc}
+  </style>
+</head>
+<body>
+  <div id="boot">Loading The Philosopher's Stone…</div>
+  <iframe id="appFrame" title="The Philosopher's Stone" hidden></iframe>
+  <script>
+    (async()=>{
+      const frame=document.getElementById('appFrame');
+      const boot=document.getElementById('boot');
+      try{
+        if(!('DecompressionStream' in window)) throw new Error('This browser does not support DecompressionStream.');
+        const names=['core.01.b64','core.02.b64','core.03.b64','core.04.b64','core.05a.b64','core.05b.b64','core.06.b64','core.07.b64','core.08.b64'];
+        const parts=await Promise.all(names.map(async name=>{
+          const response=await fetch(name,{cache:'no-store'});
+          if(!response.ok) throw new Error(`Could not load ${name}`);
+          return (await response.text()).trim();
+        }));
+        const packed=parts.join('');
+        const bytes=Uint8Array.from(atob(packed),c=>c.charCodeAt(0));
+        const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+        let core=await new Response(stream).text();
+        core=core.replaceAll('Epistemic Octahedron','The Philosopher’s Stone');
+        core=core.replaceAll('EO Mobile Atlas Beta','The Philosopher’s Stone');
+        core=core.replace('</body>','<script src="worldview-layer.js?v=stone-20261027"><\/script><script src="stone-layer.js?v=stone-20261027"><\/script></body>');
+        frame.srcdoc=core;
+        frame.hidden=false;
+        boot.remove();
+      }catch(err){
+        boot.textContent='The Philosopher\'s Stone could not start: '+err.message;
+      }
+    })();
+  </script>
+</body>
+</html>
