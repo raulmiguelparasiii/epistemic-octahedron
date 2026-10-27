@@ -33,7 +33,92 @@
         let core=await new Response(stream).text();
         core=core.replaceAll('Epistemic Octahedron','The Philosopher’s Stone');
         core=core.replaceAll('EO Mobile Atlas Beta','The Philosopher’s Stone');
-        core=core.replace('</body>','<script src="worldview-layer.js?v=stone-v6-20261027"><\/script><script src="stone-data-v2.js?v=stone-v6-20261027"><\/script><script src="stone-readings-core-v2.js?v=stone-v6-20261027"><\/script><script src="stone-readings-more-v2.js?v=stone-v6-20261027"><\/script><script src="stone-referents-v4.js?v=stone-v6-20261027"><\/script><script src="stone-semantics-v5.js?v=stone-v6-20261027"><\/script><script src="stone-ui-v2.js?v=stone-v6-20261027"><\/script><script src="stone-polish-v3.js?v=stone-v6-20261027"><\/script></body>');
+
+        const patchCore=(needle,replacement,label)=>{
+          if(!core.includes(needle)) throw new Error(`Stone core patch failed: ${label}`);
+          core=core.replace(needle,replacement);
+        };
+
+        patchCore(
+          "state.uiMode = ['plot','worldview','questions','editor'].includes(mode) ? mode : 'plot';",
+          "state.uiMode = ['plot','worldview','questions','editor','semantics'].includes(mode) ? mode : 'plot';",
+          'semantic mode'
+        );
+        patchCore(
+          "const showingEditor = state.uiMode === 'editor';",
+          "const showingEditor = state.uiMode === 'editor';\n      const showingSemantics = state.uiMode === 'semantics';",
+          'semantic visibility state'
+        );
+        patchCore(
+          "editorPanel.hidden = !showingEditor;",
+          "editorPanel.hidden = !showingEditor;\n      const stoneSemanticsPanel = document.getElementById('stoneSemanticsPanel');\n      if (stoneSemanticsPanel) stoneSemanticsPanel.hidden = !showingSemantics;",
+          'semantic panel isolation'
+        );
+
+        const bridge=`    function stoneSetPoint(coords) {
+      if (!Array.isArray(coords) || coords.length !== 3) return false;
+      const x = Number(coords[0]);
+      const y = Number(coords[1]);
+      const z = Number(coords[2]);
+      if (![x, y, z].every(Number.isFinite)) return false;
+      const l1 = Math.abs(x) + Math.abs(y) + Math.abs(z);
+      if (l1 > 1.0005) return false;
+      state.point.set(x, y, z);
+      state.surfaceLocked = l1 > 0.0001;
+      if (Math.abs(y) > 1e-6) state.stabilitySign = Math.sign(y);
+      updatePointerNormalFromPoint();
+      applyPointVisuals();
+      controlsFromPoint(state.point);
+      invalidateRender();
+      return true;
+    }
+
+    function stoneRequestView(name, options = {}) {
+      const yaw = Number.isFinite(options.yaw) ? options.yaw : Math.PI / 4;
+      let pitch = null;
+      if (name === 'top') pitch = -Math.PI / 2;
+      else if (name === 'bottom') pitch = Math.PI / 2;
+      else if (name === 'side') pitch = 0;
+      else if (name === 'main') pitch = -0.55;
+      if (pitch === null) return false;
+      startSoftSnap(makeCanonicalQuat(yaw, pitch));
+      state.panVel.set(0, 0, 0);
+      state.target.set(0, 0, 0);
+      if (Number.isFinite(options.distance)) {
+        state.distance = Math.max(1.7, Math.min(12, options.distance));
+        state.zoomVel = 0;
+      }
+      invalidateRender();
+      return true;
+    }
+
+    window.STONE_PLOT = {
+      setPoint: stoneSetPoint,
+      requestView: stoneRequestView,
+      setMode(mode) {
+        if (!['plot','worldview','semantics'].includes(mode)) return false;
+        setPanelMode(mode);
+        return true;
+      },
+      request(options = {}) {
+        let ok = true;
+        if (options.point) ok = stoneSetPoint(options.point) && ok;
+        if (options.view) ok = stoneRequestView(options.view, options) && ok;
+        return ok;
+      },
+      getPoint() {
+        return [state.point.x, state.point.y, state.point.z];
+      }
+    };
+
+`;
+        patchCore(
+          "    function setPointFromExternal(profileData) {",
+          bridge + "    function setPointFromExternal(profileData) {",
+          'native plot bridge'
+        );
+
+        core=core.replace('</body>','<script src="worldview-layer.js?v=stone-v7-20261027"><\/script><script src="stone-data-v2.js?v=stone-v7-20261027"><\/script><script src="stone-readings-core-v2.js?v=stone-v7-20261027"><\/script><script src="stone-readings-more-v2.js?v=stone-v7-20261027"><\/script><script src="stone-referents-v4.js?v=stone-v7-20261027"><\/script><script src="stone-semantics-v5.js?v=stone-v7-20261027"><\/script><script src="stone-ui-v2.js?v=stone-v7-20261027"><\/script><script src="stone-polish-v3.js?v=stone-v7-20261027"><\/script></body>');
         frame.srcdoc=core;
         frame.hidden=false;
         boot.remove();
