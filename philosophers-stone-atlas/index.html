@@ -108,6 +108,13 @@
       },
       getPoint() {
         return [state.point.x, state.point.y, state.point.z];
+      },
+      getViewState() {
+        return {
+          distance: state.distance,
+          snappedTopBottom: state.snappedTopBottom,
+          lastSnapKey: state.lastSnapKey
+        };
       }
     };
 
