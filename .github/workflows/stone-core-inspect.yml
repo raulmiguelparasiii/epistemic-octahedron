@@ -21,11 +21,14 @@ jobs:
           grep -Fq "function makeCanonicalQuat(yaw, pitch)" /tmp/core.html
           grep -Fq "function setPanelMode(mode)" /tmp/core.html
           grep -Fq "state.snappedTopBottom || !state.surfaceLocked" /tmp/core.html
-      - name: Install browser
+      - name: Prepare browser harness
+        shell: bash
         run: |
           npm init -y >/dev/null 2>&1
           npm install playwright@1.56.1 >/dev/null 2>&1
-          npx playwright install --with-deps chromium >/dev/null
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)
+          test -n "$CHROME"
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
       - name: Browser smoke test
         shell: bash
         run: |
@@ -36,7 +39,7 @@ jobs:
           const assert=require('assert');
           const {chromium}=require('playwright');
           (async()=>{
-            const browser=await chromium.launch({headless:true});
+            const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
             const page=await browser.newPage({viewport:{width:390,height:844}});
             const errors=[];
             page.on('pageerror',e=>errors.push(String(e)));
