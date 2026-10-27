@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="EO Atlas">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>EO Atlas Offline</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#0f172a;background:#f8fafc}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100svh;display:grid;place-items:center;padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));background:#f8fafc}
+    main{width:min(100%,460px);background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:22px;box-shadow:0 12px 35px rgba(15,23,42,.08)}
+    h1{margin:0 0 8px;font-size:24px;line-height:1.15}
+    p{margin:8px 0;color:#475569;font-size:14px;line-height:1.5}
+    #status{margin-top:14px;padding:11px 12px;border-radius:12px;background:#f1f5f9;color:#334155;font-size:13px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    button{appearance:none;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font:600 14px system-ui;padding:10px 13px}
+    button.primary{background:#0f172a;color:#fff;border-color:#0f172a}
+    button:disabled{opacity:.5}
+    ol{margin:14px 0 0;padding-left:20px;color:#475569;font-size:13px;line-height:1.55}
+    .small{font-size:12px;color:#64748b}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>EO Mobile Atlas</h1>
+    <p>This page installs and maintains an offline copy of the Atlas on this iPhone.</p>
+    <div id="status">Preparing offline copy…</div>
+    <div class="actions">
+      <button id="openBtn" class="primary" type="button" disabled>Open Atlas</button>
+      <button id="updateBtn" type="button" disabled>Update offline copy</button>
+    </div>
+    <ol id="installSteps">
+      <li>Keep this page open until it says the offline copy is ready.</li>
+      <li>In Safari, tap Share.</li>
+      <li>Choose Add to Home Screen.</li>
+      <li>Launch EO Atlas from the new Home Screen icon.</li>
+    </ol>
+    <p class="small">After setup, cached Atlas files are served from the iPhone. The update button is the explicit way to refresh the local copy.</p>
+  </main>
+
+  <script>
+    (() => {
+      const statusEl = document.getElementById('status');
+      const openBtn = document.getElementById('openBtn');
+      const updateBtn = document.getElementById('updateBtn');
+      const installSteps = document.getElementById('installSteps');
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+      const setStatus = text => { statusEl.textContent = text; };
+
+      function waitForController() {
+        if (navigator.serviceWorker.controller) return Promise.resolve();
+        return new Promise(resolve => {
+          const done = () => resolve();
+          navigator.serviceWorker.addEventListener('controllerchange', done, { once: true });
+          setTimeout(done, 2500);
+        });
+      }
+
+      async function prepare() {
+        if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable in this browser.');
+        await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+        await navigator.serviceWorker.ready;
+        await waitForController();
+        openBtn.disabled = false;
+        updateBtn.disabled = false;
+        setStatus('Offline copy ready. You can now add this page to the Home Screen.');
+
+        if (standalone) {
+          location.replace('./index.html');
+        }
+      }
+
+      openBtn.addEventListener('click', () => {
+        location.href = './index.html';
+      });
+
+      updateBtn.addEventListener('click', async () => {
+        updateBtn.disabled = true;
+        openBtn.disabled = true;
+        setStatus('Updating the offline copy…');
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          if (!registration.active) throw new Error('Offline worker is not active.');
+          const channel = new MessageChannel();
+          const result = await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('Update did not complete.')), 30000);
+            channel.port1.onmessage = event => {
+              clearTimeout(timer);
+              resolve(event.data || {});
+            };
+            registration.active.postMessage({ type: 'UPDATE_CACHE' }, [channel.port2]);
+          });
+          if (!result.ok) throw new Error(result.message || 'Update failed.');
+          setStatus('Offline copy updated.');
+        } catch (error) {
+          setStatus('Could not update the offline copy: ' + error.message);
+        } finally {
+          updateBtn.disabled = false;
+          openBtn.disabled = false;
+        }
+      });
+
+      prepare().catch(error => {
+        installSteps.hidden = true;
+        setStatus('Could not prepare the offline copy: ' + error.message);
+      });
+    })();
+  </script>
+</body>
+</html>
