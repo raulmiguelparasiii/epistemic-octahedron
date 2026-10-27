@@ -65,7 +65,7 @@
     {name:'Collapse',coord:[0,-1,0],text:'Maximal insulation: materially relevant reality no longer retains corrective authority over the organized whole.'},
     {name:'Reality-friction',text:'Pressure produced when reality presents a materially relevant counterpart that a one-sided stance has not integrated.'},
     {name:'Realization',text:'Further reality becomes materially apparent and can expand the referent from r to r′, requiring the entity to be situated again.'},
-    {name:'Epistemic freedom',text:'Reality-governed authorship: strong judgment without surrendering correction to identity, status, ideology, fear, or interest.'}
+    {name:'Epistemic freedom',coord:[0,1,0],text:'Reality-governed authorship: strong judgment without surrendering correction to identity, status, ideology, fear, or interest.'}
   ];
 
   R.renderSemantics=()=>`<div class="stone-semantics-inner"><header><h1>Semantics</h1></header><div class="stone-semantics-grid stone-semantics-v5">${SEMANTICS.map(s=>`<details class="stone-semantic-item"${s.coord?` data-coordinate="${s.coord.join(',')}"`:''}><summary>${esc(s.name)}</summary><p>${esc(s.text)}</p></details>`).join('')}</div></div>`;
@@ -83,24 +83,48 @@
   `;
   (document.head||document.documentElement).appendChild(style);
 
-  const setPoint=coord=>{
-    const ids=['coord-x','coord-y','coord-z'];
-    const els=ids.map(id=>document.getElementById(id));
-    if(els.some(e=>!e)) return;
-    els.forEach((e,i)=>{e.value=String(coord[i]);});
-    els.forEach(e=>{
-      e.dispatchEvent(new Event('input',{bubbles:true}));
-      e.dispatchEvent(new Event('change',{bubbles:true}));
-    });
+  const TOP_YAW=Math.PI/4;
+  const ACTIONS={
+    Empathy:{point:[1,0,0],view:'top',yaw:TOP_YAW,distance:5.25},
+    Practicality:{point:[-1,0,0],view:'top',yaw:TOP_YAW,distance:5.25},
+    Wisdom:{point:[0,0,1],view:'top',yaw:TOP_YAW,distance:5.25},
+    Knowledge:{point:[0,0,-1],view:'top',yaw:TOP_YAW,distance:5.25},
+    Absence:{point:[0,0,0]},
+    Maturity:{point:[0,1,0],view:'top',yaw:TOP_YAW,distance:4.25},
+    Collapse:{point:[0,-1,0],view:'side',yaw:TOP_YAW,distance:4.25},
+    'Reality-friction':{friction:true,view:'side',yaw:TOP_YAW,distance:4.25},
+    'Epistemic freedom':{point:[0,1,0],view:'top',yaw:TOP_YAW,distance:4.25}
+  };
+
+  const frictionPoint=()=>{
+    const p=window.STONE_PLOT?.getPoint?.();
+    if(Array.isArray(p)&&p.length===3){
+      const x=Number(p[0])||0,z=Number(p[2])||0,m=Math.abs(x)+Math.abs(z);
+      if(m>1e-6) return [x/m,0,z/m];
+    }
+    return [1,0,0];
+  };
+
+  const runSemanticAction=name=>{
+    const action=ACTIONS[name],plot=window.STONE_PLOT;
+    if(!action||!plot?.request) return;
+    const point=action.friction?frictionPoint():action.point;
+    plot.request({point,view:action.view,yaw:action.yaw,distance:action.distance});
   };
 
   document.addEventListener('click',e=>{
-    const summary=e.target.closest?.('#stoneSemanticsPanel .stone-semantic-item[data-coordinate] > summary');
+    const summary=e.target.closest?.('#stoneSemanticsPanel .stone-semantic-item > summary');
     if(!summary) return;
     const details=summary.parentElement;
-    if(details.open) return;
-    const coord=details.dataset.coordinate.split(',').map(Number);
-    if(coord.length===3&&coord.every(Number.isFinite)) setTimeout(()=>setPoint(coord),0);
+    const opening=!details.open;
+    if(opening){
+      const panel=details.closest('#stoneSemanticsPanel');
+      for(const other of panel?.querySelectorAll('.stone-semantic-item[open]')||[]){
+        if(other!==details) other.open=false;
+      }
+      const name=(summary.textContent||'').trim();
+      if(ACTIONS[name]) setTimeout(()=>runSemanticAction(name),0);
+    }
   });
 
   const POLES={E:'concern',P:'constraint',W:'context',K:'information'};
