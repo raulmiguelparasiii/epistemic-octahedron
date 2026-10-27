@@ -7,16 +7,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Decode core and inspect native camera functions
+        with:
+          ref: stone-native-semantics-20261027
+      - name: Validate native semantics implementation
+        shell: bash
         run: |
+          set -euo pipefail
+          node --check philosophers-stone-atlas/stone-semantics-v5.js
+          node --check philosophers-stone-atlas/stone-ui-v2.js
           cat philosophers-stone-atlas/core.01.b64 philosophers-stone-atlas/core.02.b64 philosophers-stone-atlas/core.03.b64 philosophers-stone-atlas/core.04.b64 philosophers-stone-atlas/core.05a.b64 philosophers-stone-atlas/core.05b.b64 philosophers-stone-atlas/core.06.b64 philosophers-stone-atlas/core.07.b64 philosophers-stone-atlas/core.08.b64 | tr -d '\n\r' | base64 -d | gzip -dc > /tmp/core.html
-          sed -n '812,890p' /tmp/core.html
-          sed -n '1000,1160p' /tmp/core.html
-          sed -n '1780,1875p' /tmp/core.html
-          sed -n '1920,1960p' /tmp/core.html
-          sed -n '2140,2210p' /tmp/core.html
-          sed -n '2285,2330p' /tmp/core.html
-          sed -n '2610,2785p' /tmp/core.html
-          sed -n '2835,2870p' /tmp/core.html
-          sed -n '2940,3020p' /tmp/core.html
-          sed -n '3200,3330p' /tmp/core.html
+          grep -Fq "state.uiMode = ['plot','worldview','questions','editor'].includes(mode) ? mode : 'plot';" /tmp/core.html
+          grep -Fq "const showingEditor = state.uiMode === 'editor';" /tmp/core.html
+          grep -Fq "editorPanel.hidden = !showingEditor;" /tmp/core.html
+          grep -Fq "function setPointFromExternal(profileData)" /tmp/core.html
+          grep -Fq "function startSoftSnap(quat)" /tmp/core.html
+          grep -Fq "function makeCanonicalQuat(yaw, pitch)" /tmp/core.html
+          grep -Fq "function setPanelMode(mode)" /tmp/core.html
+          grep -Fq "state.snappedTopBottom || !state.surfaceLocked" /tmp/core.html
+          echo 'Native Stone semantics validation passed.'
