@@ -173,7 +173,6 @@
       nav.appendChild(semanticsBtn);
     }
 
-    // Remove the beta controls from this copy rather than leaving invisible fourth/fifth slots.
     questionsBtn?.remove();
     editorBtn?.remove();
     $('#questionsPanel')?.remove();
@@ -190,10 +189,15 @@
     }
 
     const setSemanticsActive=on=>{
-      semanticsPanel.hidden=!on;
       if(on){
+        const handled=window.STONE_PLOT?.setMode?.('semantics')===true;
+        if(!handled){
+          const plotPanel=$('#plotPanel');
+          if(plotPanel) plotPanel.hidden=true;
+          worldviewPanel.hidden=true;
+        }
+        semanticsPanel.hidden=false;
         referentUI.selector.hidden=true;
-        worldviewPanel.hidden=true;
         referentUI.custom.hidden=true;
         plotBtn.classList.remove('active','selected');
         referentBtn.classList.remove('active','selected');
@@ -202,6 +206,7 @@
         semanticsBtn.classList.add('active');
         semanticsBtn.setAttribute('aria-selected','true');
       }else{
+        semanticsPanel.hidden=true;
         semanticsBtn.classList.remove('active','selected');
         semanticsBtn.setAttribute('aria-selected','false');
       }
