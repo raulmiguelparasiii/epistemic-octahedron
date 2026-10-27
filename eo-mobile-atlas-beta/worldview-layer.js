@@ -71,8 +71,38 @@
   ];
   const themeFor=n=>THEMES.find(t=>t.n.includes(n));
 
+  // Developer note: guidance is referent-relative and follows the first-principles
+  // correction rule: preserve what is warranted, restore any materially relevant
+  // pressure that has lost warranted authority, and keep the stance corrigible.
+  const GUIDANCE={
+    Humanitarianism:'Keep the concern. Do not weaken it merely to look balanced. Instead, let feasibility, tradeoffs, consequences, scarcity, and implementation carry whatever authority the situation warrants. A humane aim becomes better when the realities required to realize it are allowed to correct it.',
+    Sentimentalism:'Do not treat humane appearance or good intention as enough. Ask what must actually be true for the intended welfare to occur, and let feasibility, tradeoffs, and consequences change the judgment when they materially bear on it.',
+    Moralism:'Do not use moral seriousness to disqualify practical correction. A constraint objection is not answered by questioning the objector’s compassion. Let feasibility and consequences count even when they threaten a valued moral picture.',
+    Pragmatism:'Keep what actually works in view, but ask whether the result should count as success once the people affected by it are fully included. Efficiency and feasibility are means; they do not by themselves settle what outcome is worth achieving.',
+    Instrumentalism:'Treat people, relationships, institutions, and processes as more than means whenever their welfare is materially relevant. A functioning system is not yet a good system if its human costs have been excluded from the definition of success.',
+    Expediency:'Do not let necessity become self-justifying. Reopen the question of who bears the cost and whether the objective remains worth achieving in that way. Effectiveness must remain answerable to affected welfare.',
+    Contextualism:'Keep context, motive, proportion, implication, and the larger picture in view, but require the interpretation to remain constrained by what is actually supported. A broader explanation earns authority only to the extent the information can bear it.',
+    Narrativism:'Do not let coherence finish the judgment. Separate what the story explains from what the information establishes, and allow missing or contrary information to break the narrative rather than being absorbed by it.',
+    'Narrative Dogmatism':'Give contrary information permission to change the explanatory frame itself. If every objection can be reinterpreted as support for the same narrative, the narrative is no longer being governed by reality.',
+    Empiricism:'Keep evidence primary where evidence should lead, but ask what the evidence means here, in proportion, with its limits, implications, and application. More information does not remove the need for contextual judgment.',
+    Literalism:'Do not assume that an accurate statement, rule, measurement, or classification applies itself. Ask what changes when circumstance, scale, exception, purpose, and consequence are included.',
+    Doctrinalism:'Allow context to revise how accepted propositions apply. Precision is not preserved by forcing every case into an inherited classification when the case itself supplies materially relevant differences.',
+    Humanism:'Preserve concern for people and human meaning, but require the vision to survive factual and practical correction. Meaningfulness and moral importance do not by themselves establish what is true or what will work.',
+    Idealism:'Do not let the desirability or coherence of an ideal settle whether it is grounded or viable. Ask what information supports it, what conditions it requires, and what actually happens when it is implemented.',
+    Utopianism:'Do not protect a morally compelling vision from the facts or constraints that threaten it. If failure can always be blamed on insufficient commitment, the ideal has stopped learning from reality.',
+    Realism:'Keep incentives, tradeoffs, power, motives, and limits in view, but do not confuse what is common with what is necessary, or what is effective with what is acceptable. Direct information and affected welfare must still be able to correct the hard reading.',
+    Cynicism:'Treat suspicion as a hypothesis, not a verdict. Look for information that could distinguish bad faith from good faith, and let genuine welfare, principle, trust, or cooperation count when reality supports them.',
+    Machiavellianism:'Do not let strategic effectiveness or distrust exempt the stance from truth and welfare. People are not merely variables to be managed; information and human cost must retain authority even when they complicate the strategy.',
+    Rationalism:'Keep clarity, mechanism, explicit reasoning, and feasibility, but actively look for materially relevant realities that the model does not represent well. What is difficult to formalize can still be real and governing.',
+    Technicism:'Do not assume a technical solution has solved the human problem. Ask what the metric leaves out, whose experience is not represented, and whether optimizing the proxy actually improves the thing the proxy was meant to track.',
+    Reductionism:'Let excluded reality challenge the model instead of being dismissed as noise. A simpler account is better only while it continues to preserve everything materially relevant to the judgment.',
+    'Empirical Humanism':'Keep both the evidence and the concern, but do not jump from “this harm is real” to “therefore this remedy follows.” Context, feasibility, tradeoffs, and downstream consequences must be able to revise the response without erasing the underlying concern.',
+    'Moral Literalism':'Do not treat a true principle or rule as self-applying. Preserve the moral fact while asking how context, competing goods, feasibility, and consequence determine what faithful application requires here.',
+    Fundamentalism:'Separate truth commitment from the need to protect the doctrine. A belief is not made truer by making doubt immoral; allow context, information, consequence, and practical reality to correct both interpretation and application.'
+  };
+
   const style=document.createElement('style');
-  style.textContent=`.eo-worldview-old{display:none!important}.eo-worldview-paper{margin:8px 0 4px;color:var(--text,#0f172a)}.eo-worldview-paper *{box-sizing:border-box}.eo-worldview-paper h2{margin:0;font-size:21px;line-height:1.12;letter-spacing:-.025em;color:var(--wv-name-color,var(--text,#0f172a))}.eo-worldview-coordinate{margin:4px 0 12px;font-size:10.5px;color:var(--muted,#64748b);font-variant-numeric:tabular-nums}.eo-worldview-prose p{margin:0 0 10px;font-size:13px;line-height:1.56}.eo-worldview-prose p:first-child{font-size:14px;line-height:1.52}.eo-worldview-structure{border-top:1px solid var(--border,#e2e8f0);margin-top:12px}.eo-worldview-structure>summary{cursor:pointer;list-style:none;padding:10px 1px;font-size:11px;font-weight:800;color:var(--muted,#475569)}.eo-worldview-structure>summary::-webkit-details-marker{display:none}.eo-worldview-structure>summary::after{content:'+';float:right;font-size:14px;font-weight:500}.eo-worldview-structure[open]>summary::after{content:'–'}.eo-worldview-structure-body{padding:0 1px 10px;font-size:11.5px;line-height:1.55}.eo-worldview-structure-body p{margin:0 0 8px}@media(max-width:520px){.eo-worldview-paper h2{font-size:20px}.eo-worldview-prose p{font-size:12.75px}.eo-worldview-prose p:first-child{font-size:13.5px}}`;
+  style.textContent=`.eo-worldview-old{display:none!important}.eo-worldview-paper{margin:8px 0 4px;color:var(--text,#0f172a)}.eo-worldview-paper *{box-sizing:border-box}.eo-worldview-paper h2{margin:0;font-size:21px;line-height:1.12;letter-spacing:-.025em;color:var(--wv-name-color,var(--text,#0f172a))}.eo-worldview-coordinate{margin:4px 0 12px;font-size:10.5px;color:var(--muted,#64748b);font-variant-numeric:tabular-nums}.eo-worldview-prose p{margin:0 0 10px;font-size:13px;line-height:1.56}.eo-worldview-prose p:first-child{font-size:14px;line-height:1.52}.eo-worldview-guidance{border-top:1px solid var(--border,#e2e8f0);margin-top:12px}.eo-worldview-guidance>summary{cursor:pointer;list-style:none;padding:10px 1px;font-size:11px;font-weight:800;color:var(--muted,#475569)}.eo-worldview-guidance>summary::-webkit-details-marker{display:none}.eo-worldview-guidance>summary::after{content:'+';float:right;font-size:14px;font-weight:500}.eo-worldview-guidance[open]>summary::after{content:'–'}.eo-worldview-guidance-body{padding:0 1px 10px;font-size:11.5px;line-height:1.55}.eo-worldview-guidance-body p{margin:0 0 8px}@media(max-width:520px){.eo-worldview-paper h2{font-size:20px}.eo-worldview-prose p{font-size:12.75px}.eo-worldview-prose p:first-child{font-size:13.5px}}`;
   (document.head||document.documentElement).appendChild(style);
 
   const host=()=>document.getElementById('worldviewPanel');
@@ -109,7 +139,7 @@
   };
 
   const accountability=y=>{
-    if(near(y,0))return 'The stance is fully formed at the accountability midpoint. Relevant counterpressures have not been fully integrated, but they have not yet been shut out from consideration either.';
+    if(near(y,0))return 'The judgment is fully formed, but relevant counterpressures have neither been fully integrated nor shut out. What has been left out can still matter, but it has not yet been given its warranted place in the judgment.';
     if(y>=.8)return 'Reality retains very strong corrective authority. The remaining one-sidedness is narrow and readily revisable, but it still keeps this position below Maturity.';
     if(y>=.6)return 'Answerability clearly governs. Contradiction, failed consequences, neglected welfare, practical impossibility, or missing context can still reorganize the worldview rather than merely being explained away.';
     if(y>=.4)return 'The stance remains corrigible, though its preferred way of judging has enough weight to bias the conclusion before all relevant pressures have been integrated.';
@@ -119,14 +149,29 @@
     if(y<=-.6)return 'Insulation clearly governs. Contradiction, harm, failed prediction, or counterpressure can increasingly be absorbed without forcing genuine revision.';
     if(y<=-.4)return 'The worldview is becoming self-protecting. Missing pressures are increasingly recoded as irrelevant, hostile, naive, immoral, subjective, or otherwise unfit to change the conclusion.';
     if(y<=-.2)return 'Insulation has gained the advantage. Reality can still make contact, but the existing stance increasingly controls the terms under which correction is allowed to count.';
-    return 'The stance has just crossed below the accountability midpoint. Counterpressure still appears, but it is beginning to lose authority to reorganize the judgment.';
+    return 'The stance has begun protecting itself from correction. Counterpressure can still appear, but it is starting to lose the authority to reorganize the judgment.';
   };
 
-  const structure=p=>{
-    const purpose=near(p[0],0)?'Purpose is not pulled toward either affected welfare or practical constraint.':p[0]>0?'Purpose leans toward affected welfare over practical constraint.':'Purpose leans toward practical constraint over affected welfare.';
-    const acc=near(p[1],0)?'Accountability is at the midpoint.':p[1]>0?'Accountability leans toward answerability.':'Accountability leans toward insulation.';
-    const meaning=near(p[2],0)?'Meaning is not pulled toward either context or information.':p[2]>0?'Meaning leans toward contextual interpretation over informational grounding.':'Meaning leans toward informational grounding over contextual interpretation.';
-    return[purpose,acc,meaning];
+  const correctionGuidance=y=>{
+    if(y>=.67)return 'Because the stance remains strongly corrigible, the task is mainly integrative: do not weaken what is already warranted. Let the neglected pressure change only what it genuinely bears on, while preserving everything that survives correction.';
+    if(y>=.34)return 'Use contradiction, consequences, and new information as tests rather than threats. When they materially bear on the referent, let them alter the judgment without discarding what remains supported.';
+    if(y>0)return 'Before increasing confidence, actively seek the strongest materially relevant counterpressure. The stance is still correctable, but its present preference is strong enough that uninvited correction may arrive too late.';
+    if(near(y,0))return 'Do not let the present judgment close the question. Deliberately bring in the materially relevant pressure it leaves out before treating the conclusion as settled.';
+    if(y>-.34)return 'First stop filtering correction through the need to preserve the stance. Let a materially relevant objection count on its own terms before deciding whether it fails.';
+    if(y>-.67)return 'Restore correction before refining the conclusion. Ask what evidence, consequence, welfare effect, constraint, or context would genuinely be allowed to change the judgment, then give that reality real authority to do so.';
+    return 'Treat self-protection as the immediate problem. If every contradiction can be reclassified, explained away, or moralized, first create a condition under which some materially relevant reality can actually defeat part of the stance.';
+  };
+
+  const guidance=(p,n)=>{
+    if(n==='Maturity')return[
+      'Keep reality in charge. Strong emphasis on welfare, practicality, information, or interpretation is compatible with maturity so long as every materially relevant counterpart still retains the authority it warrants. Corrigibility does not require weak conviction: preserve the judgment when reality supports it, qualify it when reality qualifies it, revise it when reality revises it, and abandon it when reality defeats it.',
+      'Do not manufacture balance for its own sake. Maturity at (0, 1, 0) is not equal weighting; it is complete integration relative to the referent, with nothing materially relevant neglected, distorted, exaggerated, or insulated from correction.'
+    ];
+    if(n==='Collapse')return[
+      'Begin by restoring the possibility of correction. Identify what materially relevant evidence, consequence, welfare effect, constraint, or context would be allowed to change the stance, and grant it genuine authority to do so. A worldview cannot move toward maturity while it decides in advance that nothing outside its present organization can count against it.',
+      'Once correction is possible again, preserve whatever remains valid and rebuild the judgment by reintegrating the realities it had excluded, neutralized, or explained away.'
+    ];
+    return[GUIDANCE[n],correctionGuidance(p[1])];
   };
 
   const card=p=>{
@@ -136,8 +181,8 @@
     else if(n==='Collapse')paras=[PAPER.Collapse.d,'Contradiction, harm, failure, evidence, and consequence can still be encountered, but they no longer retain reliable authority to reorganize the worldview.'];
     else if(ex===n)paras=[PAPER[n].d,accountability(p[1])];
     else {const [a,b]=emphasis(p,t);paras=[a,accountability(p[1]),b];}
-    const s=structure(p);
-    return `<article class="eo-worldview-paper" data-point="${esc(cfmt(p))}" style="--wv-name-color:${esc(yColor(p[1]))}"><h2>${esc(n)}</h2><div class="eo-worldview-coordinate">${esc(cfmt(p))}</div><div class="eo-worldview-prose">${paras.map(v=>`<p>${esc(v)}</p>`).join('')}</div><details class="eo-worldview-structure"><summary>Structure</summary><div class="eo-worldview-structure-body">${s.map(v=>`<p>${esc(v)}</p>`).join('')}<p>Only Maturity at (0, 1, 0) is structurally mature. Strong concern, practicality, information, or interpretation is not itself a defect; the problem begins when a materially relevant counterpart loses the authority it should have over the judgment.</p><p>The coordinate describes the declared referent. A bounded stance does not by itself establish the whole person&#39;s worldview.</p></div></details></article>`;
+    const g=guidance(p,n);
+    return `<article class="eo-worldview-paper" data-point="${esc(cfmt(p))}" style="--wv-name-color:${esc(yColor(p[1]))}"><h2>${esc(n)}</h2><div class="eo-worldview-coordinate">${esc(cfmt(p))}</div><div class="eo-worldview-prose">${paras.map(v=>`<p>${esc(v)}</p>`).join('')}</div><details class="eo-worldview-guidance"><summary>Guidance</summary><div class="eo-worldview-guidance-body">${g.map(v=>`<p>${esc(v)}</p>`).join('')}</div></details></article>`;
   };
 
   let queued=false;
