@@ -36,7 +36,13 @@
   R.doctrineHtml=p=>{
     const [name,text]=nearestDoctrine(p);
     const coord=pointValid(p)?cfmt(p):'—';
-    return `<section class="stone-ref-section"><article class="stone-current-card"><h2>${esc(name)}</h2><div class="stone-current-coordinate">${esc(coord)}</div><p>${esc(text)}</p></article></section>`;
+    const current=`<article class="stone-current-card"><h2>${esc(name)}</h2><div class="stone-current-coordinate">${esc(coord)}</div><p>${esc(text)}</p></article>`;
+    const items=D.DOCTRINES.map(d=>{
+      const hit=d.name===name;
+      const short=DOCS[d.name]?.t||d.verdict||d.text;
+      return `<details class="stone-item${hit?' stone-match':''}"${hit?' open':''}><summary><span>${esc(d.name)}</span></summary><div class="stone-item-body"><p>${esc(short)}</p></div></details>`;
+    }).join('');
+    return `<section class="stone-ref-section">${current}<div class="stone-list">${items}</div></section>`;
   };
 
   const SEMANTICS=[
