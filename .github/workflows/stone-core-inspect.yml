@@ -7,15 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Decode core and print camera/state neighborhoods
-        shell: bash
+      - name: Decode core and inspect native camera functions
         run: |
           cat philosophers-stone-atlas/core.01.b64 philosophers-stone-atlas/core.02.b64 philosophers-stone-atlas/core.03.b64 philosophers-stone-atlas/core.04.b64 philosophers-stone-atlas/core.05a.b64 philosophers-stone-atlas/core.05b.b64 philosophers-stone-atlas/core.06.b64 philosophers-stone-atlas/core.07.b64 philosophers-stone-atlas/core.08.b64 | tr -d '\n\r' | base64 -d | gzip -dc > /tmp/core.html
-          echo '=== camera/view identifiers ==='
-          grep -nE 'camera|Camera|rotation|quaternion|viewPreset|viewButtons|snap|zoom|Orbit|controls|octaGroup|coord-x|coord-y|coord-z|setCoordinate|setView|lookAt' /tmp/core.html | head -n 220 || true
-          echo '=== state declarations ==='
-          grep -nE 'const state|let state|uiMode|targetRotation|rotationTarget|cameraTarget|viewState' /tmp/core.html | head -n 160 || true
-          echo '=== context around octaGroup ==='
-          grep -n -B 15 -A 45 'octaGroup' /tmp/core.html | head -n 260 || true
-          echo '=== context around coordinate inputs ==='
-          grep -n -B 20 -A 55 "coord-x" /tmp/core.html | head -n 260 || true
+          sed -n '812,890p' /tmp/core.html
+          sed -n '1000,1160p' /tmp/core.html
+          sed -n '1780,1875p' /tmp/core.html
+          sed -n '1920,1960p' /tmp/core.html
+          sed -n '2140,2210p' /tmp/core.html
+          sed -n '2285,2330p' /tmp/core.html
+          sed -n '2610,2785p' /tmp/core.html
+          sed -n '2835,2870p' /tmp/core.html
+          sed -n '2940,3020p' /tmp/core.html
+          sed -n '3200,3330p' /tmp/core.html
