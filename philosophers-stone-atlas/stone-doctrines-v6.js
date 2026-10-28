@@ -8,7 +8,7 @@
   const DOCTRINES={
     Nihilism:{
       mature:false,
-      text:'Cannot be mature in the strong existential form used here. Treating the absence of given meaning as the absence of meaning itself lets informational absence settle interpretation, so full integration is impossible while that thesis is retained.',
+      text:'In the strong existential form used here, the absence of given meaning is treated as the absence of meaning itself. An informational negative is made to settle the interpretive question, so contextual meaning is excluded while that thesis is retained.',
       region:{
         label:'Knowledge-dominant nihilist corridor',
         radius:.10,
@@ -17,23 +17,23 @@
     },
     Existentialism:{
       mature:true,
-      text:'Can be mature. The claim that meaning or essence is not simply given does not require excluding welfare, constraint, evidence, context, or correction. An existentialist stance can therefore reach Maturity.'
+      text:'The claim that meaning or essence is not simply given does not require excluding welfare, constraint, evidence, context, or correction. Created or chosen meaning can remain fully answerable to reality.'
     },
     Stoicism:{
       mature:true,
-      text:'Can be mature. Acceptance of constraint and disciplined response do not inherently exclude affected welfare, context, evidence, or correction. Stoicism becomes immature only when those are suppressed.'
+      text:'Acceptance of constraint and disciplined response do not inherently exclude affected welfare, context, evidence, or correction. Distortion begins only when those pressures are suppressed.'
     },
     Utilitarianism:{
       mature:true,
-      text:'Can be mature. Consequences and affected welfare may lead the judgment while feasibility, evidence, context, uncertainty, and correction still retain the authority they warrant.'
+      text:'Consequences and affected welfare may lead the judgment while feasibility, evidence, context, uncertainty, and correction still retain the authority they warrant.'
     },
     Deontology:{
       mature:true,
-      text:'Can be mature. A duty or rule can remain fully answerable to circumstance, competing duties, welfare, feasibility, evidence, and correction rather than being treated as self-applying.'
+      text:'A duty or rule can remain fully answerable to circumstance, competing duties, welfare, feasibility, evidence, and correction rather than being treated as self-applying.'
     },
     'Moral relativism':{
       mature:false,
-      text:'Cannot be mature in the strong form used here. If contextual variation is taken to mean that shared reality cannot supply cross-context moral correction, interpretation is granted authority that informational grounding and correction are not allowed to defeat.',
+      text:'In the strong form used here, contextual variation is taken to mean that shared reality cannot supply cross-context moral correction. Interpretation is therefore granted authority that informational grounding and correction are not allowed to defeat.',
       region:{
         label:'Context-dominant relativist corridor',
         radius:.10,
@@ -42,7 +42,7 @@
     },
     Solipsism:{
       mature:false,
-      text:'Cannot be mature in the strong epistemic form used here. If independent reality is defined so that external evidence can never genuinely count against the thesis, the stance structurally withholds corrective authority from reality.',
+      text:'In the strong epistemic form used here, independent reality is defined so that external evidence can never genuinely count against the thesis. The stance therefore withholds corrective authority from reality.',
       region:{
         label:'Insulated interpretation region',
         radius:.085,
@@ -51,11 +51,11 @@
     },
     Skepticism:{
       mature:true,
-      text:'Can be mature. Provisional doubt is fully compatible with answerability when confidence tracks available evidence and new evidence can update the stance.'
+      text:'Provisional doubt remains answerable when confidence tracks available evidence and new evidence can update the stance.'
     },
     Hedonism:{
       mature:false,
-      text:'Cannot be mature in the strong sole-good form used here. If pleasure alone is sufficient to settle value, one welfare signal is made authoritative over other materially relevant welfare, constraint, information, context, and correction.',
+      text:'In the strong sole-good form used here, pleasure alone is sufficient to settle value. One welfare signal is therefore made authoritative over other materially relevant welfare, constraint, information, context, and correction.',
       region:{
         label:'Pleasure-dominant welfare corridor',
         radius:.10,
@@ -64,7 +64,7 @@
     },
     Determinism:{
       mature:true,
-      text:'Can be mature. Whether events are determined is a content thesis about reality; it does not inherently exclude welfare, agency-relevant context, evidence, practical constraint, or correction.'
+      text:'Whether events are determined is a content thesis about reality; it does not inherently exclude welfare, agency-relevant context, evidence, practical constraint, or correction.'
     }
   };
 
@@ -127,10 +127,9 @@
     const items=D.DOCTRINES.map(d=>{
       const def=DOCTRINES[d.name]||{mature:true,text:d.verdict||d.text};
       const open=openDoctrine===d.name;
-      const status=def.mature?'Can be mature':'Cannot be mature';
       const region=REGIONS[d.name];
       const regionText=region?`Approximate Stone region: ${region.label}.`:'';
-      return `<details class="stone-item stone-doctrine-item" data-doctrine="${esc(d.name)}"${open?' open':''}><summary><span>${esc(d.name)}</span><small>${esc(status)}</small></summary><div class="stone-item-body"><p>${esc(def.text)}</p>${regionText?`<p class="stone-region-note">${esc(regionText)}</p>`:''}</div></details>`;
+      return `<details class="stone-item stone-doctrine-item" data-doctrine="${esc(d.name)}"${open?' open':''}><summary><span>${esc(d.name)}</span></summary><div class="stone-item-body"><p>${esc(def.text)}</p>${regionText?`<p class="stone-region-note">${esc(regionText)}</p>`:''}</div></details>`;
     }).join('');
     return `<section class="stone-ref-section"><div class="stone-list">${items}</div></section>`;
   };
