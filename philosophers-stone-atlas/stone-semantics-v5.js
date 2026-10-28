@@ -46,10 +46,10 @@
   };
 
   const SEMANTICS=[
-    {name:'Empathy',coord:[1,0,0],text:'Concern for affected welfare develops through experiencing suffering and welfare consequence. On its signed relation it tugs against real-world constraint, forming the purpose of a judgment.'},
-    {name:'Practicality',coord:[-1,0,0],text:'Real-world constraint develops through experiencing consequence: what reality permits, prevents, requires, costs, or makes possible. On its signed relation it tugs against concern for affected welfare, forming the purpose of a judgment.'},
-    {name:'Wisdom',coord:[0,0,1],text:'Contextual interpretation develops through experiencing complexity: proportion, circumstance, implication, exception, and application. On its signed relation it tugs against informational grounding, forming the meaning of a judgment.'},
-    {name:'Knowledge',coord:[0,0,-1],text:'Informational grounding develops through experiencing evidence: what is known, unknown, supported, doubtful, or established. On its signed relation it tugs against contextual interpretation, forming the meaning of a judgment.'},
+    {name:'Empathy',coord:[1,0,0],view:'top',distance:5.25,text:'Concern for affected welfare develops through experiencing suffering and welfare consequence. On its signed relation it tugs against real-world constraint, forming the purpose of a judgment.'},
+    {name:'Practicality',coord:[-1,0,0],view:'top',distance:5.25,text:'Real-world constraint develops through experiencing consequence: what reality permits, prevents, requires, costs, or makes possible. On its signed relation it tugs against concern for affected welfare, forming the purpose of a judgment.'},
+    {name:'Wisdom',coord:[0,0,1],view:'top',distance:5.25,text:'Contextual interpretation develops through experiencing complexity: proportion, circumstance, implication, exception, and application. On its signed relation it tugs against informational grounding, forming the meaning of a judgment.'},
+    {name:'Knowledge',coord:[0,0,-1],view:'top',distance:5.25,text:'Informational grounding develops through experiencing evidence: what is known, unknown, supported, doubtful, or established. On its signed relation it tugs against contextual interpretation, forming the meaning of a judgment.'},
     {name:'Entity',text:'The organized subject being situated: a person, group, organization, institution, or other coherent subject.'},
     {name:'Referent',text:'The relevant reality within which that entity is being situated. Changing the referent changes the scope of the assessment.'},
     {name:'Orientation',text:'Φ(q, r) = (x, y, z): the entity–referent relation inside the Stone.'},
@@ -60,15 +60,15 @@
     {name:'Development',text:'L1 = |x| + |y| + |z|. The interior represents developing orientation; the surface represents a formed stance.'},
     {name:'Experience',text:'L2 = √(x² + y² + z²): the direct Euclidean magnitude of the same orientation.'},
     {name:'Stance',text:'A formed orientation on the surface |x| + |y| + |z| = 1.'},
-    {name:'Prejudice',plot:'equator',text:'At y = 0, judgment is formed before materially relevant purpose and meaning pressures have been fully integrated.'},
-    {name:'Maturity',coord:[0,1,0],text:'Complete purpose and meaning integration under maximal answerability to reality.'},
-    {name:'Collapse',coord:[0,-1,0],text:'Maximal insulation: materially relevant reality no longer retains corrective authority over the organized whole.'},
-    {name:'Reality-friction',plot:'equator',text:'Pressure produced when reality presents a materially relevant counterpart that a one-sided stance has not integrated.'},
+    {name:'Prejudice',plot:'equator',view:'side',distance:4.25,text:'At y = 0, judgment is formed before materially relevant purpose and meaning pressures have been fully integrated.'},
+    {name:'Maturity',coord:[0,1,0],view:'top',distance:4.25,text:'Complete purpose and meaning integration under maximal answerability to reality.'},
+    {name:'Collapse',coord:[0,-1,0],view:'side',distance:4.25,text:'Maximal insulation: materially relevant reality no longer retains corrective authority over the organized whole.'},
+    {name:'Reality-friction',plot:'equator',view:'side',distance:4.25,text:'Pressure produced when reality presents a materially relevant counterpart that a one-sided stance has not integrated.'},
     {name:'Realization',text:'Further reality becomes materially apparent and can expand the referent from r to r′, requiring the entity to be situated again.'},
-    {name:'Epistemic freedom',coord:[0,1,0],text:'Reality-governed authorship: strong judgment without surrendering correction to identity, status, ideology, fear, or interest.'}
+    {name:'Epistemic freedom',coord:[0,1,0],view:'top',distance:4.25,text:'Reality-governed authorship: strong judgment without surrendering correction to identity, status, ideology, fear, or interest.'}
   ];
 
-  R.renderSemantics=()=>`<div class="stone-semantics-inner"><header><h1>Semantics</h1></header><div class="stone-semantics-grid stone-semantics-v5">${SEMANTICS.map(s=>`<details class="stone-semantic-item"${s.coord?` data-coordinate="${s.coord.join(',')}"`:''}${s.plot?` data-plot="${s.plot}"`:''}><summary>${esc(s.name)}</summary><p>${esc(s.text)}</p></details>`).join('')}</div></div>`;
+  R.renderSemantics=()=>`<div class="stone-semantics-inner"><header><h1>Semantics</h1></header><div class="stone-semantics-grid stone-semantics-v5">${SEMANTICS.map(s=>`<details class="stone-semantic-item"${s.coord?` data-coordinate="${s.coord.join(',')}"`:''}${s.plot?` data-plot="${s.plot}"`:''}${s.view?` data-view="${s.view}"`:''}${Number.isFinite(s.distance)?` data-distance="${s.distance}"`:''}><summary>${esc(s.name)}</summary><p>${esc(s.text)}</p></details>`).join('')}</div></div>`;
 
   const style=document.createElement('style');
   style.textContent=`
@@ -95,6 +95,13 @@
     return lateral>1e-8?[x/lateral,0,z/lateral]:[1,0,0];
   };
 
+  const requestView=details=>{
+    const view=details.dataset.view;
+    if(!view||!window.STONE_VIEW?.request) return;
+    const distance=Number(details.dataset.distance);
+    window.STONE_VIEW.request(view,Number.isFinite(distance)?distance:undefined);
+  };
+
   document.addEventListener('click',e=>{
     if(e.target.closest?.('#stoneSemanticsTab')){
       setTimeout(()=>{const plotPanel=document.getElementById('plotPanel');if(plotPanel)plotPanel.hidden=true;},0);
@@ -111,6 +118,7 @@
     if(details.dataset.coordinate) coord=details.dataset.coordinate.split(',').map(Number);
     else if(details.dataset.plot==='equator') coord=equatorPoint();
     if(coord) setTimeout(()=>setPoint(coord),0);
+    requestView(details);
   },true);
 
   const POLES={E:'concern',P:'constraint',W:'context',K:'information'};
