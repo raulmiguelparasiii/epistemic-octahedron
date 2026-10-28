@@ -86,6 +86,7 @@
     return false;
   };
 
+  // Fallback sampler retained in case the continuous mesh path is unavailable.
   let samples=null;
   const surfaceSamples=()=>{
     if(samples) return samples;
@@ -116,11 +117,59 @@
     return pts;
   };
 
+  // Continuous surface approximation. A triangle is retained only if all three
+  // of its vertices satisfy the doctrine predicate, so the visual errs inward
+  // rather than painting outside the region. N=64 gives a ~0.016 surface step.
+  const meshCache=new Map();
+  const regionTriangles=name=>{
+    if(meshCache.has(name)) return meshCache.get(name);
+    const spec=REGIONS[name];
+    if(!spec){meshCache.set(name,[]);return [];}
+    const N=64,tris=[];
+    const signs=[-1,1];
+    const P=(sx,sy,sz,i,j)=>[sx*(i/N),sy*(j/N),sz*((N-i-j)/N)];
+    const keep=tri=>tri.every(p=>inRegion(p,spec));
+    for(const sx of signs){
+      for(const sy of signs){
+        for(const sz of signs){
+          for(let i=0;i<N;i++){
+            for(let j=0;j<N-i;j++){
+              const a=P(sx,sy,sz,i,j);
+              const b=P(sx,sy,sz,i+1,j);
+              const c=P(sx,sy,sz,i,j+1);
+              const t1=[a,b,c];
+              if(keep(t1)) tris.push(t1);
+              if(j<N-i-1){
+                const d=P(sx,sy,sz,i+1,j+1);
+                const t2=[b,d,c];
+                if(keep(t2)) tris.push(t2);
+              }
+            }
+          }
+        }
+      }
+    }
+    meshCache.set(name,tris);
+    return tris;
+  };
+
   let openDoctrine='';
-  const setOverlay=name=>window.STONE_VIEW?.setDoctrineRegion?.(name?regionPoints(name):[]);
+  const clearOverlay=()=>{
+    if(window.STONE_VIEW?.setDoctrineRegionMesh) window.STONE_VIEW.setDoctrineRegionMesh([]);
+    else window.STONE_VIEW?.setDoctrineRegion?.([]);
+  };
+  const setOverlay=name=>{
+    if(!name){clearOverlay();return;}
+    const tris=regionTriangles(name);
+    if(tris.length&&window.STONE_VIEW?.setDoctrineRegionMesh){
+      const ok=window.STONE_VIEW.setDoctrineRegionMesh(tris);
+      if(ok===true) return;
+    }
+    window.STONE_VIEW?.setDoctrineRegion?.(regionPoints(name));
+  };
   const clearSelection=()=>{
     openDoctrine='';
-    setOverlay('');
+    clearOverlay();
   };
 
   R.doctrineHtml=()=>{
@@ -144,7 +193,7 @@
       setTimeout(()=>{
         if(!details.open&&openDoctrine===name){
           openDoctrine='';
-          setOverlay('');
+          clearOverlay();
         }
       },0);
       return;
@@ -171,8 +220,14 @@
     DOCTRINES,
     REGIONS,
     regionPoints,
+    regionTriangles,
     inRegion,
     clear:clearSelection,
-    getState:()=>({openDoctrine,regionPointCount:openDoctrine?regionPoints(openDoctrine).length:0,mature:openDoctrine?DOCTRINES[openDoctrine]?.mature:null})
+    getState:()=>({
+      openDoctrine,
+      regionPointCount:openDoctrine?regionPoints(openDoctrine).length:0,
+      regionTriangleCount:openDoctrine?regionTriangles(openDoctrine).length:0,
+      mature:openDoctrine?DOCTRINES[openDoctrine]?.mature:null
+    })
   };
 })();
