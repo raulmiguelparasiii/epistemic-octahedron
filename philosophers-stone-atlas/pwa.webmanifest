@@ -1,0 +1,10 @@
+{
+  "name": "The Philosopher's Stone",
+  "short_name": "Stone",
+  "id": "./pwa.html",
+  "start_url": "./pwa.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc"
+}
