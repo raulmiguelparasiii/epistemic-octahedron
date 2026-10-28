@@ -1,0 +1,75 @@
+name: Stone doctrine bounded regions test
+
+on:
+  push:
+    branches: [stone-doctrine-bounded-test-20261028]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static validation
+        run: |
+          set -euo pipefail
+          node --check philosophers-stone-atlas/stone-doctrines-v6.js
+          grep -Fq "const N=128" philosophers-stone-atlas/stone-doctrines-v6.js
+          ! grep -Fq "Approximate Stone region:" philosophers-stone-atlas/stone-doctrines-v6.js
+      - name: Prepare browser harness
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.56.1 >/dev/null 2>&1
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)
+          test -n "$CHROME"
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
+      - name: Browser smoke test
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8000 >/tmp/stone-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          cat > /tmp/stone-bounded-test.js <<'NODE'
+          const assert=require('assert');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
+            const page=await browser.newPage({viewport:{width:390,height:844}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'domcontentloaded',timeout:30000});
+            const frame=page.frames().find(f=>f!==page.mainFrame());
+            assert(frame,'Stone iframe missing');
+            await frame.waitForFunction(()=>window.STONE_VIEW&&window.STONE_DOCTRINES_V6&&document.querySelector('.stone-ref-option[data-ref="doctrines"]'),null,{timeout:25000});
+            await frame.getByRole('button',{name:'Referent',exact:true}).click();
+            await frame.locator('.stone-ref-option[data-ref="doctrines"]').click();
+            await frame.waitForSelector('#stoneReferentContent .stone-doctrine-item');
+
+            const names=['Nihilism','Existentialism','Stoicism','Utilitarianism','Deontology','Moral relativism','Solipsism','Skepticism','Hedonism'];
+            assert.strictEqual(await frame.locator('#stoneReferentContent .stone-doctrine-item').count(),names.length,'Doctrine list should contain only bounded doctrines');
+            assert.strictEqual(await frame.locator('#stoneReferentContent .stone-doctrine-item[data-doctrine="Determinism"]').count(),0,'Determinism should be omitted');
+            assert.strictEqual(await frame.locator('#stoneReferentContent').getByText('Approximate Stone region:',{exact:false}).count(),0,'Region prose should be removed');
+
+            for(const name of names){
+              const item=frame.locator(`#stoneReferentContent .stone-doctrine-item[data-doctrine="${name}"]`).first();
+              await item.locator('summary').click();
+              await frame.waitForTimeout(90);
+              assert.strictEqual(await frame.locator('#stoneReferentContent .stone-doctrine-item[open]').count(),1,'Only one doctrine should be open');
+              const s=await frame.evaluate(()=>window.STONE_VIEW.getState());
+              const d=await frame.evaluate(()=>window.STONE_DOCTRINES_V6.getState());
+              assert.strictEqual(s.doctrineRegionVisible,true,`${name} should show a region`);
+              assert.strictEqual(s.doctrineRegionMode,'mesh',`${name} should use continuous mesh`);
+              assert(d.regionTriangleCount>0,`${name} should have non-empty triangle region`);
+              assert.strictEqual(s.pointerVisible,false,`${name} region should hide point marker`);
+            }
+
+            await frame.locator('.stone-ref-option[data-ref="communication"]').click();
+            await frame.waitForTimeout(100);
+            const end=await frame.evaluate(()=>window.STONE_VIEW.getState());
+            assert.strictEqual(end.doctrineRegionVisible,false,'Leaving Doctrines should clear region');
+            assert.strictEqual(end.pointerVisible,true,'Leaving Doctrines should restore marker');
+            if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
+            await browser.close();
+            console.log('Bounded doctrine regions smoke test passed.');
+          })().catch(err=>{console.error(err);process.exit(1)});
+          NODE
+          NODE_PATH="$PWD/node_modules" timeout 90s node /tmp/stone-bounded-test.js
