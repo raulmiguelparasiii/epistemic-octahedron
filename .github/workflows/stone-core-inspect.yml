@@ -1,4 +1,3 @@
-# Retest after capture-phase fix
 name: Stone core inspect
 on:
   push:
@@ -9,67 +8,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: stone-semantics-points-20261027
-      - name: Static validation
-        run: node --check philosophers-stone-atlas/stone-semantics-v5.js
-      - name: Prepare browser harness
+          ref: main
+      - name: Inspect native camera code
+        shell: bash
         run: |
-          npm init -y >/dev/null 2>&1
-          npm install playwright@1.56.1 >/dev/null 2>&1
-          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)
-          test -n "$CHROME"
-          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
-      - name: Browser smoke test
-        run: |
-          python3 -m http.server 8000 >/tmp/stone-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill $SERVER_PID || true' EXIT
-          cat > /tmp/stone-test.js <<'NODE'
-          const assert=require('assert');
-          const {chromium}=require('playwright');
-          const round=p=>p.map(v=>Math.round(v*1000)/1000);
-          (async()=>{
-            const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
-            const page=await browser.newPage({viewport:{width:390,height:844}});
-            const errors=[];
-            page.on('pageerror',e=>errors.push(String(e)));
-            await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'networkidle',timeout:30000});
-            const frame=page.frames().find(f=>f!==page.mainFrame());
-            assert(frame,'Stone iframe missing');
-            await frame.waitForSelector('#stoneSemanticsTab',{timeout:20000});
-            const getPoint=()=>frame.evaluate(()=>['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id).value)));
-            const item=name=>frame.locator('.stone-semantic-item').filter({has:frame.locator('summary',{hasText:name})}).first();
-
-            await frame.getByRole('button',{name:'Semantics',exact:true}).click();
-            await frame.waitForTimeout(100);
-            assert.strictEqual(await frame.$eval('#plotPanel',el=>el.hidden),true,'Plot leaked into Semantics');
-            assert.strictEqual(await frame.$eval('#stoneSemanticsPanel',el=>el.hidden),false,'Semantics panel hidden');
-
-            for(const [name,expected] of [
-              ['Empathy',[1,0,0]],['Practicality',[-1,0,0]],['Wisdom',[0,0,1]],['Knowledge',[0,0,-1]],
-              ['Absence',[0,0,0]],['Maturity',[0,1,0]],['Collapse',[0,-1,0]],['Epistemic freedom',[0,1,0]]
-            ]){
-              await item(name).locator('summary').click();
-              await frame.waitForTimeout(100);
-              assert.deepStrictEqual(round(await getPoint()),expected,`${name} plotted incorrectly`);
-              assert.strictEqual(await frame.locator('.stone-semantic-item[open]').count(),1,'More than one semantic stayed open');
-            }
-
-            await frame.evaluate(()=>window.postMessage({type:'set-profile',data:{data:{point:{x:.5,y:.5,z:0}}}},'*'));
-            await frame.waitForTimeout(50);
-            await item('Prejudice').locator('summary').click();
-            await frame.waitForTimeout(100);
-            assert.deepStrictEqual(round(await getPoint()),[1,0,0],'Prejudice did not project to y=0 surface');
-
-            await frame.evaluate(()=>window.postMessage({type:'set-profile',data:{data:{point:{x:0,y:.5,z:.5}}}},'*'));
-            await frame.waitForTimeout(50);
-            await item('Reality-friction').locator('summary').click();
-            await frame.waitForTimeout(100);
-            assert.deepStrictEqual(round(await getPoint()),[0,0,1],'Reality-friction did not project to y=0 surface');
-
-            if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
-            await browser.close();
-            console.log('Semantic plotting smoke test passed.');
-          })().catch(err=>{console.error(err);process.exit(1)});
-          NODE
-          NODE_PATH="$PWD/node_modules" node /tmp/stone-test.js
+          set -euo pipefail
+          cat philosophers-stone-atlas/core.01.b64 philosophers-stone-atlas/core.02.b64 philosophers-stone-atlas/core.03.b64 philosophers-stone-atlas/core.04.b64 philosophers-stone-atlas/core.05a.b64 philosophers-stone-atlas/core.05b.b64 philosophers-stone-atlas/core.06.b64 philosophers-stone-atlas/core.07.b64 philosophers-stone-atlas/core.08.b64 | tr -d '\n\r' | base64 -d | gzip -dc > /tmp/core.html
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('/tmp/core.html').read_text()
+          needles=['function startSoftSnap','function makeCanonicalQuat','snappedTopBottom','state.distance','softSnap','snapQuat','Top view','Side view','canonical']
+          for needle in needles:
+              print('\n===== ',needle,' =====')
+              start=0; count=0
+              while True:
+                  i=s.find(needle,start)
+                  if i<0 or count>=8: break
+                  lo=max(0,i-900); hi=min(len(s),i+1800)
+                  print(s[lo:hi].replace('\n',' '))
+                  print('\n---')
+                  start=i+len(needle); count+=1
+          PY
