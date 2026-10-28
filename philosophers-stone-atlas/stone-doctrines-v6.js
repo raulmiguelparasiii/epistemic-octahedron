@@ -5,71 +5,29 @@
   if(!R||!D) return;
   const {esc,pointValid}=R;
 
-  // A doctrine is shown here only when its defining commitment exposes a
-  // meaningfully bounded Stone region. Content theses that can honestly sit
-  // almost anywhere are omitted rather than being painted across most of the Stone.
+  // A doctrine appears here only when its defining commitment itself fixes a
+  // meaningfully bounded structural relation on the Stone. Mere emphasis is
+  // not displacement: broad doctrines that can preserve the full authority of
+  // their counterpart pressures are omitted rather than assigned a thematic area.
   const DOCTRINES={
     Nihilism:{
-      text:'In the strong existential form used here, the absence of given meaning is treated as the absence of meaning itself. An informational negative is made to settle the interpretive question, so contextual meaning is excluded while that thesis is retained.',
+      text:'Existential nihilism treats the absence of given or established meaning as sufficient to conclude that meaning itself is absent. The structural error is not "too much knowledge": an informational negative is allowed to complete the meaning relation, doing interpretive work that the information alone cannot settle.',
       region:{
-        radius:.095,
-        segments:[[[0,.45,-.55],[0,0,-1]],[[0,0,-1],[0,-.5,-.5]]]
-      }
-    },
-    Existentialism:{
-      text:'The claim that meaning or essence is not simply given shifts authority toward contextual interpretation and authored meaning. Its characteristic Stone region is therefore interpretation-heavy without requiring insulation from reality.',
-      region:{
-        radius:.11,
-        segments:[[[0,.55,.45],[0,0,1]]]
-      }
-    },
-    Stoicism:{
-      text:'Stoicism characteristically foregrounds real-world constraint: what can be controlled, accepted, endured, or acted upon. Its bounded region therefore sits on the constraint side while leaving room for answerability.',
-      region:{
-        radius:.11,
-        segments:[[[-.5,.5,0],[-1,0,0]]]
-      }
-    },
-    Utilitarianism:{
-      text:'Utilitarianism characteristically gives affected welfare and outcome a leading role in judgment. Its bounded region therefore sits on the welfare side, with mature use still requiring the other pressures to remain governing.',
-      region:{
-        radius:.11,
-        segments:[[[.5,.5,0],[1,0,0]]]
-      }
-    },
-    Deontology:{
-      text:'Deontology characteristically organizes judgment around duty, principle, and rule-like moral information. On the Stone this is best represented by the information-plus-moral-concern diagonal rather than by information alone.',
-      region:{
-        radius:.11,
-        segments:[[[1/3,1/3,-1/3],[.5,0,-.5]]]
+        radius:.075,
+        segments:[[[0,.5,-.5],[0,0,-1]],[[0,0,-1],[0,-.5,-.5]]]
       }
     },
     'Moral relativism':{
-      text:'In the strong form used here, contextual variation is taken to mean that shared reality cannot supply cross-context moral correction. Interpretation is therefore granted authority that informational grounding and correction are not allowed to defeat.',
+      text:'In the strong form used here, contextual variation is allowed to settle moral meaning in a way that shared reality cannot ultimately defeat. Context therefore becomes sufficient before common informational grounding has completed the judgment, and in the insulated form contrary evidence is reinterpreted through the context rather than permitted to correct it.',
       region:{
-        radius:.095,
+        radius:.075,
         segments:[[[0,0,1],[0,-.5,.5]]]
       }
     },
     Solipsism:{
-      text:'In the strong epistemic form used here, independent reality is defined so that external evidence can never genuinely count against the thesis. The stance therefore occupies a narrow interpretation-heavy, insulated region.',
+      text:'Solipsism is primarily an accountability failure. Relative to claims about an independent external reality, the doctrine denies that such reality can acquire independent corrective standing against the stance. Its Stone signature is therefore collapse-adjacent rather than interpretation-dominant: the defining loss is the authority of the referent to correct the belief from outside the belief-system itself.',
       region:{
-        radius:.08,
-        segments:[[[0,-.2,.8],[0,-.55,.45]],[[0,-.55,.45],[0,-.7,.3]]]
-      }
-    },
-    Skepticism:{
-      text:'Skepticism characteristically foregrounds informational grounding, uncertainty, and evidential restraint. Its bounded region therefore sits on the information side while remaining open to correction.',
-      region:{
-        radius:.11,
-        segments:[[[0,.55,-.45],[0,0,-1]]]
-      }
-    },
-    Hedonism:{
-      text:'In the strong sole-good form used here, pleasure alone is sufficient to settle value. One welfare signal is therefore made authoritative over other materially relevant welfare, constraint, information, context, and correction.',
-      region:{
-        radius:.10,
-        segments:[[[.5,.5,0],[1,0,0]],[[1,0,0],[.5,-.5,0]]]
+        yMax:-.68
       }
     }
   };
@@ -87,6 +45,8 @@
   };
   const inRegion=(p,spec)=>{
     if(!spec||!surfacePoint(p)) return false;
+    if(Number.isFinite(spec.yMax)&&p[1]<=spec.yMax) return true;
+    if(Number.isFinite(spec.yMin)&&p[1]>=spec.yMin) return true;
     if(spec.centers?.some(c=>dist(p,c)<=spec.radius)) return true;
     if(spec.segments?.some(([a,b])=>segmentDistance(p,a,b)<=spec.radius)) return true;
     return false;
