@@ -42,13 +42,28 @@
       new THREE.BufferGeometry().setFromPoints(equatorPoints),
       new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.28, depthTest: true })
     );
-    octaGroup.add(stoneEquatorLine);`;
+    octaGroup.add(stoneEquatorLine);
+
+    const stoneDoctrineRegionMaterial = new THREE.PointsMaterial({
+      color:0xdc2626,
+      size:0.05,
+      transparent:true,
+      opacity:0.72,
+      depthTest:true,
+      depthWrite:false,
+      sizeAttenuation:true
+    });
+    const stoneDoctrineRegion = new THREE.Points(new THREE.BufferGeometry(),stoneDoctrineRegionMaterial);
+    stoneDoctrineRegion.visible=false;
+    stoneDoctrineRegion.renderOrder=9;
+    octaGroup.add(stoneDoctrineRegion);`;
         if(!core.includes(equatorAnchor)) throw new Error('Equator anchor was not found.');
         core=core.replace(equatorAnchor,equatorNamed);
 
         const viewAnchor='buildCanonicalViews();';
         const viewBridge=`buildCanonicalViews();
     let stonePrejudicePresentation=false;
+    let stoneDoctrinePresentation=false;
     window.STONE_VIEW={
       request(view,distance){
         let quat=null;
@@ -76,10 +91,28 @@
       setPrejudice(active){
         const on=!!active;
         stonePrejudicePresentation=on;
-        pointerMarker.visible=!on && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
+        pointerMarker.visible=!on && !stoneDoctrinePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
         stoneEquatorLine.material.color.setHex(on?0xdc2626:0x94a3b8);
         stoneEquatorLine.material.opacity=on?0.9:0.28;
         stoneEquatorLine.material.needsUpdate=true;
+        invalidateRender();
+      },
+      setDoctrineRegion(points){
+        const clean=Array.isArray(points)?points.filter(p=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)):[];
+        stoneDoctrinePresentation=clean.length>0;
+        const positions=[];
+        for(const raw of clean){
+          const p=new THREE.Vector3(raw[0],raw[1],raw[2]);
+          const n=getOctaSurfaceNormal(p);
+          p.addScaledVector(n,0.012);
+          positions.push(p.x,p.y,p.z);
+        }
+        const geometry=new THREE.BufferGeometry();
+        if(positions.length) geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+        stoneDoctrineRegion.geometry.dispose();
+        stoneDoctrineRegion.geometry=geometry;
+        stoneDoctrineRegion.visible=stoneDoctrinePresentation;
+        pointerMarker.visible=!stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
         invalidateRender();
       },
       getState(){
@@ -90,6 +123,8 @@
           pointerVisible:pointerMarker.visible,
           equatorColor:'#'+stoneEquatorLine.material.color.getHexString(),
           equatorOpacity:stoneEquatorLine.material.opacity,
+          doctrineRegionVisible:stoneDoctrineRegion.visible,
+          doctrineRegionPointCount:stoneDoctrineRegion.geometry.getAttribute('position')?.count||0,
           orientation:[state.orientation.x,state.orientation.y,state.orientation.z,state.orientation.w]
         };
       }
@@ -98,11 +133,11 @@
         core=core.replace(viewAnchor,viewBridge);
 
         const pointerVisibilityAnchor="pointerMarker.visible = !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
-        const pointerVisibilityPatched="pointerMarker.visible = !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
+        const pointerVisibilityPatched="pointerMarker.visible = !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
         if(!core.includes(pointerVisibilityAnchor)) throw new Error('Pointer visibility anchor was not found.');
         core=core.replace(pointerVisibilityAnchor,pointerVisibilityPatched);
 
-        core=core.replace('</body>','<script src="worldview-layer.js?v=stone-v9-20261027"><\/script><script src="stone-data-v2.js?v=stone-v9-20261027"><\/script><script src="stone-readings-core-v2.js?v=stone-v9-20261027"><\/script><script src="stone-readings-more-v2.js?v=stone-v9-20261027"><\/script><script src="stone-referents-v4.js?v=stone-v9-20261027"><\/script><script src="stone-semantics-v5.js?v=stone-v9-20261027"><\/script><script src="stone-ui-v2.js?v=stone-v9-20261027"><\/script><script src="stone-polish-v3.js?v=stone-v9-20261027"><\/script></body>');
+        core=core.replace('</body>','<script src="worldview-layer.js?v=stone-v10-20261028"><\/script><script src="stone-data-v2.js?v=stone-v10-20261028"><\/script><script src="stone-readings-core-v2.js?v=stone-v10-20261028"><\/script><script src="stone-readings-more-v2.js?v=stone-v10-20261028"><\/script><script src="stone-referents-v4.js?v=stone-v10-20261028"><\/script><script src="stone-semantics-v5.js?v=stone-v10-20261028"><\/script><script src="stone-doctrines-v6.js?v=stone-v10-20261028"><\/script><script src="stone-ui-v2.js?v=stone-v10-20261028"><\/script><script src="stone-polish-v3.js?v=stone-v10-20261028"><\/script></body>');
         frame.srcdoc=core;
         frame.hidden=false;
         boot.remove();
