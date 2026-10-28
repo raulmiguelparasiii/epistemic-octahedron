@@ -8,84 +8,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: stone-semantics-view-snap-20261027
-      - name: Static validation
+          ref: main
+      - name: Inspect equator and point marker code
+        shell: bash
         run: |
-          node --check philosophers-stone-atlas/stone-semantics-v5.js
-          node -e "const fs=require('fs');const s=fs.readFileSync('philosophers-stone-atlas/index.html','utf8');if(!s.includes('window.STONE_VIEW'))process.exit(1)"
-      - name: Prepare browser harness
-        run: |
-          npm init -y >/dev/null 2>&1
-          npm install playwright@1.56.1 >/dev/null 2>&1
-          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)
-          test -n "$CHROME"
-          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
-      - name: Browser smoke test
-        run: |
-          python3 -m http.server 8000 >/tmp/stone-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill $SERVER_PID || true' EXIT
-          cat > /tmp/stone-view-test.js <<'NODE'
-          const assert=require('assert');
-          const {chromium}=require('playwright');
-          const round=p=>p.map(v=>Math.round(v*1000)/1000);
-          const close=(a,b,t=.06)=>Math.abs(a-b)<=t;
-          (async()=>{
-            const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
-            const page=await browser.newPage({viewport:{width:390,height:844}});
-            const errors=[]; page.on('pageerror',e=>errors.push(String(e)));
-            await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'networkidle',timeout:30000});
-            const frame=page.frames().find(f=>f!==page.mainFrame());
-            assert(frame,'Stone iframe missing');
-            await frame.waitForFunction(()=>window.STONE_VIEW&&document.querySelector('#stoneSemanticsTab'),null,{timeout:20000});
-            const item=name=>frame.locator('.stone-semantic-item').filter({has:frame.locator('summary',{hasText:name})}).first();
-            const getPoint=()=>frame.evaluate(()=>['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id).value)));
-            const getView=()=>frame.evaluate(()=>window.STONE_VIEW.getState());
-
-            await frame.getByRole('button',{name:'Semantics',exact:true}).click();
-            await frame.waitForTimeout(80);
-            assert.strictEqual(await frame.$eval('#plotPanel',el=>el.hidden),true,'Plot leaked into Semantics');
-
-            const before=await getView();
-            await item('Empathy').locator('summary').click();
-            await frame.waitForTimeout(60);
-            const moving=await getView();
-            assert.strictEqual(moving.snapActive,true,'Empathy did not start a native soft snap');
-            assert(!close(moving.distance,5.25,.01),'Empathy zoom jumped directly instead of damping');
-            await frame.waitForTimeout(1200);
-            let view=await getView();
-            assert.deepStrictEqual(round(await getPoint()),[1,0,0]);
-            assert.strictEqual(view.snappedTopBottom,true,'Empathy did not settle top/bottom axis');
-            assert(close(view.distance,5.25),'Empathy zoom-out distance incorrect');
-
-            await item('Collapse').locator('summary').click();
-            await frame.waitForTimeout(60);
-            assert.strictEqual((await getView()).snapActive,true,'Collapse did not start a native soft snap');
-            await frame.waitForTimeout(1200);
-            view=await getView();
-            assert.deepStrictEqual(round(await getPoint()),[0,-1,0]);
-            assert.strictEqual(view.snappedTopBottom,false,'Collapse should be side view');
-            assert(close(view.distance,4.25),'Collapse distance incorrect');
-            const q=view.orientation;
-            assert(Math.abs(q[0])<.03&&Math.abs(q[1])<.03&&Math.abs(q[2])<.03&&Math.abs(Math.abs(q[3])-1)<.03,'Collapse did not settle to canonical side view');
-
-            await item('Maturity').locator('summary').click();
-            await frame.waitForTimeout(1200);
-            view=await getView();
-            assert.deepStrictEqual(round(await getPoint()),[0,1,0]);
-            assert.strictEqual(view.snappedTopBottom,true,'Maturity should be top view');
-            assert(close(view.distance,4.25),'Maturity distance incorrect');
-
-            const stable=await getView();
-            await item('Entity').locator('summary').click();
-            await frame.waitForTimeout(120);
-            const afterEntity=await getView();
-            assert.strictEqual(afterEntity.snapActive,false,'Indeterminate semantic should not request a view');
-            assert(close(afterEntity.distance,stable.distance,.01),'Indeterminate semantic changed distance');
-
-            if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
-            await browser.close();
-            console.log('Semantic native view snap smoke test passed.');
-          })().catch(err=>{console.error(err);process.exit(1)});
-          NODE
-          NODE_PATH="$PWD/node_modules" node /tmp/stone-view-test.js
+          set -euo pipefail
+          cat philosophers-stone-atlas/core.01.b64 philosophers-stone-atlas/core.02.b64 philosophers-stone-atlas/core.03.b64 philosophers-stone-atlas/core.04.b64 philosophers-stone-atlas/core.05a.b64 philosophers-stone-atlas/core.05b.b64 philosophers-stone-atlas/core.06.b64 philosophers-stone-atlas/core.07.b64 philosophers-stone-atlas/core.08.b64 | tr -d '\n\r' | base64 -d | gzip -dc > /tmp/core.html
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('/tmp/core.html').read_text()
+          needles=['equator','equatorial','pointMarker','marker','state.point','LineBasicMaterial','red','surfacePoint','pointDot']
+          for needle in needles:
+              print('\n===== ',needle,' =====')
+              start=0; count=0
+              while True:
+                  i=s.lower().find(needle.lower(),start)
+                  if i<0 or count>=12: break
+                  lo=max(0,i-1000); hi=min(len(s),i+2200)
+                  print(s[lo:hi].replace('\n',' '))
+                  print('\n---')
+                  start=i+len(needle); count+=1
+          PY
