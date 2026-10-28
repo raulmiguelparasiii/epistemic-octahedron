@@ -111,7 +111,7 @@
     if(details.dataset.coordinate) coord=details.dataset.coordinate.split(',').map(Number);
     else if(details.dataset.plot==='equator') coord=equatorPoint();
     if(coord) setTimeout(()=>setPoint(coord),0);
-  });
+  },true);
 
   const POLES={E:'concern',P:'constraint',W:'context',K:'information'};
   const patchPoleLabels=()=>{
