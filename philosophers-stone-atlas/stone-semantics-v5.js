@@ -3,7 +3,7 @@
   const R=window.STONE_V2_READINGS;
   const D=window.STONE_V2_DATA;
   if(!R||!D) return;
-  const {esc,pointValid,isOrigin}=R;
+  const {esc,point,pointValid,isOrigin}=R;
   const near=(a,b,t=.00001)=>Math.abs(a-b)<=t;
   const dist2=(p,a)=>p.reduce((s,v,i)=>s+(v-a[i])**2,0);
   const fmt=n=>near(n,0)?'0':near(Math.abs(n),.5)?(n<0?'-.5':'.5'):near(Math.abs(n),1)?(n<0?'-1':'1'):String(Math.round(n*1000)/1000);
@@ -60,15 +60,15 @@
     {name:'Development',text:'L1 = |x| + |y| + |z|. The interior represents developing orientation; the surface represents a formed stance.'},
     {name:'Experience',text:'L2 = √(x² + y² + z²): the direct Euclidean magnitude of the same orientation.'},
     {name:'Stance',text:'A formed orientation on the surface |x| + |y| + |z| = 1.'},
-    {name:'Prejudice',text:'At y = 0, judgment is formed before materially relevant purpose and meaning pressures have been fully integrated.'},
+    {name:'Prejudice',plot:'equator',text:'At y = 0, judgment is formed before materially relevant purpose and meaning pressures have been fully integrated.'},
     {name:'Maturity',coord:[0,1,0],text:'Complete purpose and meaning integration under maximal answerability to reality.'},
     {name:'Collapse',coord:[0,-1,0],text:'Maximal insulation: materially relevant reality no longer retains corrective authority over the organized whole.'},
-    {name:'Reality-friction',text:'Pressure produced when reality presents a materially relevant counterpart that a one-sided stance has not integrated.'},
+    {name:'Reality-friction',plot:'equator',text:'Pressure produced when reality presents a materially relevant counterpart that a one-sided stance has not integrated.'},
     {name:'Realization',text:'Further reality becomes materially apparent and can expand the referent from r to r′, requiring the entity to be situated again.'},
-    {name:'Epistemic freedom',text:'Reality-governed authorship: strong judgment without surrendering correction to identity, status, ideology, fear, or interest.'}
+    {name:'Epistemic freedom',coord:[0,1,0],text:'Reality-governed authorship: strong judgment without surrendering correction to identity, status, ideology, fear, or interest.'}
   ];
 
-  R.renderSemantics=()=>`<div class="stone-semantics-inner"><header><h1>Semantics</h1></header><div class="stone-semantics-grid stone-semantics-v5">${SEMANTICS.map(s=>`<details class="stone-semantic-item"${s.coord?` data-coordinate="${s.coord.join(',')}"`:''}><summary>${esc(s.name)}</summary><p>${esc(s.text)}</p></details>`).join('')}</div></div>`;
+  R.renderSemantics=()=>`<div class="stone-semantics-inner"><header><h1>Semantics</h1></header><div class="stone-semantics-grid stone-semantics-v5">${SEMANTICS.map(s=>`<details class="stone-semantic-item"${s.coord?` data-coordinate="${s.coord.join(',')}"`:''}${s.plot?` data-plot="${s.plot}"`:''}><summary>${esc(s.name)}</summary><p>${esc(s.text)}</p></details>`).join('')}</div></div>`;
 
   const style=document.createElement('style');
   style.textContent=`
@@ -84,17 +84,22 @@
   (document.head||document.documentElement).appendChild(style);
 
   const setPoint=coord=>{
-    const ids=['coord-x','coord-y','coord-z'];
-    const els=ids.map(id=>document.getElementById(id));
-    if(els.some(e=>!e)) return;
-    els.forEach((e,i)=>{e.value=String(coord[i]);});
-    els.forEach(e=>{
-      e.dispatchEvent(new Event('input',{bubbles:true}));
-      e.dispatchEvent(new Event('change',{bubbles:true}));
-    });
+    if(!Array.isArray(coord)||coord.length!==3||!coord.every(Number.isFinite)) return;
+    window.postMessage({type:'set-profile',data:{data:{point:{x:coord[0],y:coord[1],z:coord[2]}}}},'*');
+  };
+
+  const equatorPoint=()=>{
+    const p=point();
+    const x=Number(p?.[0])||0,z=Number(p?.[2])||0;
+    const lateral=Math.abs(x)+Math.abs(z);
+    return lateral>1e-8?[x/lateral,0,z/lateral]:[1,0,0];
   };
 
   document.addEventListener('click',e=>{
+    if(e.target.closest?.('#stoneSemanticsTab')){
+      setTimeout(()=>{const plotPanel=document.getElementById('plotPanel');if(plotPanel)plotPanel.hidden=true;},0);
+      return;
+    }
     const summary=e.target.closest?.('#stoneSemanticsPanel .stone-semantic-item > summary');
     if(!summary) return;
     const details=summary.parentElement;
@@ -102,9 +107,10 @@
     for(const other of document.querySelectorAll('#stoneSemanticsPanel .stone-semantic-item[open]')){
       if(other!==details) other.open=false;
     }
-    if(!details.dataset.coordinate) return;
-    const coord=details.dataset.coordinate.split(',').map(Number);
-    if(coord.length===3&&coord.every(Number.isFinite)) setTimeout(()=>setPoint(coord),0);
+    let coord=null;
+    if(details.dataset.coordinate) coord=details.dataset.coordinate.split(',').map(Number);
+    else if(details.dataset.plot==='equator') coord=equatorPoint();
+    if(coord) setTimeout(()=>setPoint(coord),0);
   });
 
   const POLES={E:'concern',P:'constraint',W:'context',K:'information'};
