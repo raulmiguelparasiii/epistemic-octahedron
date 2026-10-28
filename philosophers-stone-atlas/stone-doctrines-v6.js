@@ -5,72 +5,78 @@
   if(!R||!D) return;
   const {esc,pointValid}=R;
 
+  // A doctrine is shown here only when its defining commitment exposes a
+  // meaningfully bounded Stone region. Content theses that can honestly sit
+  // almost anywhere are omitted rather than being painted across most of the Stone.
   const DOCTRINES={
     Nihilism:{
-      mature:false,
       text:'In the strong existential form used here, the absence of given meaning is treated as the absence of meaning itself. An informational negative is made to settle the interpretive question, so contextual meaning is excluded while that thesis is retained.',
       region:{
-        label:'Knowledge-dominant nihilist corridor',
-        radius:.10,
-        segments:[[[0,.5,-.5],[0,0,-1]],[[0,0,-1],[0,-.5,-.5]]]
+        radius:.095,
+        segments:[[[0,.45,-.55],[0,0,-1]],[[0,0,-1],[0,-.5,-.5]]]
       }
     },
     Existentialism:{
-      mature:true,
-      text:'The claim that meaning or essence is not simply given does not require excluding welfare, constraint, evidence, context, or correction. Created or chosen meaning can remain fully answerable to reality.'
+      text:'The claim that meaning or essence is not simply given shifts authority toward contextual interpretation and authored meaning. Its characteristic Stone region is therefore interpretation-heavy without requiring insulation from reality.',
+      region:{
+        radius:.11,
+        segments:[[[0,.55,.45],[0,0,1]]]
+      }
     },
     Stoicism:{
-      mature:true,
-      text:'Acceptance of constraint and disciplined response do not inherently exclude affected welfare, context, evidence, or correction. Distortion begins only when those pressures are suppressed.'
+      text:'Stoicism characteristically foregrounds real-world constraint: what can be controlled, accepted, endured, or acted upon. Its bounded region therefore sits on the constraint side while leaving room for answerability.',
+      region:{
+        radius:.11,
+        segments:[[[-.5,.5,0],[-1,0,0]]]
+      }
     },
     Utilitarianism:{
-      mature:true,
-      text:'Consequences and affected welfare may lead the judgment while feasibility, evidence, context, uncertainty, and correction still retain the authority they warrant.'
+      text:'Utilitarianism characteristically gives affected welfare and outcome a leading role in judgment. Its bounded region therefore sits on the welfare side, with mature use still requiring the other pressures to remain governing.',
+      region:{
+        radius:.11,
+        segments:[[[.5,.5,0],[1,0,0]]]
+      }
     },
     Deontology:{
-      mature:true,
-      text:'A duty or rule can remain fully answerable to circumstance, competing duties, welfare, feasibility, evidence, and correction rather than being treated as self-applying.'
+      text:'Deontology characteristically organizes judgment around duty, principle, and rule-like moral information. On the Stone this is best represented by the information-plus-moral-concern diagonal rather than by information alone.',
+      region:{
+        radius:.11,
+        segments:[[[1/3,1/3,-1/3],[.5,0,-.5]]]
+      }
     },
     'Moral relativism':{
-      mature:false,
       text:'In the strong form used here, contextual variation is taken to mean that shared reality cannot supply cross-context moral correction. Interpretation is therefore granted authority that informational grounding and correction are not allowed to defeat.',
       region:{
-        label:'Context-dominant relativist corridor',
-        radius:.10,
-        segments:[[[0,.5,.5],[0,0,1]],[[0,0,1],[0,-.5,.5]]]
+        radius:.095,
+        segments:[[[0,0,1],[0,-.5,.5]]]
       }
     },
     Solipsism:{
-      mature:false,
-      text:'In the strong epistemic form used here, independent reality is defined so that external evidence can never genuinely count against the thesis. The stance therefore withholds corrective authority from reality.',
+      text:'In the strong epistemic form used here, independent reality is defined so that external evidence can never genuinely count against the thesis. The stance therefore occupies a narrow interpretation-heavy, insulated region.',
       region:{
-        label:'Insulated interpretation region',
-        radius:.085,
+        radius:.08,
         segments:[[[0,-.2,.8],[0,-.55,.45]],[[0,-.55,.45],[0,-.7,.3]]]
       }
     },
     Skepticism:{
-      mature:true,
-      text:'Provisional doubt remains answerable when confidence tracks available evidence and new evidence can update the stance.'
+      text:'Skepticism characteristically foregrounds informational grounding, uncertainty, and evidential restraint. Its bounded region therefore sits on the information side while remaining open to correction.',
+      region:{
+        radius:.11,
+        segments:[[[0,.55,-.45],[0,0,-1]]]
+      }
     },
     Hedonism:{
-      mature:false,
       text:'In the strong sole-good form used here, pleasure alone is sufficient to settle value. One welfare signal is therefore made authoritative over other materially relevant welfare, constraint, information, context, and correction.',
       region:{
-        label:'Pleasure-dominant welfare corridor',
         radius:.10,
         segments:[[[.5,.5,0],[1,0,0]],[[1,0,0],[.5,-.5,0]]]
       }
-    },
-    Determinism:{
-      mature:true,
-      text:'Whether events are determined is a content thesis about reality; it does not inherently exclude welfare, agency-relevant context, evidence, practical constraint, or correction.'
     }
   };
 
-  const REGIONS=Object.fromEntries(Object.entries(DOCTRINES).map(([name,d])=>[name,d.region||null]));
+  const REGIONS=Object.fromEntries(Object.entries(DOCTRINES).map(([name,d])=>[name,d.region]));
   const l1=p=>Math.abs(p[0])+Math.abs(p[1])+Math.abs(p[2]);
-  const surfacePoint=p=>pointValid(p)&&Math.abs(l1(p)-1)<=.03;
+  const surfacePoint=p=>pointValid(p)&&Math.abs(l1(p)-1)<=.02;
   const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
   const segmentDistance=(p,a,b)=>{
     const ab=[b[0]-a[0],b[1]-a[1],b[2]-a[2]];
@@ -90,7 +96,7 @@
   let samples=null;
   const surfaceSamples=()=>{
     if(samples) return samples;
-    const N=40,out=[],seen=new Set();
+    const N=48,out=[],seen=new Set();
     for(let xi=-N;xi<=N;xi++){
       for(let yi=-N;yi<=N;yi++){
         const rem=N-Math.abs(xi)-Math.abs(yi);
@@ -117,15 +123,15 @@
     return pts;
   };
 
-  // Continuous surface approximation. A triangle is retained only if all three
-  // of its vertices satisfy the doctrine predicate, so the visual errs inward
-  // rather than painting outside the region. N=64 gives a ~0.016 surface step.
+  // Continuous surface approximation. A triangle is retained only when all three
+  // vertices satisfy the doctrine predicate, so the visual errs inward rather
+  // than painting beyond the defensible region. N=128 gives a ~0.008 surface step.
   const meshCache=new Map();
   const regionTriangles=name=>{
     if(meshCache.has(name)) return meshCache.get(name);
     const spec=REGIONS[name];
     if(!spec){meshCache.set(name,[]);return [];}
-    const N=64,tris=[];
+    const N=128,tris=[];
     const signs=[-1,1];
     const P=(sx,sy,sz,i,j)=>[sx*(i/N),sy*(j/N),sz*((N-i-j)/N)];
     const keep=tri=>tri.every(p=>inRegion(p,spec));
@@ -173,13 +179,13 @@
   };
 
   R.doctrineHtml=()=>{
-    const items=D.DOCTRINES.map(d=>{
-      const def=DOCTRINES[d.name]||{mature:true,text:d.verdict||d.text};
-      const open=openDoctrine===d.name;
-      const region=REGIONS[d.name];
-      const regionText=region?`Approximate Stone region: ${region.label}.`:'';
-      return `<details class="stone-item stone-doctrine-item" data-doctrine="${esc(d.name)}"${open?' open':''}><summary><span>${esc(d.name)}</span></summary><div class="stone-item-body"><p>${esc(def.text)}</p>${regionText?`<p class="stone-region-note">${esc(regionText)}</p>`:''}</div></details>`;
-    }).join('');
+    const items=D.DOCTRINES
+      .filter(d=>REGIONS[d.name])
+      .map(d=>{
+        const def=DOCTRINES[d.name];
+        const open=openDoctrine===d.name;
+        return `<details class="stone-item stone-doctrine-item" data-doctrine="${esc(d.name)}"${open?' open':''}><summary><span>${esc(d.name)}</span></summary><div class="stone-item-body"><p>${esc(def.text)}</p></div></details>`;
+      }).join('');
     return `<section class="stone-ref-section"><div class="stone-list">${items}</div></section>`;
   };
 
@@ -226,8 +232,7 @@
     getState:()=>({
       openDoctrine,
       regionPointCount:openDoctrine?regionPoints(openDoctrine).length:0,
-      regionTriangleCount:openDoctrine?regionTriangles(openDoctrine).length:0,
-      mature:openDoctrine?DOCTRINES[openDoctrine]?.mature:null
+      regionTriangleCount:openDoctrine?regionTriangles(openDoctrine).length:0
     })
   };
 })();
