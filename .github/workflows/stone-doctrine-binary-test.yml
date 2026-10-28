@@ -1,0 +1,94 @@
+name: Stone doctrine binary test
+
+on:
+  push:
+    branches: [stone-doctrine-binary-test-20261028]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static validation
+        run: |
+          set -euo pipefail
+          node --check philosophers-stone-atlas/stone-doctrines-v6.js
+          grep -Fq "Can be mature" philosophers-stone-atlas/stone-doctrines-v6.js
+          grep -Fq "Cannot be mature" philosophers-stone-atlas/stone-doctrines-v6.js
+      - name: Prepare browser harness
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.56.1 >/dev/null 2>&1
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)
+          test -n "$CHROME"
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
+      - name: Browser smoke test
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8000 >/tmp/stone-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          cat > /tmp/stone-doctrine-binary-test.js <<'NODE'
+          const assert=require('assert');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
+            const page=await browser.newPage({viewport:{width:390,height:844}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'domcontentloaded',timeout:30000});
+            const frame=page.frames().find(f=>f!==page.mainFrame());
+            assert(frame,'Stone iframe missing');
+            await frame.waitForFunction(()=>window.STONE_VIEW&&window.STONE_DOCTRINES_V6&&document.querySelector('.stone-ref-option[data-ref="doctrines"]'),null,{timeout:25000});
+            const state=()=>frame.evaluate(()=>window.STONE_VIEW.getState());
+            const item=name=>frame.locator(`#stoneReferentContent .stone-doctrine-item[data-doctrine="${name}"]`).first();
+            const openItems=()=>frame.locator('#stoneReferentContent .stone-doctrine-item[open]');
+
+            await frame.getByRole('button',{name:'Referent',exact:true}).click();
+            await frame.locator('.stone-ref-option[data-ref="doctrines"]').click();
+            await frame.waitForSelector('#stoneReferentContent .stone-doctrine-item');
+            assert.strictEqual(await frame.locator('#stoneReferentContent .stone-current-card').count(),0,'Generic doctrine card should be gone');
+
+            assert((await item('Nihilism').locator('summary').innerText()).includes('Cannot be mature'));
+            assert((await item('Existentialism').locator('summary').innerText()).includes('Can be mature'));
+            assert((await item('Deontology').locator('summary').innerText()).includes('Can be mature'));
+            assert((await item('Moral relativism').locator('summary').innerText()).includes('Cannot be mature'));
+            assert((await item('Solipsism').locator('summary').innerText()).includes('Cannot be mature'));
+            assert((await item('Hedonism').locator('summary').innerText()).includes('Cannot be mature'));
+            assert((await item('Skepticism').locator('summary').innerText()).includes('Can be mature'));
+            assert((await item('Determinism').locator('summary').innerText()).includes('Can be mature'));
+
+            await item('Nihilism').locator('summary').click();
+            await frame.waitForTimeout(120);
+            assert.strictEqual(await openItems().count(),1);
+            let s=await state();
+            assert.strictEqual(s.doctrineRegionVisible,true,'Nihilism should have a doctrine region');
+            assert.strictEqual(s.pointerVisible,false,'Doctrine region should hide plot marker');
+            const nihilismCount=await frame.evaluate(()=>window.STONE_DOCTRINES_V6.regionPoints('Nihilism').length);
+            assert(nihilismCount>100&&nihilismCount<700,'Nihilism region should remain narrow');
+
+            await item('Deontology').locator('summary').click();
+            await frame.waitForTimeout(120);
+            assert.strictEqual(await openItems().count(),1,'Accordion should remain single-open');
+            s=await state();
+            assert.strictEqual(s.doctrineRegionVisible,false,'Maturity-compatible Deontology should not be assigned a fake region');
+            assert.strictEqual(s.pointerVisible,true);
+
+            await item('Moral relativism').locator('summary').click();
+            await frame.waitForTimeout(120);
+            s=await state();
+            assert.strictEqual(s.doctrineRegionVisible,true,'Strong Moral relativism should have a structural region');
+            assert.strictEqual(s.pointerVisible,false);
+
+            await item('Existentialism').locator('summary').click();
+            await frame.waitForTimeout(120);
+            s=await state();
+            assert.strictEqual(s.doctrineRegionVisible,false,'Maturity-compatible Existentialism should not fabricate a region');
+            assert.strictEqual(s.pointerVisible,true);
+
+            if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
+            await browser.close();
+            console.log('Doctrine binary smoke test passed.');
+          })().catch(err=>{console.error(err);process.exit(1)});
+          NODE
+          NODE_PATH="$PWD/node_modules" timeout 75s node /tmp/stone-doctrine-binary-test.js
