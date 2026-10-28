@@ -1,0 +1,104 @@
+name: Stone doctrine surface mesh test
+
+on:
+  push:
+    branches: [stone-doctrine-surface-mesh-test-20261028]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static validation
+        run: |
+          set -euo pipefail
+          node --check philosophers-stone-atlas/stone-doctrines-v6.js
+          grep -Fq "new THREE.MeshBasicMaterial" philosophers-stone-atlas/index.html
+          grep -Fq "setDoctrineRegionMesh(triangles)" philosophers-stone-atlas/index.html
+          grep -Fq "regionTriangles" philosophers-stone-atlas/stone-doctrines-v6.js
+      - name: Prepare browser harness
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.56.1 >/dev/null 2>&1
+          CHROME=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)
+          test -n "$CHROME"
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
+      - name: Browser smoke test
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8000 >/tmp/stone-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          cat > /tmp/stone-mesh-test.js <<'NODE'
+          const assert=require('assert');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
+            const page=await browser.newPage({viewport:{width:390,height:844}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'domcontentloaded',timeout:30000});
+            const frame=page.frames().find(f=>f!==page.mainFrame());
+            assert(frame,'Stone iframe missing');
+            await frame.waitForFunction(()=>window.STONE_VIEW&&window.STONE_DOCTRINES_V6&&document.querySelector('.stone-ref-option[data-ref="doctrines"]'),null,{timeout:25000});
+
+            const state=()=>frame.evaluate(()=>window.STONE_VIEW.getState());
+            const point=()=>frame.evaluate(()=>['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id).value)));
+            const item=name=>frame.locator(`#stoneReferentContent .stone-doctrine-item[data-doctrine="${name}"]`).first();
+            const openItems=()=>frame.locator('#stoneReferentContent .stone-doctrine-item[open]');
+
+            await frame.getByRole('button',{name:'Referent',exact:true}).click();
+            await frame.locator('.stone-ref-option[data-ref="doctrines"]').click();
+            await frame.waitForSelector('#stoneReferentContent .stone-doctrine-item');
+            const before=await point();
+
+            await item('Nihilism').locator('summary').click();
+            await frame.waitForTimeout(180);
+            let s=await state();
+            assert.strictEqual(s.doctrineRegionVisible,true,'Nihilism region should be visible');
+            assert.strictEqual(s.doctrineRegionMode,'mesh','Nihilism should use the continuous mesh');
+            assert(s.doctrineRegionTriangleCount>20,'Mesh should contain filled triangles');
+            assert(s.doctrineRegionTriangleCount<4000,'Mesh should remain compact');
+            assert.strictEqual(s.doctrineRegionPointCount,0,'Dot overlay should be hidden while mesh is active');
+            assert.strictEqual(s.pointerVisible,false,'Mesh should hide the plot marker');
+            assert.deepStrictEqual(await point(),before,'Doctrine visualization must not move the plotted point');
+            assert.strictEqual(await openItems().count(),1,'Only one doctrine may remain open');
+
+            await item('Stoicism').locator('summary').click();
+            await frame.waitForTimeout(120);
+            s=await state();
+            assert.strictEqual(s.doctrineRegionVisible,false,'Stoicism should not fabricate a fixed region');
+            assert.strictEqual(s.doctrineRegionMode,'none');
+            assert.strictEqual(s.pointerVisible,true,'No-region doctrine should restore the plot marker');
+
+            await frame.evaluate(()=>{
+              window.__stoneMeshSetter=window.STONE_VIEW.setDoctrineRegionMesh;
+              window.STONE_VIEW.setDoctrineRegionMesh=()=>false;
+            });
+            await item('Hedonism').locator('summary').click();
+            await frame.waitForTimeout(160);
+            s=await state();
+            assert.strictEqual(s.doctrineRegionVisible,true,'Fallback region should remain visible');
+            assert.strictEqual(s.doctrineRegionMode,'points','Failed mesh path should fall back to dots');
+            assert(s.doctrineRegionPointCount>0,'Fallback dots should contain points');
+            assert.strictEqual(s.pointerVisible,false,'Fallback dots should hide the plot marker');
+
+            await frame.evaluate(()=>{window.STONE_VIEW.setDoctrineRegionMesh=window.__stoneMeshSetter;});
+            await item('Nihilism').locator('summary').click();
+            await frame.waitForTimeout(160);
+            s=await state();
+            assert.strictEqual(s.doctrineRegionMode,'mesh','Restored mesh path should be used again');
+            assert(s.doctrineRegionTriangleCount>20);
+
+            await frame.locator('.stone-ref-option[data-ref="communication"]').click();
+            await frame.waitForTimeout(120);
+            s=await state();
+            assert.strictEqual(s.doctrineRegionVisible,false,'Leaving Doctrines should clear mesh');
+            assert.strictEqual(s.pointerVisible,true,'Leaving Doctrines should restore marker');
+
+            if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
+            await browser.close();
+            console.log('Doctrine surface mesh and fallback smoke test passed.');
+          })().catch(err=>{console.error(err);process.exit(1)});
+          NODE
+          NODE_PATH="$PWD/node_modules" timeout 80s node /tmp/stone-mesh-test.js
