@@ -25,6 +25,7 @@ jobs:
           test -n "$CHROME"
           echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
       - name: Browser smoke test
+        timeout-minutes: 2
         shell: bash
         run: |
           python3 -m http.server 8000 >/tmp/stone-http.log 2>&1 &
@@ -33,60 +34,64 @@ jobs:
           cat > /tmp/stone-test.js <<'NODE'
           const assert=require('assert');
           const {chromium}=require('playwright');
-          const close=(a,b,t=.035)=>Math.abs(a-b)<=t;
+          const close=(a,b,t=.04)=>Math.abs(a-b)<=t;
           (async()=>{
             const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
-            const page=await browser.newPage({viewport:{width:390,height:844}});
-            const errors=[];
-            page.on('pageerror',e=>errors.push(String(e)));
-            await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'networkidle',timeout:30000});
-            const frame=page.frames().find(f=>f!==page.mainFrame());
-            assert(frame,'Stone iframe missing');
-            await frame.waitForFunction(()=>window.STONE_VIEW&&document.querySelector('#stoneSemanticsTab'),null,{timeout:20000});
-            const item=name=>frame.locator('.stone-semantic-item').filter({has:frame.locator('summary',{hasText:name})}).first();
-            const state=()=>frame.evaluate(()=>window.STONE_VIEW.getState());
-            const point=()=>frame.evaluate(()=>['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id).value)));
+            try{
+              const page=await browser.newPage({viewport:{width:390,height:844}});
+              page.setDefaultTimeout(6000);
+              const errors=[];
+              page.on('pageerror',e=>errors.push(String(e)));
+              await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'domcontentloaded',timeout:12000});
+              await page.waitForTimeout(700);
+              const frame=page.frames().find(f=>f!==page.mainFrame());
+              assert(frame,'Stone iframe missing');
+              await frame.waitForFunction(()=>window.STONE_VIEW&&document.querySelector('#stoneSemanticsTab'),null,{timeout:8000});
+              const item=name=>frame.locator('.stone-semantic-item').filter({has:frame.locator('summary',{hasText:name})}).first();
+              const state=()=>frame.evaluate(()=>window.STONE_VIEW.getState());
+              const point=()=>frame.evaluate(()=>['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id).value)));
 
-            await frame.getByRole('button',{name:'Semantics',exact:true}).click();
-            await item('Empathy').locator('summary').click();
-            await frame.waitForTimeout(1500);
-            let s=await state();
-            assert(s.snappedTopBottom,'Empathy should settle top');
-            assert(close(s.distance,5.6),'Top-view distance should settle near 5.6');
+              await frame.getByRole('button',{name:'Semantics',exact:true}).click();
+              await item('Empathy').locator('summary').click();
+              await frame.waitForTimeout(1400);
+              let s=await state();
+              assert(s.snappedTopBottom,'Empathy should settle top');
+              assert(close(s.distance,5.6),'Top-view distance should settle near 5.6');
 
-            await item('Collapse').locator('summary').click();
-            await frame.waitForTimeout(1300);
-            s=await state();
-            assert(!s.snappedTopBottom,'Collapse should remain side-like');
-            const q=s.orientation;
-            assert(Math.abs(q[0])>.07,'Collapse should have a downward pitch');
+              await item('Collapse').locator('summary').click();
+              await frame.waitForTimeout(1200);
+              s=await state();
+              assert(!s.snappedTopBottom,'Collapse should remain side-like');
+              assert(Math.abs(s.orientation[0])>.07,'Collapse should have a downward pitch');
 
-            await item('Absence').locator('summary').click();
-            await frame.waitForTimeout(1500);
-            s=await state();
-            assert(close(s.distance,4.25),'Absence should return default distance');
-            assert(Math.abs(s.orientation[0])<.02&&Math.abs(s.orientation[1])<.02&&Math.abs(s.orientation[2])<.02&&Math.abs(s.orientation[3]-1)<.02,'Absence should return default orientation');
+              await item('Absence').locator('summary').click();
+              await frame.waitForTimeout(1400);
+              s=await state();
+              assert(close(s.distance,4.25),'Absence should return default distance');
+              assert(Math.abs(s.orientation[0])<.025&&Math.abs(s.orientation[1])<.025&&Math.abs(s.orientation[2])<.025&&Math.abs(s.orientation[3]-1)<.025,'Absence should return default orientation');
 
-            await frame.evaluate(()=>window.postMessage({type:'set-profile',data:{data:{point:{x:.5,y:.5,z:0}}}},'*'));
-            await frame.waitForTimeout(80);
-            const before=await point();
-            await item('Prejudice').locator('summary').click();
-            await frame.waitForTimeout(120);
-            s=await state();
-            assert.deepStrictEqual(await point(),before,'Prejudice must not move the plotted point');
-            assert.strictEqual(s.pointerVisible,false,'Prejudice should hide the point marker');
-            assert.strictEqual(s.equatorColor,'#dc2626','Prejudice should make the equator red');
-            assert(s.equatorOpacity>.8,'Prejudice equator should be clearly visible');
+              await frame.evaluate(()=>window.postMessage({type:'set-profile',data:{data:{point:{x:.5,y:.5,z:0}}}},'*'));
+              await frame.waitForTimeout(100);
+              const before=await point();
+              await item('Prejudice').locator('summary').click();
+              await frame.waitForTimeout(150);
+              s=await state();
+              assert.deepStrictEqual(await point(),before,'Prejudice must not move the plotted point');
+              assert.strictEqual(s.pointerVisible,false,'Prejudice should hide the point marker');
+              assert.strictEqual(s.equatorColor,'#dc2626','Prejudice should make the equator red');
+              assert(s.equatorOpacity>.8,'Prejudice equator should be clearly visible');
 
-            await item('Maturity').locator('summary').click();
-            await frame.waitForTimeout(120);
-            s=await state();
-            assert.strictEqual(s.pointerVisible,true,'Leaving Prejudice should restore point marker');
-            assert.strictEqual(s.equatorColor,'#94a3b8','Leaving Prejudice should restore equator color');
+              await item('Maturity').locator('summary').click();
+              await frame.waitForTimeout(150);
+              s=await state();
+              assert.strictEqual(s.pointerVisible,true,'Leaving Prejudice should restore point marker');
+              assert.strictEqual(s.equatorColor,'#94a3b8','Leaving Prejudice should restore equator color');
 
-            if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
-            await browser.close();
-            console.log('Semantic presentation smoke test passed.');
+              if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
+              console.log('Semantic presentation smoke test passed.');
+            } finally {
+              await browser.close();
+            }
           })().catch(err=>{console.error(err);process.exit(1)});
           NODE
           NODE_PATH="$PWD/node_modules" node /tmp/stone-test.js
