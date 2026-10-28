@@ -1,3 +1,4 @@
+# Retest after capture-phase fix
 name: Stone core inspect
 on:
   push:
