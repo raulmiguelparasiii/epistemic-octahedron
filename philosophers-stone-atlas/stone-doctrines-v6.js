@@ -5,80 +5,72 @@
   if(!R||!D) return;
   const {esc,pointValid}=R;
 
-  const SHORT={
-    Nihilism:'In its strong existential form, the absence of given meaning is treated as the absence of meaning itself, so informational absence settles interpretation.',
-    Existentialism:'Meaning is not simply given; maturity depends on keeping created or chosen meaning answerable to evidence, constraint, welfare, and context.',
-    Stoicism:'Constraint and self-command can be maturely emphasized; distortion begins when acceptance erases avoidable harm or relevant human context.',
-    Utilitarianism:'Consequences and welfare are real pressures, but aggregate outcome becomes immature when it is allowed to exhaust value or erase relevant persons and context.',
-    Deontology:'Principle becomes immature when a rule is treated as self-applying and context, welfare, feasibility, or consequence lose warranted authority.',
-    'Moral relativism':'Context matters, but contextual variation becomes immature when it is used to deny correction that a shared referent can actually supply.',
-    Solipsism:'The thesis becomes self-sealing when independent evidence is reinterpreted so that nothing external can genuinely count against it.',
-    Skepticism:'Doubt is mature when proportional to evidence; it becomes collapse-like when no evidence is permitted to update the stance.',
-    Hedonism:'Pleasure and suffering are real welfare signals; the strong form becomes immature when pleasure alone is allowed to settle value.',
-    Determinism:'The thesis itself does not fix maturity; distortion begins when causal explanation is used to erase materially relevant agency, responsibility, welfare, or correction.'
-  };
-
-  // These regions represent only the failure form described in the doctrine entry.
-  // They are deliberately conservative UI approximations, not canonical Stone boundaries
-  // and not claims that everyone holding the doctrine occupies the marked region.
-  const REGIONS={
+  const DOCTRINES={
     Nihilism:{
-      label:'Literalism → Doctrinalism corridor',
-      note:'Information is allowed to settle interpretation; the lower end adds insulation from counterexample.',
-      radius:.11,
-      segments:[[[0,0,-1],[0,-.5,-.5]]]
+      mature:false,
+      text:'Cannot be mature in the strong existential form used here. Treating the absence of given meaning as the absence of meaning itself lets informational absence settle interpretation, so full integration is impossible while that thesis is retained.',
+      region:{
+        label:'Knowledge-dominant nihilist corridor',
+        radius:.10,
+        segments:[[[0,.5,-.5],[0,0,-1]],[[0,0,-1],[0,-.5,-.5]]]
+      }
     },
-    Existentialism:null,
+    Existentialism:{
+      mature:true,
+      text:'Can be mature. The claim that meaning or essence is not simply given does not require excluding welfare, constraint, evidence, context, or correction. An existentialist stance can therefore reach Maturity.'
+    },
     Stoicism:{
-      label:'Two distortion corridors',
-      note:'Only the failure cases are marked: constraint suppressing welfare, or information/rule-like acceptance suppressing relevant context.',
-      radius:.10,
-      segments:[[[-1,0,0],[-.5,-.5,0]],[[0,0,-1],[0,-.5,-.5]]]
+      mature:true,
+      text:'Can be mature. Acceptance of constraint and disciplined response do not inherently exclude affected welfare, context, evidence, or correction. Stoicism becomes immature only when those are suppressed.'
     },
     Utilitarianism:{
-      label:'Instrumentalism → Expediency corridor',
-      note:'Aggregate outcome becomes structurally dominant enough that persons or other materially relevant pressures lose warranted authority.',
-      radius:.11,
-      segments:[[[-1,0,0],[-.5,-.5,0]]]
+      mature:true,
+      text:'Can be mature. Consequences and affected welfare may lead the judgment while feasibility, evidence, context, uncertainty, and correction still retain the authority they warrant.'
     },
     Deontology:{
-      label:'Literalism / Moral Literalism loci',
-      note:'The compact red patches mark the rule-as-self-applying failure, not deontology as such.',
-      radius:.11,
-      centers:[[0,0,-1],[.5,0,-.5]]
+      mature:true,
+      text:'Can be mature. A duty or rule can remain fully answerable to circumstance, competing duties, welfare, feasibility, evidence, and correction rather than being treated as self-applying.'
     },
     'Moral relativism':{
-      label:'Narrativism → Narrative Dogmatism corridor',
-      note:'Contextual variation is made authoritative over informational and cross-context correction.',
-      radius:.11,
-      segments:[[[0,0,1],[0,-.5,.5]]]
+      mature:false,
+      text:'Cannot be mature in the strong form used here. If contextual variation is taken to mean that shared reality cannot supply cross-context moral correction, interpretation is granted authority that informational grounding and correction are not allowed to defeat.',
+      region:{
+        label:'Context-dominant relativist corridor',
+        radius:.10,
+        segments:[[[0,.5,.5],[0,0,1]],[[0,0,1],[0,-.5,.5]]]
+      }
     },
     Solipsism:{
-      label:'Insulated interpretation locus',
-      note:'A narrow lower-interpretation region marks the self-sealing form in which independent correction is neutralized.',
-      radius:.10,
-      segments:[[[0,-.5,.5],[0,-.75,.25]]]
+      mature:false,
+      text:'Cannot be mature in the strong epistemic form used here. If independent reality is defined so that external evidence can never genuinely count against the thesis, the stance structurally withholds corrective authority from reality.',
+      region:{
+        label:'Insulated interpretation region',
+        radius:.085,
+        segments:[[[0,-.2,.8],[0,-.55,.45]],[[0,-.55,.45],[0,-.7,.3]]]
+      }
     },
     Skepticism:{
-      label:'Collapse-near insulation cap',
-      note:'Only self-sealing skepticism is marked: the small lower cap where correction has nearly lost governing authority regardless of lateral content.',
-      yMax:-.78
+      mature:true,
+      text:'Can be mature. Provisional doubt is fully compatible with answerability when confidence tracks available evidence and new evidence can update the stance.'
     },
     Hedonism:{
-      label:'Sentimentalism → Moralism corridor',
-      note:'A welfare signal is allowed to authenticate the whole judgment and increasingly resists correction by the rest of the referent.',
-      radius:.11,
-      segments:[[[1,0,0],[.5,-.5,0]]]
+      mature:false,
+      text:'Cannot be mature in the strong sole-good form used here. If pleasure alone is sufficient to settle value, one welfare signal is made authoritative over other materially relevant welfare, constraint, information, context, and correction.',
+      region:{
+        label:'Pleasure-dominant welfare corridor',
+        radius:.10,
+        segments:[[[.5,.5,0],[1,0,0]],[[1,0,0],[.5,-.5,0]]]
+      }
     },
-    Determinism:null
+    Determinism:{
+      mature:true,
+      text:'Can be mature. Whether events are determined is a content thesis about reality; it does not inherently exclude welfare, agency-relevant context, evidence, practical constraint, or correction.'
+    }
   };
 
-  const near=(a,b,t=.00001)=>Math.abs(a-b)<=t;
-  const fmt=n=>near(n,0)?'0':near(Math.abs(n),.5)?(n<0?'-.5':'.5'):near(Math.abs(n),1)?(n<0?'-1':'1'):String(Math.round(n*1000)/1000);
-  const cfmt=p=>`(${p.map(fmt).join(', ')})`;
+  const REGIONS=Object.fromEntries(Object.entries(DOCTRINES).map(([name,d])=>[name,d.region||null]));
   const l1=p=>Math.abs(p[0])+Math.abs(p[1])+Math.abs(p[2]);
   const surfacePoint=p=>pointValid(p)&&Math.abs(l1(p)-1)<=.03;
-
   const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
   const segmentDistance=(p,a,b)=>{
     const ab=[b[0]-a[0],b[1]-a[1],b[2]-a[2]];
@@ -87,10 +79,8 @@
     const t=den<1e-12?0:Math.max(0,Math.min(1,(ap[0]*ab[0]+ap[1]*ab[1]+ap[2]*ab[2])/den));
     return dist(p,[a[0]+ab[0]*t,a[1]+ab[1]*t,a[2]+ab[2]*t]);
   };
-
   const inRegion=(p,spec)=>{
     if(!spec||!surfacePoint(p)) return false;
-    if(Number.isFinite(spec.yMax)&&p[1]<=spec.yMax) return true;
     if(spec.centers?.some(c=>dist(p,c)<=spec.radius)) return true;
     if(spec.segments?.some(([a,b])=>segmentDistance(p,a,b)<=spec.radius)) return true;
     return false;
@@ -127,34 +117,22 @@
   };
 
   let openDoctrine='';
-  const setOverlay=name=>{
-    const pts=name?regionPoints(name):[];
-    window.STONE_VIEW?.setDoctrineRegion?.(pts);
-  };
+  const setOverlay=name=>window.STONE_VIEW?.setDoctrineRegion?.(name?regionPoints(name):[]);
   const clearSelection=()=>{
     openDoctrine='';
     setOverlay('');
   };
 
-  const matchesAt=p=>Object.keys(REGIONS).filter(name=>REGIONS[name]&&inRegion(p,REGIONS[name]));
-
-  R.doctrineHtml=p=>{
-    const coord=pointValid(p)?cfmt(p):'—';
-    const matches=matchesAt(p);
-    const currentText=matches.length
-      ?`The current coordinate lies inside the conservative failure-form region for ${matches.length===1?matches[0]:matches.join(', ')}.`
-      :'The current coordinate is outside the conservative failure-form regions marked for the doctrines below.';
-    const intro=`<article class="stone-current-card"><h2>Doctrines</h2><div class="stone-current-coordinate">${esc(coord)}</div><p>${esc(currentText)}</p><p class="stone-footnote">Red surface areas mark only the structurally defined failure form described for an entry. They do not mean the doctrine itself has one compulsory coordinate.</p></article>`;
+  R.doctrineHtml=()=>{
     const items=D.DOCTRINES.map(d=>{
-      const spec=REGIONS[d.name];
-      const hit=matches.includes(d.name);
+      const def=DOCTRINES[d.name]||{mature:true,text:d.verdict||d.text};
       const open=openDoctrine===d.name;
-      const regionText=spec
-        ?`Approximate failure region: ${spec.label}. ${spec.note}`
-        :'No unique surface region follows from this doctrine label alone, so no red overlay is shown.';
-      return `<details class="stone-item stone-doctrine-item${hit?' stone-match':''}" data-doctrine="${esc(d.name)}"${open?' open':''}><summary><span>${esc(d.name)}</span></summary><div class="stone-item-body"><p>${esc(SHORT[d.name]||d.verdict||d.text)}</p><p class="stone-region-note">${esc(regionText)}</p></div></details>`;
+      const status=def.mature?'Can be mature':'Cannot be mature';
+      const region=REGIONS[d.name];
+      const regionText=region?`Approximate Stone region: ${region.label}.`:'';
+      return `<details class="stone-item stone-doctrine-item" data-doctrine="${esc(d.name)}"${open?' open':''}><summary><span>${esc(d.name)}</span><small>${esc(status)}</small></summary><div class="stone-item-body"><p>${esc(def.text)}</p>${regionText?`<p class="stone-region-note">${esc(regionText)}</p>`:''}</div></details>`;
     }).join('');
-    return `<section class="stone-ref-section">${intro}<div class="stone-list">${items}</div></section>`;
+    return `<section class="stone-ref-section"><div class="stone-list">${items}</div></section>`;
   };
 
   document.addEventListener('click',e=>{
@@ -191,10 +169,11 @@
   new MutationObserver(contextSync).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class','aria-selected','hidden']});
 
   window.STONE_DOCTRINES_V6={
+    DOCTRINES,
     REGIONS,
     regionPoints,
     inRegion,
     clear:clearSelection,
-    getState:()=>({openDoctrine,regionPointCount:openDoctrine?regionPoints(openDoctrine).length:0})
+    getState:()=>({openDoctrine,regionPointCount:openDoctrine?regionPoints(openDoctrine).length:0,mature:openDoctrine?DOCTRINES[openDoctrine]?.mature:null})
   };
 })();
