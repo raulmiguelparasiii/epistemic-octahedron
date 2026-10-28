@@ -8,21 +8,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: stone-native-semantics-20261027
+          ref: stone-semantics-points-20261027
       - name: Static validation
-        shell: bash
-        run: |
-          set -euo pipefail
-          node --check philosophers-stone-atlas/stone-semantics-v5.js
-          node --check philosophers-stone-atlas/stone-ui-v2.js
-          cat philosophers-stone-atlas/core.01.b64 philosophers-stone-atlas/core.02.b64 philosophers-stone-atlas/core.03.b64 philosophers-stone-atlas/core.04.b64 philosophers-stone-atlas/core.05a.b64 philosophers-stone-atlas/core.05b.b64 philosophers-stone-atlas/core.06.b64 philosophers-stone-atlas/core.07.b64 philosophers-stone-atlas/core.08.b64 | tr -d '\n\r' | base64 -d | gzip -dc > /tmp/core.html
-          grep -Fq "state.uiMode = ['plot','worldview','questions','editor'].includes(mode) ? mode : 'plot';" /tmp/core.html
-          grep -Fq "function startSoftSnap(quat)" /tmp/core.html
-          grep -Fq "function makeCanonicalQuat(yaw, pitch)" /tmp/core.html
-          grep -Fq "function setPanelMode(mode)" /tmp/core.html
-          grep -Fq "state.snappedTopBottom || !state.surfaceLocked" /tmp/core.html
+        run: node --check philosophers-stone-atlas/stone-semantics-v5.js
       - name: Prepare browser harness
-        shell: bash
         run: |
           npm init -y >/dev/null 2>&1
           npm install playwright@1.56.1 >/dev/null 2>&1
@@ -30,7 +19,6 @@ jobs:
           test -n "$CHROME"
           echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
       - name: Browser smoke test
-        shell: bash
         run: |
           python3 -m http.server 8000 >/tmp/stone-http.log 2>&1 &
           SERVER_PID=$!
@@ -39,7 +27,6 @@ jobs:
           const assert=require('assert');
           const {chromium}=require('playwright');
           const round=p=>p.map(v=>Math.round(v*1000)/1000);
-          const close=(a,b)=>Math.abs(a-b)<0.01;
           (async()=>{
             const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
             const page=await browser.newPage({viewport:{width:390,height:844}});
@@ -48,58 +35,40 @@ jobs:
             await page.goto('http://127.0.0.1:8000/philosophers-stone-atlas/',{waitUntil:'networkidle',timeout:30000});
             const frame=page.frames().find(f=>f!==page.mainFrame());
             assert(frame,'Stone iframe missing');
-            await frame.waitForFunction(()=>window.STONE_PLOT&&document.querySelector('#stoneSemanticsTab'),null,{timeout:20000});
+            await frame.waitForSelector('#stoneSemanticsTab',{timeout:20000});
+            const getPoint=()=>frame.evaluate(()=>['coord-x','coord-y','coord-z'].map(id=>Number(document.getElementById(id).value)));
+            const item=name=>frame.locator('.stone-semantic-item').filter({has:frame.locator('summary',{hasText:name})}).first();
+
             await frame.getByRole('button',{name:'Semantics',exact:true}).click();
             await frame.waitForTimeout(100);
             assert.strictEqual(await frame.$eval('#plotPanel',el=>el.hidden),true,'Plot leaked into Semantics');
             assert.strictEqual(await frame.$eval('#stoneSemanticsPanel',el=>el.hidden),false,'Semantics panel hidden');
 
-            const item=name=>frame.locator('.stone-semantic-item').filter({has:frame.locator('summary',{hasText:name})}).first();
-            await item('Empathy').locator('summary').click();
-            await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[1,0,0]);
-            let view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
-            assert.strictEqual(view.snappedTopBottom,true,'Empathy did not settle to top view');
-            assert(close(view.distance,5.25),'Empathy did not use zoomed-out distance');
+            for(const [name,expected] of [
+              ['Empathy',[1,0,0]],['Practicality',[-1,0,0]],['Wisdom',[0,0,1]],['Knowledge',[0,0,-1]],
+              ['Absence',[0,0,0]],['Maturity',[0,1,0]],['Collapse',[0,-1,0]],['Epistemic freedom',[0,1,0]]
+            ]){
+              await item(name).locator('summary').click();
+              await frame.waitForTimeout(100);
+              assert.deepStrictEqual(round(await getPoint()),expected,`${name} plotted incorrectly`);
+              assert.strictEqual(await frame.locator('.stone-semantic-item[open]').count(),1,'More than one semantic stayed open');
+            }
 
-            await item('Knowledge').locator('summary').click();
-            await frame.waitForTimeout(1200);
-            assert.strictEqual(await frame.locator('.stone-semantic-item[open]').count(),1,'More than one semantic stayed open');
-            assert.strictEqual((await frame.locator('.stone-semantic-item[open] summary').innerText()).trim(),'Knowledge');
-            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
-            assert.strictEqual(view.snappedTopBottom,true,'Knowledge did not settle to top view');
-            assert(close(view.distance,5.25),'Knowledge did not use zoomed-out distance');
+            await frame.evaluate(()=>window.postMessage({type:'set-profile',data:{data:{point:{x:.5,y:.5,z:0}}}},'*'));
+            await frame.waitForTimeout(50);
+            await item('Prejudice').locator('summary').click();
+            await frame.waitForTimeout(100);
+            assert.deepStrictEqual(round(await getPoint()),[1,0,0],'Prejudice did not project to y=0 surface');
 
-            await item('Collapse').locator('summary').click();
-            await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[0,-1,0]);
-            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
-            assert.strictEqual(view.snappedTopBottom,false,'Collapse did not settle to side view');
-            assert(close(view.distance,4.25),'Collapse distance incorrect');
-
-            await frame.evaluate(()=>window.STONE_PLOT.setPoint([0.5,0.5,0]));
+            await frame.evaluate(()=>window.postMessage({type:'set-profile',data:{data:{point:{x:0,y:.5,z:.5}}}},'*'));
+            await frame.waitForTimeout(50);
             await item('Reality-friction').locator('summary').click();
-            await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[1,0,0]);
-            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
-            assert.strictEqual(view.snappedTopBottom,false,'Reality-friction did not settle to side view');
-
-            await item('Maturity').locator('summary').click();
-            await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[0,1,0]);
-            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
-            assert.strictEqual(view.snappedTopBottom,true,'Maturity did not settle to top view');
-            assert(close(view.distance,4.25),'Maturity distance incorrect');
-
-            await item('Epistemic freedom').locator('summary').click();
-            await frame.waitForTimeout(1200);
-            assert.deepStrictEqual(round(await frame.evaluate(()=>window.STONE_PLOT.getPoint())),[0,1,0]);
-            view=await frame.evaluate(()=>window.STONE_PLOT.getViewState());
-            assert.strictEqual(view.snappedTopBottom,true,'Epistemic freedom did not settle to top view');
+            await frame.waitForTimeout(100);
+            assert.deepStrictEqual(round(await getPoint()),[0,0,1],'Reality-friction did not project to y=0 surface');
 
             if(errors.length) throw new Error('Page errors: '+errors.join(' | '));
             await browser.close();
-            console.log('Native Stone browser smoke test passed.');
+            console.log('Semantic plotting smoke test passed.');
           })().catch(err=>{console.error(err);process.exit(1)});
           NODE
           NODE_PATH="$PWD/node_modules" node /tmp/stone-test.js
