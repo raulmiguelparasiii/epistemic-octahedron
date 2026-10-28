@@ -95,10 +95,14 @@
   };
 
   document.addEventListener('click',e=>{
-    const summary=e.target.closest?.('#stoneSemanticsPanel .stone-semantic-item[data-coordinate] > summary');
+    const summary=e.target.closest?.('#stoneSemanticsPanel .stone-semantic-item > summary');
     if(!summary) return;
     const details=summary.parentElement;
     if(details.open) return;
+    for(const other of document.querySelectorAll('#stoneSemanticsPanel .stone-semantic-item[open]')){
+      if(other!==details) other.open=false;
+    }
+    if(!details.dataset.coordinate) return;
     const coord=details.dataset.coordinate.split(',').map(Number);
     if(coord.length===3&&coord.every(Number.isFinite)) setTimeout(()=>setPoint(coord),0);
   });
