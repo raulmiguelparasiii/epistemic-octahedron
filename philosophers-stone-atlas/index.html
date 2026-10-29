@@ -406,7 +406,9 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
       stoneApplyProjectionRecovery(now);
     };
     const stonePortalState=()=>{
-      applyStonePortalCamera();
+      syncSceneMatrices();
+      camera.lookAt(rootGroup.position);
+      camera.updateMatrixWorld();
       const canvasRect=renderer.domElement.getBoundingClientRect();
       const origin=new THREE.Vector3(0,0,0)
         .applyMatrix4(octaGroup.matrixWorld)
