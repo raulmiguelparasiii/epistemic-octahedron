@@ -679,7 +679,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
         core=core.replace(movingAnchor,movingReplacement);
 
         const pointerVisibilityAnchor="pointerMarker.visible = !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
-        const pointerVisibilityPatched="pointerMarker.visible = !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
+        const pointerVisibilityPatched="pointerMarker.visible = !stoneEntranceHeld && !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
         if(!core.includes(pointerVisibilityAnchor)) throw new Error('Pointer visibility anchor was not found.');
         core=core.replace(pointerVisibilityAnchor,pointerVisibilityPatched);
 
