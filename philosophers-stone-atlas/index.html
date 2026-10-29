@@ -183,14 +183,14 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
     let stoneEntranceHeld=false;
     const stonePointerVisibility=()=>!stoneEntranceHeld && !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
     const stonePortalHoldStyle=document.createElement('style');
-    stonePortalHoldStyle.textContent=`
-      #ui,#crosshair,#viewLabels,#sliderTooltip,#aspectTooltip{transition:opacity 180ms ease!important}
-      body.stone-portal-held #ui,
-      body.stone-portal-held #crosshair,
-      body.stone-portal-held #viewLabels,
-      body.stone-portal-held #sliderTooltip,
-      body.stone-portal-held #aspectTooltip{opacity:0!important;pointer-events:none!important}
-    `;
+    stonePortalHoldStyle.textContent=[
+      '#ui,#crosshair,#viewLabels,#sliderTooltip,#aspectTooltip{transition:opacity 180ms ease!important}',
+      'body.stone-portal-held #ui,',
+      'body.stone-portal-held #crosshair,',
+      'body.stone-portal-held #viewLabels,',
+      'body.stone-portal-held #sliderTooltip,',
+      'body.stone-portal-held #aspectTooltip{opacity:0!important;pointer-events:none!important}'
+    ].join(String.fromCharCode(10));
     document.head.appendChild(stonePortalHoldStyle);
     const stoneSetEntranceHeld=held=>{
       stoneEntranceHeld=!!held;
