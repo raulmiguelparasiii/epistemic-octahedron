@@ -1,0 +1,95 @@
+name: Fix Atlas orthographic runtime anchor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fix-atlas-ortho-anchor.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Correct exact packed-core resize anchor
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64, gzip
+
+          p=Path('philosophers-stone-atlas/index.html')
+          s=p.read_text()
+          old="""const resizeAnchor=`    function resizeRendererToViewport() {
+            const { width, height } = getViewportSize();
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+          }`;
+          const resizeReplacement=`    function resizeRendererToViewport() {
+            const { width, height } = getViewportSize();
+            const aspect = width / height;
+            camera.left = -STONE_ORTHO_HALF_HEIGHT * aspect;
+            camera.right = STONE_ORTHO_HALF_HEIGHT * aspect;
+            camera.top = STONE_ORTHO_HALF_HEIGHT;
+            camera.bottom = -STONE_ORTHO_HALF_HEIGHT;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+          }`;"""
+          # Current wrapper was accidentally dedented by the patch executor.
+          current="""const resizeAnchor=`    function resizeRendererToViewport() {
+  const { width, height } = getViewportSize();
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}`;
+const resizeReplacement=`    function resizeRendererToViewport() {
+  const { width, height } = getViewportSize();
+  const aspect = width / height;
+  camera.left = -STONE_ORTHO_HALF_HEIGHT * aspect;
+  camera.right = STONE_ORTHO_HALF_HEIGHT * aspect;
+  camera.top = STONE_ORTHO_HALF_HEIGHT;
+  camera.bottom = -STONE_ORTHO_HALF_HEIGHT;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}`;"""
+          if s.count(current)!=1:
+              raise SystemExit(f'expected one current resize wrapper, found {s.count(current)}')
+          s=s.replace(current,old,1)
+          p.write_text(s)
+
+          sw=Path('philosophers-stone-atlas/service-worker.js')
+          sws=sw.read_text()
+          if sws.count("philosophers-stone-atlas-offline-v2")!=1:
+              raise SystemExit('expected v2 service-worker cache name once')
+          sw.write_text(sws.replace('philosophers-stone-atlas-offline-v2','philosophers-stone-atlas-offline-v3',1))
+
+          root=Path('philosophers-stone-atlas')
+          names=['core.01.b64','core.02.b64','core.03.b64','core.04.b64','core.05a.b64','core.05b.b64','core.06.b64','core.07.b64','core.08.b64']
+          packed=''.join((root/n).read_text().strip() for n in names)
+          core=gzip.decompress(base64.b64decode(packed)).decode()
+          exact_resize="""    function resizeRendererToViewport() {
+      const { width, height } = getViewportSize();
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }"""
+          exact_camera="    const camera = new THREE.PerspectiveCamera(45, (viewport.clientWidth || window.innerWidth) / (viewport.clientHeight || window.innerHeight), 0.01, 100);"
+          exact_position="      camera.position.set(0, 0, state.distance);"
+          for label,anchor in [('resize',exact_resize),('camera',exact_camera),('position',exact_position)]:
+              if core.count(anchor)!=1:
+                  raise SystemExit(f'{label} packed-core anchor mismatch: {core.count(anchor)}')
+          PY
+      - name: Commit fix and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/fix-atlas-ortho-anchor.yml
+          git add philosophers-stone-atlas/index.html philosophers-stone-atlas/service-worker.js
+          git diff --cached --check
+          git commit -m "Fix Atlas orthographic runtime anchor"
+          git push
