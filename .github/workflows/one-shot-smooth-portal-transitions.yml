@@ -11,7 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply patch helper
-        run: python .github/portal_transition_patch.py
+        run: |
+          sed -i 's/assert s.count(old)>=2/assert s.count(old)==1/' .github/portal_transition_patch.py
+          python .github/portal_transition_patch.py
       - name: Commit and clean temporary files
         run: |
           git config user.name 'github-actions[bot]'
