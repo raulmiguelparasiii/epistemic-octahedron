@@ -1,4 +1,4 @@
-const CACHE_NAME = 'philosophers-stone-atlas-offline-v1';
+const CACHE_NAME = 'philosophers-stone-atlas-offline-v2';
 const CACHE_PREFIX = 'philosophers-stone-atlas-offline-';
 
 const PRECACHE = [

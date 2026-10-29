@@ -9,6 +9,8 @@
   <style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f8fafc}
     iframe{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#f8fafc}
+    #portalPreview{opacity:0;pointer-events:none;z-index:4;background:#000;transition:opacity 80ms linear}
+#portalPreview.is-committing{opacity:1!important;transition:opacity 220ms ease}
     #boot{position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font:14px system-ui,sans-serif;color:#64748b;background:#f8fafc}
   </style>
 </head>
@@ -19,6 +21,68 @@
     (async()=>{
       const frame=document.getElementById('appFrame');
       const boot=document.getElementById('boot');
+const params=new URLSearchParams(location.search);
+const portalPreviewMode=params.get('portal-preview')==='1';
+const portalArrival=params.get('portal')==='from42';
+const RETURN_URL='https://raulmiguelparasiii.github.io/42/';
+const PORTAL_PRELOAD_RADIUS=8*Math.PI/180;
+const PORTAL_PREVIEW_RADIUS=4*Math.PI/180;
+const PORTAL_MAX_OPACITY=.52;
+const activePortalPointers=new Set();
+let portalReturnFrame=null;
+let portalTransitioning=false;
+let portalArrivalLocked=portalArrival;
+if(portalPreviewMode||portalArrival) boot.textContent='';
+
+const clamp01=value=>Math.max(0,Math.min(1,value));
+const smoothstep=value=>value*value*(3-2*value);
+const ensureReturnPreview=()=>{
+  if(portalPreviewMode||portalReturnFrame) return portalReturnFrame;
+  const preview=document.createElement('iframe');
+  preview.id='portalPreview';
+  preview.title='';
+  preview.tabIndex=-1;
+  preview.setAttribute('aria-hidden','true');
+  preview.src=RETURN_URL+'?portal-preview=1';
+  document.body.appendChild(preview);
+  portalReturnFrame=preview;
+  return preview;
+};
+const portalDistance=()=>{
+  try{
+    return frame.contentWindow?.STONE_VIEW?.portalDistance?.()??Infinity;
+  }catch{
+    return Infinity;
+  }
+};
+const updatePortalPreview=()=>{
+  if(portalPreviewMode||portalTransitioning) return;
+  const distance=portalDistance();
+  if(portalArrivalLocked){
+    if(distance>PORTAL_PREVIEW_RADIUS*1.5) portalArrivalLocked=false;
+    if(portalReturnFrame) portalReturnFrame.style.opacity='0';
+    requestAnimationFrame(updatePortalPreview);
+    return;
+  }
+  if(distance<PORTAL_PRELOAD_RADIUS) ensureReturnPreview();
+  const active=activePortalPointers.size>0;
+  const amount=active?clamp01(1-distance/PORTAL_PREVIEW_RADIUS):0;
+  const opacity=PORTAL_MAX_OPACITY*smoothstep(amount);
+  if(portalReturnFrame) portalReturnFrame.style.opacity=String(opacity);
+  requestAnimationFrame(updatePortalPreview);
+};
+const commitReturnPortal=()=>{
+  if(portalPreviewMode||portalArrivalLocked||portalTransitioning) return false;
+  if(portalDistance()>PORTAL_PREVIEW_RADIUS) return false;
+  portalTransitioning=true;
+  const preview=ensureReturnPreview();
+  if(preview){
+    preview.classList.add('is-committing');
+    preview.style.opacity='1';
+  }
+  setTimeout(()=>location.assign(RETURN_URL+'?portal=from-atlas'),230);
+  return true;
+};
       try{
         if(!('DecompressionStream' in window)) throw new Error('This browser does not support DecompressionStream.');
         const names=['core.01.b64','core.02.b64','core.03.b64','core.04.b64','core.05a.b64','core.05b.b64','core.06.b64','core.07.b64','core.08.b64'];
@@ -33,6 +97,48 @@
         let core=await new Response(stream).text();
         core=core.replaceAll('Epistemic Octahedron','The Philosopher’s Stone');
         core=core.replaceAll('EO Mobile Atlas Beta','The Philosopher’s Stone');
+
+const cameraAnchor=`    const camera = new THREE.PerspectiveCamera(45, (viewport.clientWidth || window.innerWidth) / (viewport.clientHeight || window.innerHeight), 0.01, 100);`;
+const cameraReplacement=`    const STONE_ORTHO_BASE_DISTANCE = 4.25;
+const STONE_ORTHO_HALF_HEIGHT = STONE_ORTHO_BASE_DISTANCE * Math.tan(THREE.MathUtils.degToRad(22.5));
+const STONE_ORTHO_INITIAL_ASPECT = (viewport.clientWidth || window.innerWidth) / (viewport.clientHeight || window.innerHeight);
+const camera = new THREE.OrthographicCamera(
+  -STONE_ORTHO_HALF_HEIGHT * STONE_ORTHO_INITIAL_ASPECT,
+  STONE_ORTHO_HALF_HEIGHT * STONE_ORTHO_INITIAL_ASPECT,
+  STONE_ORTHO_HALF_HEIGHT,
+  -STONE_ORTHO_HALF_HEIGHT,
+  0.01,
+  100
+);
+camera.position.set(0, 0, STONE_ORTHO_BASE_DISTANCE);`;
+if(!core.includes(cameraAnchor)) throw new Error('Perspective camera anchor was not found.');
+core=core.replace(cameraAnchor,cameraReplacement);
+
+const cameraPositionAnchor='      camera.position.set(0, 0, state.distance);';
+const cameraPositionReplacement=`      camera.position.set(0, 0, STONE_ORTHO_BASE_DISTANCE);
+  camera.zoom = STONE_ORTHO_BASE_DISTANCE / state.distance;
+  camera.updateProjectionMatrix();`;
+if(!core.includes(cameraPositionAnchor)) throw new Error('Camera distance anchor was not found.');
+core=core.replace(cameraPositionAnchor,cameraPositionReplacement);
+
+const resizeAnchor=`    function resizeRendererToViewport() {
+  const { width, height } = getViewportSize();
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}`;
+const resizeReplacement=`    function resizeRendererToViewport() {
+  const { width, height } = getViewportSize();
+  const aspect = width / height;
+  camera.left = -STONE_ORTHO_HALF_HEIGHT * aspect;
+  camera.right = STONE_ORTHO_HALF_HEIGHT * aspect;
+  camera.top = STONE_ORTHO_HALF_HEIGHT;
+  camera.bottom = -STONE_ORTHO_HALF_HEIGHT;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}`;
+if(!core.includes(resizeAnchor)) throw new Error('Camera resize anchor was not found.');
+core=core.replace(resizeAnchor,resizeReplacement);
 
         const equatorAnchor=`octaGroup.add(new THREE.Line(
       new THREE.BufferGeometry().setFromPoints(equatorPoints),
@@ -88,6 +194,24 @@
       pointerMarker.visible=stonePointerVisibility();
     };
     window.STONE_VIEW={
+  portalDistance(){
+    return state.orientation.angleTo(
+      makeCanonicalQuat(Math.PI / 4, Math.asin(1 / Math.sqrt(3)))
+    );
+  },
+  setPortalOrientation(){
+    state.orientation.copy(
+      makeCanonicalQuat(Math.PI / 4, Math.asin(1 / Math.sqrt(3)))
+    );
+    state.snapQuat=null;
+    state.angularSpeed=0;
+    resetUprightStabilizer();
+    state.panVel.set(0,0,0);
+    state.zoomVel=0;
+    state.target.set(0,0,0);
+    state.distance=4.25;
+    invalidateRender();
+  },
       request(view,distance){
         let quat=null;
         if(view==='default'){
@@ -197,9 +321,30 @@
         core=core.replace(pointerVisibilityAnchor,pointerVisibilityPatched);
 
         core=core.replace('</body>','<script src="worldview-layer.js?v=stone-v11-20261028"><\/script><script src="stone-data-v2.js?v=stone-v11-20261028"><\/script><script src="stone-readings-core-v2.js?v=stone-v11-20261028"><\/script><script src="stone-readings-more-v2.js?v=stone-v11-20261028"><\/script><script src="stone-referents-v4.js?v=stone-v11-20261028"><\/script><script src="stone-semantics-v5.js?v=stone-v11-20261028"><\/script><script src="stone-doctrines-v6.js?v=stone-v11-20261028"><\/script><script src="stone-ui-v2.js?v=stone-v11-20261028"><\/script><script src="stone-polish-v3.js?v=stone-v11-20261028"><\/script></body>');
-        frame.srcdoc=core;
+        frame.addEventListener('load',()=>{
+  const inner=frame.contentWindow;
+  if(!inner) return;
+  if(portalPreviewMode||portalArrival){
+    inner.STONE_VIEW?.setPortalOrientation?.();
+  }
+  inner.addEventListener('pointerdown',event=>{
+    activePortalPointers.add(event.pointerId);
+  },true);
+  inner.addEventListener('pointerup',event=>{
+    activePortalPointers.delete(event.pointerId);
+    setTimeout(()=>{
+      if(activePortalPointers.size===0) commitReturnPortal();
+    },0);
+  },true);
+  inner.addEventListener('pointercancel',event=>{
+    activePortalPointers.delete(event.pointerId);
+  },true);
+  if(portalArrival) history.replaceState(null,'',location.pathname);
+},{once:true});
+frame.srcdoc=core;
         frame.hidden=false;
         boot.remove();
+        if(!portalPreviewMode) requestAnimationFrame(updatePortalPreview);
       }catch(err){
         boot.textContent='The Philosopher\'s Stone could not start: '+err.message;
       }
