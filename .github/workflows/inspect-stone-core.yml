@@ -1,0 +1,47 @@
+name: Inspect Stone core physics
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/inspect-stone-core.yml
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print relevant core sections
+        run: |
+          python - <<'PY'
+          import base64, gzip
+          from pathlib import Path
+          root=Path('philosophers-stone-atlas')
+          names=['core.01.b64','core.02.b64','core.03.b64','core.04.b64','core.05a.b64','core.05b.b64','core.06.b64','core.07.b64','core.08.b64']
+          packed=''.join((root/n).read_text().strip() for n in names)
+          core=gzip.decompress(base64.b64decode(packed)).decode()
+          needles=[
+            'const state =',
+            'angularSpeed',
+            'function startSoftSnap',
+            'const startSoftSnap',
+            'function updateInertia',
+            'function animate',
+            'requestAnimationFrame',
+            'camera.position.set(0, 0, state.distance);',
+            'function resizeRendererToViewport()',
+            "addEventListener('pointerdown'",
+            "addEventListener('pointerup'",
+            'function endPointer',
+            'const endPointer',
+          ]
+          seen=[]
+          for needle in needles:
+            pos=core.find(needle)
+            if pos<0: continue
+            key=(max(0,pos-1800), min(len(core),pos+5000))
+            if any(abs(key[0]-a)<1200 for a,b in seen): continue
+            seen.append(key)
+            print('\n\n===== NEEDLE:',needle,'@',pos,'=====\n')
+            print(core[key[0]:key[1]])
+          PY
