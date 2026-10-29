@@ -1,5 +1,5 @@
-const CACHE_NAME = 'philosophers-stone-atlas-offline-v10';
-// revision: 2026-10-29 smooth portal transitions; cache generation intentionally remains v10.
+const CACHE_NAME = 'philosophers-stone-atlas-offline-v11';
+// revision: 2026-10-29 Plot terminology and current paper assets.
 const CACHE_PREFIX = 'philosophers-stone-atlas-offline-';
 
 const PRECACHE = [
@@ -27,7 +27,9 @@ const PRECACHE = [
   './stone-semantics-camera-v6.js',
   './stone-semantics-v5.js',
   './stone-ui-v2.js',
-  './worldview-layer.js'
+  './worldview-layer.js',
+  './paper/page-01.jpg',
+  './paper/The-Philosophers-Stone-The-Objective-Structure-of-Maturity.pdf'
 ];
 
 async function refreshPrecache() {
