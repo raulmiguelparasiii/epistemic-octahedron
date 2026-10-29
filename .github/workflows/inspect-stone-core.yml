@@ -1,0 +1,44 @@
+name: Inspect Philosopher's Stone core
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/inspect-stone-core.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect compressed core camera and controls
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64, gzip, re
+          root=Path('philosophers-stone-atlas')
+          names=['core.01.b64','core.02.b64','core.03.b64','core.04.b64','core.05a.b64','core.05b.b64','core.06.b64','core.07.b64','core.08.b64']
+          packed=''.join((root/n).read_text().strip() for n in names)
+          core=gzip.decompress(base64.b64decode(packed)).decode()
+          print('CORE_LENGTH', len(core))
+          lines=core.splitlines()
+          patterns=[
+            r'PerspectiveCamera', r'OrthographicCamera', r'camera\s*=', r'camera\.position',
+            r'state\.distance', r'ZOOM_', r'makeCanonicalQuat', r'startSoftSnap',
+            r'pointerup', r'pointerdown', r'pointermove', r'touchend', r'resize', r'setSize'
+          ]
+          hits=[]
+          for i,line in enumerate(lines):
+            if any(re.search(p,line) for p in patterns): hits.append(i)
+          seen=set()
+          for i in hits:
+            lo=max(0,i-4); hi=min(len(lines),i+6)
+            key=(lo,hi)
+            if key in seen: continue
+            seen.add(key)
+            print(f'\n--- lines {lo+1}-{hi} ---')
+            for j in range(lo,hi): print(f'{j+1}: {lines[j]}')
+          PY
