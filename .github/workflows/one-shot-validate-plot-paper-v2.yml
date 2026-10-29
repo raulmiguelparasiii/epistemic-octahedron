@@ -1,0 +1,117 @@
+name: One-shot validate Plot paper v2
+on:
+  push:
+    paths:
+      - '.github/workflows/one-shot-validate-plot-paper-v2.yml'
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PDF and preview assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pypdf
+          python - <<'PY'
+          from pathlib import Path
+          from pypdf import PdfReader
+          pdf=Path('philosophers-stone-atlas/paper/The-Philosophers-Stone-The-Objective-Structure-of-Maturity.pdf')
+          jpg=Path('philosophers-stone-atlas/paper/page-01.jpg')
+          assert pdf.read_bytes()[:5] == b'%PDF-', 'bad PDF signature'
+          assert jpg.read_bytes()[:2] == b'\xff\xd8', 'bad JPEG signature'
+          reader=PdfReader(str(pdf))
+          assert len(reader.pages) >= 1, 'PDF has no pages'
+          text=(reader.pages[0].extract_text() or '').strip()
+          print({'pages':len(reader.pages),'pdf_bytes':pdf.stat().st_size,'preview_bytes':jpg.stat().st_size,'first_page_text':text[:500]})
+          PY
+      - name: Exercise Plot UI in browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet selenium
+          python -m http.server 8000 >/tmp/stone-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          python - <<'PY'
+          import json, time, urllib.request
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import WebDriverWait
+          from selenium.webdriver.support import expected_conditions as EC
+
+          options=Options()
+          options.add_argument('--headless=new')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
+          options.add_argument('--window-size=390,844')
+          driver=webdriver.Chrome(options=options)
+          try:
+              driver.get('http://127.0.0.1:8000/philosophers-stone-atlas/')
+              wait=WebDriverWait(driver,25)
+              frame=wait.until(EC.presence_of_element_located((By.ID,'appFrame')))
+              wait.until(lambda d: d.execute_script("return document.getElementById('appFrame')?.contentDocument?.readyState") == 'complete')
+              driver.switch_to.frame(frame)
+              section=wait.until(EC.presence_of_element_located((By.ID,'stonePaperSection')))
+              panel=driver.find_element(By.ID,'plotPanel')
+              img=section.find_element(By.CSS_SELECTOR,'img.stone-paper-preview')
+              dl=section.find_element(By.CSS_SELECTOR,'a.stone-paper-download')
+              wait.until(lambda d: d.execute_script('return arguments[0].complete && arguments[0].naturalWidth>0',img))
+              data=driver.execute_script('''
+                const panel=arguments[0],img=arguments[1],dl=arguments[2];
+                const cue=document.getElementById('stonePaperScrollCue');
+                return {
+                  negative:document.getElementById('negativeStabilityLabel').textContent.trim(),
+                  positive:document.getElementById('positiveStabilityLabel').textContent.trim(),
+                  overflowY:getComputedStyle(panel).overflowY,
+                  scrollHeight:panel.scrollHeight,
+                  clientHeight:panel.clientHeight,
+                  scrollTop:panel.scrollTop,
+                  cueVisible:cue?.classList.contains('is-visible')||false,
+                  imageWidth:img.naturalWidth,
+                  imageHeight:img.naturalHeight,
+                  pdfHref:dl.href,
+                  downloadText:dl.textContent.trim()
+                };
+              ''',panel,img,dl)
+              driver.execute_script('arguments[0].scrollTop=Math.min(160,Math.max(0,arguments[0].scrollHeight-arguments[0].clientHeight))',panel)
+              time.sleep(.2)
+              data['scrollTopAfter']=driver.execute_script('return arguments[0].scrollTop',panel)
+              data['cueVisibleAfter']=driver.execute_script("return document.getElementById('stonePaperScrollCue')?.classList.contains('is-visible')||false")
+              assert data['negative']=='Insulation', data
+              assert data['positive']=='Answerability', data
+              assert data['scrollHeight']>data['clientHeight']+2, data
+              assert data['scrollTopAfter']>0, data
+              assert data['imageWidth']>0 and data['imageHeight']>0, data
+              assert data['downloadText']=='Download PDF', data
+              with urllib.request.urlopen(data['pdfHref'],timeout=10) as response:
+                  prefix=response.read(5)
+                  data['pdfStatus']=response.status
+                  data['pdfType']=response.headers.get('Content-Type')
+                  data['pdfPrefix']=prefix.decode('ascii','replace')
+              assert data['pdfStatus']==200 and data['pdfPrefix']=='%PDF-', data
+              print(json.dumps(data,indent=2))
+          finally:
+              driver.quit()
+          PY
+      - name: Validate offline precache generation
+        shell: python
+        run: |
+          from pathlib import Path
+          sw=Path('philosophers-stone-atlas/service-worker.js').read_text()
+          assert "offline-v11" in sw
+          assert "./paper/page-01.jpg" in sw
+          assert "./paper/The-Philosophers-Stone-The-Objective-Structure-of-Maturity.pdf" in sw
+          print('offline cache v11 includes paper assets')
+      - name: Remove one-shot workflow
+        if: always()
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/one-shot-validate-plot-paper-v2.yml
+          git commit -m 'Remove one-shot Plot paper validation workflow'
+          git push
