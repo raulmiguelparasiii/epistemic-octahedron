@@ -1,0 +1,102 @@
+name: One-shot validate Plot paper
+on:
+  push:
+    paths:
+      - '.github/workflows/one-shot-validate-plot-paper.yml'
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect paper assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          PDF='philosophers-stone-atlas/paper/The-Philosophers-Stone-The-Objective-Structure-of-Maturity.pdf'
+          JPG='philosophers-stone-atlas/paper/page-01.jpg'
+          file "$PDF" "$JPG"
+          pdfinfo "$PDF" | sed -n '1,24p'
+          echo '--- first page text ---'
+          pdftotext -f 1 -l 1 "$PDF" - | sed -n '1,35p'
+      - name: Exercise Plot UI in browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet selenium
+          python -m http.server 8000 >/tmp/stone-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          python - <<'PY'
+          import json, time, urllib.request
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import WebDriverWait
+          from selenium.webdriver.support import expected_conditions as EC
+
+          options=Options()
+          options.add_argument('--headless=new')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
+          options.add_argument('--window-size=390,844')
+          driver=webdriver.Chrome(options=options)
+          try:
+              driver.get('http://127.0.0.1:8000/philosophers-stone-atlas/')
+              wait=WebDriverWait(driver,20)
+              frame=wait.until(EC.presence_of_element_located((By.ID,'appFrame')))
+              wait.until(lambda d: d.execute_script("return document.getElementById('appFrame')?.contentDocument?.readyState") == 'complete')
+              driver.switch_to.frame(frame)
+              wait.until(EC.presence_of_element_located((By.ID,'stonePaperSection')))
+              neg=driver.find_element(By.ID,'negativeStabilityLabel').text.strip()
+              pos=driver.find_element(By.ID,'positiveStabilityLabel').text.strip()
+              panel=driver.find_element(By.ID,'plotPanel')
+              section=driver.find_element(By.ID,'stonePaperSection')
+              img=section.find_element(By.CSS_SELECTOR,'img.stone-paper-preview')
+              download=section.find_element(By.CSS_SELECTOR,'a.stone-paper-download')
+              data=driver.execute_script('''
+                const panel=arguments[0], img=arguments[1], dl=arguments[2];
+                const cue=document.getElementById('stonePaperScrollCue');
+                return {
+                  negative:document.getElementById('negativeStabilityLabel').textContent.trim(),
+                  positive:document.getElementById('positiveStabilityLabel').textContent.trim(),
+                  scrollHeight:panel.scrollHeight,
+                  clientHeight:panel.clientHeight,
+                  overflowY:getComputedStyle(panel).overflowY,
+                  cueVisible:cue?.classList.contains('is-visible')||false,
+                  imageComplete:img.complete,
+                  imageWidth:img.naturalWidth,
+                  imageHeight:img.naturalHeight,
+                  downloadHref:dl.href,
+                  sectionText:document.getElementById('stonePaperSection').innerText
+                };
+              ''',panel,img,download)
+              driver.execute_script('arguments[0].scrollTop=120',panel)
+              time.sleep(.15)
+              data['scrollTopAfter']=driver.execute_script('return arguments[0].scrollTop',panel)
+              assert neg=='Insulation', neg
+              assert pos=='Answerability', pos
+              assert data['scrollHeight']>data['clientHeight']+2, data
+              assert data['scrollTopAfter']>0, data
+              assert data['imageComplete'] and data['imageWidth']>0, data
+              assert 'Download PDF' in data['sectionText'], data
+              with urllib.request.urlopen(data['downloadHref'], timeout=10) as response:
+                  head=response.read(5)
+                  data['pdfStatus']=response.status
+                  data['pdfContentType']=response.headers.get('Content-Type')
+                  data['pdfPrefix']=head.decode('ascii','replace')
+              assert data['pdfStatus']==200 and data['pdfPrefix']=='%PDF-', data
+              print(json.dumps(data,indent=2))
+          finally:
+              driver.quit()
+          PY
+      - name: Remove one-shot workflow
+        if: always()
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/one-shot-validate-plot-paper.yml
+          git commit -m 'Remove one-shot Plot validation workflow'
+          git push
