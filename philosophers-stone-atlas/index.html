@@ -122,21 +122,21 @@ if(!core.includes(cameraPositionAnchor)) throw new Error('Camera distance anchor
 core=core.replace(cameraPositionAnchor,cameraPositionReplacement);
 
 const resizeAnchor=`    function resizeRendererToViewport() {
-  const { width, height } = getViewportSize();
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
-}`;
+      const { width, height } = getViewportSize();
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }`;
 const resizeReplacement=`    function resizeRendererToViewport() {
-  const { width, height } = getViewportSize();
-  const aspect = width / height;
-  camera.left = -STONE_ORTHO_HALF_HEIGHT * aspect;
-  camera.right = STONE_ORTHO_HALF_HEIGHT * aspect;
-  camera.top = STONE_ORTHO_HALF_HEIGHT;
-  camera.bottom = -STONE_ORTHO_HALF_HEIGHT;
-  camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
-}`;
+      const { width, height } = getViewportSize();
+      const aspect = width / height;
+      camera.left = -STONE_ORTHO_HALF_HEIGHT * aspect;
+      camera.right = STONE_ORTHO_HALF_HEIGHT * aspect;
+      camera.top = STONE_ORTHO_HALF_HEIGHT;
+      camera.bottom = -STONE_ORTHO_HALF_HEIGHT;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }`;
 if(!core.includes(resizeAnchor)) throw new Error('Camera resize anchor was not found.');
 core=core.replace(resizeAnchor,resizeReplacement);
 
