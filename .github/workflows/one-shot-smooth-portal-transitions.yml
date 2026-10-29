@@ -1,0 +1,359 @@
+name: One-shot smooth portal transitions
+on:
+  push:
+    paths:
+      - '.github/workflows/one-shot-smooth-portal-transitions.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply transition smoothing
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('philosophers-stone-atlas/index.html')
+          s=p.read_text()
+
+          old="""    const stonePointerVisibility=()=>!stoneEntranceHeld && !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
+    const stonePortalHoldStyle=document.createElement('style');
+    stonePortalHoldStyle.textContent=[
+      '#ui,#crosshair,#viewLabels,#sliderTooltip,#aspectTooltip{transition:opacity 180ms ease!important}',
+      'body.stone-portal-held #ui,',
+      'body.stone-portal-held #crosshair,',
+      'body.stone-portal-held #viewLabels,',
+      'body.stone-portal-held #sliderTooltip,',
+      'body.stone-portal-held #aspectTooltip{opacity:0!important;pointer-events:none!important}'
+    ].join(String.fromCharCode(10));"""
+          new="""    const stonePointerVisibility=()=>!stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
+    const stonePortalHoldStyle=document.createElement('style');
+    stonePortalHoldStyle.textContent=[
+      '#ui{transition:opacity 180ms ease!important}',
+      'body.stone-portal-held #ui{opacity:0!important;pointer-events:none!important}'
+    ].join(String.fromCharCode(10));"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""    const STONE_RETURN_SPIN_MIN=0.040;
+    const STONE_RETURN_PREVIEW_RADIUS=THREE.MathUtils.degToRad(12);
+    const STONE_RETURN_SETTLE_RADIUS=THREE.MathUtils.degToRad(0.35);
+    const STONE_RETURN_SETTLE_SPEED=0.0012;
+    const STONE_RETURN_DWELL_MS=2000;
+    const STONE_ENTRANCE_DURATION=900;
+    let stoneCompositionBridgeEnabled=false;
+    let stonePortalLayout=null;
+    let stoneEntranceTransition=null;
+    let stoneReturnArmed=false;
+    let stoneReturnDwellStarted=0;
+    let stoneReturnReady=false;
+    let stoneProjectionRecovery=null;"""
+          new="""    const STONE_RETURN_SPIN_MIN=0.040;
+    const STONE_RETURN_PREVIEW_RADIUS=THREE.MathUtils.degToRad(12);
+    const STONE_RETURN_BLEND_SPEED=0.006;
+    const STONE_RETURN_CANCEL_ROTATION_EPS=THREE.MathUtils.degToRad(0.8);
+    const STONE_RETURN_DWELL_MS=2000;
+    const STONE_RETURN_RECOVERY_DURATION=520;
+    const STONE_ENTRANCE_DURATION=900;
+    let stoneCompositionBridgeEnabled=false;
+    let stonePortalLayout=null;
+    let stoneEntranceTransition=null;
+    let stoneReturnArmed=false;
+    let stoneReturnDwellStarted=0;
+    let stoneReturnBlendStartQuat=null;
+    let stoneReturnRecovery=null;
+    let stoneReturnReady=false;
+    let stoneProjectionRecovery=null;"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""      stoneEntranceTransition={
+        started:performance.now(),
+        duration:STONE_ENTRANCE_DURATION,
+        startRect:{left:startRect.left,top:startRect.top,width:startRect.width,height:startRect.height},
+        endRect:{...stonePortalLayout.nativeRect},
+        startUnitScale:stoneBlackUnitScale(startRect)
+      };"""
+          new="""      stoneEntranceTransition={
+        started:performance.now(),
+        duration:STONE_ENTRANCE_DURATION,
+        startRect:{left:startRect.left,top:startRect.top,width:startRect.width,height:startRect.height},
+        endRect:{...stonePortalLayout.nativeRect},
+        startUnitScale:stoneBlackUnitScale(startRect),
+        startQuat:state.orientation.clone(),
+        targetQuat:stoneNativeTargetQuat(),
+        orientationUserOwned:false
+      };"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""      stoneReturnArmed=false;
+      stoneReturnDwellStarted=0;
+      stoneReturnReady=false;
+      stoneProjectionRecovery=null;"""
+          new="""      stoneReturnArmed=false;
+      stoneReturnDwellStarted=0;
+      stoneReturnBlendStartQuat=null;
+      stoneReturnRecovery=null;
+      stoneReturnReady=false;
+      stoneProjectionRecovery=null;"""
+          assert s.count(old)>=2
+          s=s.replace(old,new,1)
+
+          old="""    const stoneCancelReturnCapture=()=>{
+      if(!stoneReturnArmed) return false;
+      const startBlend=stoneProjectionBlend;
+      stoneReturnArmed=false;
+      stoneReturnDwellStarted=0;
+      stoneReturnReady=false;
+      stoneProjectionRecovery=startBlend>0.001?{started:performance.now(),startBlend}:null;
+      resetUprightStabilizer();
+      invalidateRender();
+      return true;
+    };"""
+          new="""    const stoneCancelReturnCapture=()=>{
+      if(!stoneReturnArmed) return false;
+      const startBlend=stoneProjectionBlend;
+      const recoveryTarget=stoneReturnDwellStarted&&stoneReturnBlendStartQuat
+        ? stoneReturnBlendStartQuat.clone()
+        : null;
+      stoneReturnArmed=false;
+      stoneReturnDwellStarted=0;
+      stoneReturnReady=false;
+      stoneProjectionRecovery=startBlend>0.001
+        ? {started:performance.now(),startBlend,duration:420}
+        : null;
+      stoneReturnRecovery=recoveryTarget?{
+        started:0,
+        duration:STONE_RETURN_RECOVERY_DURATION,
+        startQuat:null,
+        targetQuat:recoveryTarget,
+        cancelQuat:state.orientation.clone(),
+        abandoned:false
+      }:null;
+      stoneReturnBlendStartQuat=null;
+      resetUprightStabilizer();
+      invalidateRender();
+      return true;
+    };"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""      stoneReturnArmed=true;
+      stoneReturnDwellStarted=0;
+      stoneReturnReady=false;
+      stoneProjectionRecovery=null;"""
+          new="""      stoneReturnArmed=true;
+      stoneReturnDwellStarted=0;
+      stoneReturnBlendStartQuat=null;
+      stoneReturnRecovery=null;
+      stoneReturnReady=false;
+      stoneProjectionRecovery=null;"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""      if(!state.rotating&&!state.gestureRotating&&!state.continuingGestureRotate){
+        state.orientation.slerp(stoneNativeTargetQuat(),0.008+0.048*t);
+      }
+      if(raw>=1){
+        if(!state.rotating&&!state.gestureRotating&&!state.continuingGestureRotate){
+          state.orientation.copy(stoneNativeTargetQuat());
+        }
+        stoneFinishPortalLayout();
+      }"""
+          new="""      const rotating=state.rotating||state.gestureRotating||state.continuingGestureRotate;
+      if(rotating) stoneEntranceTransition.orientationUserOwned=true;
+      if(!stoneEntranceTransition.orientationUserOwned){
+        state.orientation.slerpQuaternions(tr.startQuat,tr.targetQuat,t);
+        state.angularSpeed=0;
+        state.snapQuat=null;
+        resetUprightStabilizer();
+      }
+      if(raw>=1){
+        if(!stoneEntranceTransition.orientationUserOwned){
+          state.orientation.copy(tr.targetQuat);
+        }
+        stoneFinishPortalLayout();
+      }"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""      const raw=stoneClamp01((now-stoneProjectionRecovery.started)/180);
+      const t=stoneSmoothstep(raw);"""
+          new="""      const raw=stoneClamp01((now-stoneProjectionRecovery.started)/(stoneProjectionRecovery.duration||180));
+      const t=stoneSmoothstep(raw);"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""    const stoneApplyReturnCapture=now=>{
+      if(!stoneReturnArmed) return;
+      const target=stoneReturnTargetQuat();
+      const speedPhase=stoneClamp01(1-state.angularSpeed/STONE_RETURN_SPIN_MIN);
+      const gravity=0.0015+0.045*speedPhase*speedPhase;
+      state.orientation.slerp(target,gravity);
+      let distance=state.orientation.angleTo(target);
+      if(distance<STONE_RETURN_SETTLE_RADIUS&&state.angularSpeed<STONE_RETURN_SETTLE_SPEED){
+        state.orientation.copy(target);
+        state.angularSpeed=0;
+        resetUprightStabilizer();
+        distance=0;
+      }
+      const amount=stoneReturnAmount();
+      stoneProjectionBlend=amount;
+      const {height}=getViewportSize();
+      const nativeScale=stoneNativeUnitScale(height,state.distance);
+      stonePortalCameraDistance=amount>0.001
+        ? stoneDistanceForScale(height,nativeScale,stoneCurrentFov())
+        : null;
+      const untouched=state.activePointers.size===0&&!state.rotating&&!state.gestureRotating&&!state.continuingGestureRotate;
+      if(distance===0&&untouched){
+        if(!stoneReturnDwellStarted) stoneReturnDwellStarted=now;
+        if(now-stoneReturnDwellStarted>=STONE_RETURN_DWELL_MS) stoneReturnReady=true;
+      }else{
+        stoneReturnDwellStarted=0;
+        stoneReturnReady=false;
+      }
+    };"""
+          new="""    const stoneApplyReturnCapture=now=>{
+      if(!stoneReturnArmed) return;
+      const target=stoneReturnTargetQuat();
+      const untouched=state.activePointers.size===0&&!state.rotating&&!state.gestureRotating&&!state.continuingGestureRotate;
+      if(stoneReturnDwellStarted&&stoneReturnBlendStartQuat){
+        const raw=stoneClamp01((now-stoneReturnDwellStarted)/STONE_RETURN_DWELL_MS);
+        const t=stoneSmoothstep(raw);
+        state.orientation.slerpQuaternions(stoneReturnBlendStartQuat,target,t);
+        state.angularSpeed=0;
+        state.snapQuat=null;
+        resetUprightStabilizer();
+        if(raw>=1){
+          state.orientation.copy(target);
+          stoneReturnReady=true;
+        }
+      }else{
+        const speedPhase=stoneClamp01(1-state.angularSpeed/STONE_RETURN_SPIN_MIN);
+        const gravity=0.0015+0.030*speedPhase*speedPhase;
+        state.orientation.slerp(target,gravity);
+        const distance=state.orientation.angleTo(target);
+        if(untouched&&distance<=STONE_RETURN_PREVIEW_RADIUS&&state.angularSpeed<=STONE_RETURN_BLEND_SPEED){
+          stoneReturnDwellStarted=now;
+          stoneReturnBlendStartQuat=state.orientation.clone();
+          stoneReturnReady=false;
+          state.angularSpeed=0;
+          state.snapQuat=null;
+          resetUprightStabilizer();
+        }
+      }
+      const amount=stoneReturnAmount();
+      stoneProjectionBlend=amount;
+      const {height}=getViewportSize();
+      const nativeScale=stoneNativeUnitScale(height,state.distance);
+      stonePortalCameraDistance=amount>0.001
+        ? stoneDistanceForScale(height,nativeScale,stoneCurrentFov())
+        : null;
+    };
+    const stoneApplyReturnRecovery=now=>{
+      if(!stoneReturnRecovery||stoneReturnArmed||stoneEntranceTransition) return;
+      const recovery=stoneReturnRecovery;
+      const interacting=state.activePointers.size>0||state.rotating||state.gestureRotating||state.continuingGestureRotate;
+      if(interacting){
+        if(
+          state.orientation.angleTo(recovery.cancelQuat)>STONE_RETURN_CANCEL_ROTATION_EPS||
+          state.angularSpeed>0.0015
+        ) recovery.abandoned=true;
+        return;
+      }
+      if(recovery.abandoned){
+        stoneReturnRecovery=null;
+        return;
+      }
+      if(!recovery.started){
+        recovery.started=now;
+        recovery.startQuat=state.orientation.clone();
+      }
+      const raw=stoneClamp01((now-recovery.started)/recovery.duration);
+      const t=stoneSmoothstep(raw);
+      state.orientation.slerpQuaternions(recovery.startQuat,recovery.targetQuat,t);
+      state.angularSpeed=0;
+      state.snapQuat=null;
+      resetUprightStabilizer();
+      if(raw>=1) stoneReturnRecovery=null;
+    };"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""      stoneApplyEntranceTransition(now);
+      stoneApplyReturnCapture(now);
+      stoneApplyProjectionRecovery(now);"""
+          new="""      stoneApplyEntranceTransition(now);
+      stoneApplyReturnCapture(now);
+      stoneApplyReturnRecovery(now);
+      stoneApplyProjectionRecovery(now);"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""        stoneReturnArmed=false;
+        stoneReturnDwellStarted=0;
+        stoneReturnReady=false;
+        stoneProjectionRecovery=null;"""
+          new="""        stoneReturnArmed=false;
+        stoneReturnDwellStarted=0;
+        stoneReturnBlendStartQuat=null;
+        stoneReturnRecovery=null;
+        stoneReturnReady=false;
+        stoneProjectionRecovery=null;"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="""        stoneReturnArmed ||
+        Boolean(stoneEntranceTransition) ||
+        Boolean(stoneProjectionRecovery) ||"""
+          new="""        stoneReturnArmed ||
+        Boolean(stoneEntranceTransition) ||
+        Boolean(stoneReturnRecovery) ||
+        Boolean(stoneProjectionRecovery) ||"""
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          old="pointerMarker.visible = !stoneEntranceHeld && !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';"
+          new="pointerMarker.visible = !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';"
+          assert s.count(old)==1
+          s=s.replace(old,new,1)
+
+          p.write_text(s)
+
+          sw=Path('philosophers-stone-atlas/service-worker.js')
+          w=sw.read_text()
+          marker="const CACHE_NAME = 'philosophers-stone-atlas-offline-v10';\n"
+          assert w.count(marker)==1
+          w=w.replace(marker,marker+"// revision: 2026-10-29 smooth portal transitions; cache generation intentionally remains v10.\n",1)
+          sw.write_text(w)
+      - name: Validate source changes
+        shell: python
+        run: |
+          from pathlib import Path
+          s=Path('philosophers-stone-atlas/index.html').read_text()
+          checks=[
+            "body.stone-portal-held #ui{opacity:0!important;pointer-events:none!important}",
+            "const STONE_RETURN_BLEND_SPEED=0.006;",
+            "state.orientation.slerpQuaternions(tr.startQuat,tr.targetQuat,t);",
+            "state.orientation.slerpQuaternions(stoneReturnBlendStartQuat,target,t);",
+            "const stoneApplyReturnRecovery=now=>{",
+            "Boolean(stoneReturnRecovery)",
+          ]
+          for x in checks: assert x in s, x
+          assert 'body.stone-portal-held #viewLabels' not in s
+          assert 'body.stone-portal-held #crosshair' not in s
+          assert 'STONE_RETURN_SETTLE_RADIUS' not in s
+          w=Path('philosophers-stone-atlas/service-worker.js').read_text()
+          assert "philosophers-stone-atlas-offline-v10" in w
+          assert "offline-v11" not in w
+      - name: Commit and clean workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add philosophers-stone-atlas/index.html philosophers-stone-atlas/service-worker.js
+          git commit -m 'Smooth Stone portal transitions'
+          git rm .github/workflows/one-shot-smooth-portal-transitions.yml
+          git commit -m 'Remove one-shot smooth portal workflow'
+          git push
