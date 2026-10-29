@@ -1,0 +1,76 @@
+name: One-shot Atlas transition smoke
+on:
+  push:
+    paths:
+      - '.github/workflows/one-shot-atlas-transition-smoke.yml'
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start local site
+        run: |
+          python3 -m http.server 8000 >/tmp/atlas-http.log 2>&1 &
+          sleep 2
+      - name: Find browser
+        id: browser
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          DRIVER="$(command -v chromedriver || command -v google-chrome-driver || true)"
+          test -n "$CHROME"
+          test -n "$DRIVER"
+          echo "chrome=$CHROME" >> "$GITHUB_OUTPUT"
+          echo "driver=$DRIVER" >> "$GITHUB_OUTPUT"
+      - name: Exercise embedded held seam in browser
+        env:
+          CHROME: ${{ steps.browser.outputs.chrome }}
+          DRIVER: ${{ steps.browser.outputs.driver }}
+        run: |
+          "$DRIVER" --port=9515 --allowed-origins='*' >/tmp/atlas-chromedriver.log 2>&1 &
+          python3 - <<'PY'
+          import json, os, time, urllib.request
+          base='http://127.0.0.1:9515'
+          def req(method,path,payload=None,timeout=60):
+              data=None if payload is None else json.dumps(payload).encode()
+              r=urllib.request.Request(base+path,data=data,method=method,headers={'Content-Type':'application/json'})
+              with urllib.request.urlopen(r,timeout=timeout) as f: return json.loads(f.read().decode())
+          end=time.time()+20
+          while time.time()<end:
+              try:
+                  if req('GET','/status',timeout=3)['value']['ready']: break
+              except Exception: pass
+              time.sleep(.2)
+          else: raise SystemExit('chromedriver not ready')
+          sid=req('POST','/session',{'capabilities':{'alwaysMatch':{'browserName':'chrome','pageLoadStrategy':'none','goog:chromeOptions':{'binary':os.environ['CHROME'],'args':['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--user-data-dir=/tmp/atlas-smoke']}}}})['value']['sessionId']
+          def js(script): return req('POST',f'/session/{sid}/execute/sync',{'script':script,'args':[]})['value']
+          try:
+              req('POST',f'/session/{sid}/url',{'url':'http://127.0.0.1:8000/philosophers-stone-atlas/?embedded=1'})
+              end=time.time()+45
+              ready=None
+              while time.time()<end:
+                  ready=js("const f=document.getElementById('appFrame'); return {boot:document.getElementById('boot')?.textContent||'', ready:!!f?.contentWindow?.STONE_VIEW};")
+                  if ready['ready']: break
+                  time.sleep(.25)
+              if not ready or not ready['ready']: raise SystemExit('Atlas STONE_VIEW did not boot: '+json.dumps(ready))
+              state=js("const v=document.getElementById('appFrame').contentWindow.STONE_VIEW; const ok=v.syncFromBlack(Math.PI/4,-Math.asin(1/Math.sqrt(3)),{left:140,top:120,width:320,height:320}); const a=v.activateFromPortal(); return {ok,a,state:v.portalState()};")
+              if not state['ok'] or not state['a'] or not state['state'].get('entranceHeld'): raise SystemExit('held seam failed: '+json.dumps(state))
+              wake=js("const v=document.getElementById('appFrame').contentWindow.STONE_VIEW; const ok=v.wakeFromPortal(); return {ok,state:v.portalState()};")
+              if not wake['ok'] or wake['state'].get('entranceHeld'): raise SystemExit('wake failed: '+json.dumps(wake))
+              time.sleep(1.1)
+              final=js("const f=document.getElementById('appFrame'); const v=f.contentWindow.STONE_VIEW; return {boot:document.getElementById('boot')?.textContent||'',state:v.portalState(),uiOpacity:f.contentDocument?.getElementById('ui')?getComputedStyle(f.contentDocument.getElementById('ui')).opacity:null};")
+              print(json.dumps({'ready':ready,'held':state,'wake':wake,'final':final}))
+          finally:
+              try:req('DELETE',f'/session/{sid}',timeout=10)
+              except Exception:pass
+          PY
+      - name: Remove one-shot smoke workflow
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/one-shot-atlas-transition-smoke.yml
+          git commit -m 'Remove one-shot Atlas transition smoke workflow'
+          git push
