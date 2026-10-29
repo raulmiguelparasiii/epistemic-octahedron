@@ -180,7 +180,26 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
         const viewBridge=`buildCanonicalViews();
     let stonePrejudicePresentation=false;
     let stoneDoctrinePresentation=false;
-    const stonePointerVisibility=()=>!stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
+    let stoneEntranceHeld=false;
+    const stonePointerVisibility=()=>!stoneEntranceHeld && !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
+    const stonePortalHoldStyle=document.createElement('style');
+    stonePortalHoldStyle.textContent=`
+      #ui,#crosshair,#viewLabels,#sliderTooltip,#aspectTooltip{transition:opacity 180ms ease!important}
+      body.stone-portal-held #ui,
+      body.stone-portal-held #crosshair,
+      body.stone-portal-held #viewLabels,
+      body.stone-portal-held #sliderTooltip,
+      body.stone-portal-held #aspectTooltip{opacity:0!important;pointer-events:none!important}
+    `;
+    document.head.appendChild(stonePortalHoldStyle);
+    const stoneSetEntranceHeld=held=>{
+      stoneEntranceHeld=!!held;
+      document.body.classList.toggle('stone-portal-held',stoneEntranceHeld);
+      const ui=document.getElementById('ui');
+      if(ui) ui.setAttribute('aria-hidden',String(stoneEntranceHeld));
+      pointerMarker.visible=stonePointerVisibility();
+      invalidateRender();
+    };
     const clearDoctrineVisuals=()=>{
       stoneDoctrineRegion.visible=false;
       stoneDoctrineMesh.visible=false;
@@ -205,7 +224,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
     const STONE_RETURN_PREVIEW_RADIUS=THREE.MathUtils.degToRad(12);
     const STONE_RETURN_SETTLE_RADIUS=THREE.MathUtils.degToRad(0.35);
     const STONE_RETURN_SETTLE_SPEED=0.0012;
-    const STONE_RETURN_DWELL_MS=1000;
+    const STONE_RETURN_DWELL_MS=2000;
     const STONE_ENTRANCE_DURATION=900;
     let stoneCompositionBridgeEnabled=false;
     let stonePortalLayout=null;
@@ -277,6 +296,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
     };
     const stoneBeginEntranceTransition=()=>{
       if(!stonePortalLayout) return false;
+      stoneSetEntranceHeld(false);
       const startRect=viewport.getBoundingClientRect();
       stoneEntranceTransition={
         started:performance.now(),
@@ -311,7 +331,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
       return true;
     };
     const stoneArmReturnFromThrow=()=>{
-      if(!stoneCompositionBridgeEnabled||stoneEntranceTransition) return false;
+      if(!stoneCompositionBridgeEnabled||stoneEntranceHeld||stoneEntranceTransition) return false;
       if(stoneReturnArmed) return true;
       if(state.angularSpeed<STONE_RETURN_SPIN_MIN) return false;
       stoneReturnArmed=true;
@@ -427,6 +447,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
         returnAmount:stoneReturnAmount(),
         returnArmed:stoneReturnArmed,
         returnReady:stoneReturnReady,
+        entranceHeld:stoneEntranceHeld,
         returnDwellProgress:dwellProgress,
         angularSpeed:state.angularSpeed,
         projectionBlend:stoneProjectionBlend,
@@ -462,6 +483,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
         }
         stoneCompositionBridgeEnabled=true;
         stoneEntranceTransition=null;
+        stoneSetEntranceHeld(true);
         stoneReturnArmed=false;
         stoneReturnDwellStarted=0;
         stoneReturnReady=false;
@@ -482,12 +504,26 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
       },
       cancelPortalPreview(){
         stoneEntranceTransition=null;
+        stoneSetEntranceHeld(false);
         stoneProjectionBlend=0;
         stonePortalCameraDistance=null;
         restoreStonePortalViewport();
         return true;
       },
       activateFromPortal(){
+        if(!stonePortalLayout) return false;
+        stoneCompositionBridgeEnabled=true;
+        stoneSetEntranceHeld(true);
+        state.angularSpeed=0;
+        state.snapQuat=null;
+        resetUprightStabilizer();
+        state.panVel.set(0,0,0);
+        state.zoomVel=0;
+        invalidateRender();
+        return true;
+      },
+      wakeFromPortal(){
+        if(!stoneEntranceHeld) return false;
         return stoneBeginEntranceTransition();
       },
       cancelReturnCapture(){
@@ -656,6 +692,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
   }
   inner.addEventListener('pointerdown',event=>{
     activePortalPointers.add(event.pointerId);
+    if(embeddedMode) inner.STONE_VIEW?.wakeFromPortal?.();
   },true);
   inner.addEventListener('pointerup',event=>{
     activePortalPointers.delete(event.pointerId);
