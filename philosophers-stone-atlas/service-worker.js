@@ -1,4 +1,5 @@
 const CACHE_NAME = 'philosophers-stone-atlas-offline-v10';
+// revision: 2026-10-29 smooth portal transitions; cache generation intentionally remains v10.
 const CACHE_PREFIX = 'philosophers-stone-atlas-offline-';
 
 const PRECACHE = [

@@ -181,15 +181,11 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
     let stonePrejudicePresentation=false;
     let stoneDoctrinePresentation=false;
     let stoneEntranceHeld=false;
-    const stonePointerVisibility=()=>!stoneEntranceHeld && !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
+    const stonePointerVisibility=()=>!stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode!=='editor' && state.uiMode!=='questions';
     const stonePortalHoldStyle=document.createElement('style');
     stonePortalHoldStyle.textContent=[
-      '#ui,#crosshair,#viewLabels,#sliderTooltip,#aspectTooltip{transition:opacity 180ms ease!important}',
-      'body.stone-portal-held #ui,',
-      'body.stone-portal-held #crosshair,',
-      'body.stone-portal-held #viewLabels,',
-      'body.stone-portal-held #sliderTooltip,',
-      'body.stone-portal-held #aspectTooltip{opacity:0!important;pointer-events:none!important}'
+      '#ui{transition:opacity 180ms ease!important}',
+      'body.stone-portal-held #ui{opacity:0!important;pointer-events:none!important}'
     ].join(String.fromCharCode(10));
     document.head.appendChild(stonePortalHoldStyle);
     const stoneSetEntranceHeld=held=>{
@@ -222,15 +218,18 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
     const stoneNativeTargetQuat=()=>makeCanonicalQuat(Math.PI/4,-0.55);
     const STONE_RETURN_SPIN_MIN=0.040;
     const STONE_RETURN_PREVIEW_RADIUS=THREE.MathUtils.degToRad(12);
-    const STONE_RETURN_SETTLE_RADIUS=THREE.MathUtils.degToRad(0.35);
-    const STONE_RETURN_SETTLE_SPEED=0.0012;
+    const STONE_RETURN_BLEND_SPEED=0.006;
+    const STONE_RETURN_CANCEL_ROTATION_EPS=THREE.MathUtils.degToRad(0.8);
     const STONE_RETURN_DWELL_MS=2000;
+    const STONE_RETURN_RECOVERY_DURATION=520;
     const STONE_ENTRANCE_DURATION=900;
     let stoneCompositionBridgeEnabled=false;
     let stonePortalLayout=null;
     let stoneEntranceTransition=null;
     let stoneReturnArmed=false;
     let stoneReturnDwellStarted=0;
+    let stoneReturnBlendStartQuat=null;
+    let stoneReturnRecovery=null;
     let stoneReturnReady=false;
     let stoneProjectionRecovery=null;
     const stonePortalRect=rect=>{
@@ -303,11 +302,16 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
         duration:STONE_ENTRANCE_DURATION,
         startRect:{left:startRect.left,top:startRect.top,width:startRect.width,height:startRect.height},
         endRect:{...stonePortalLayout.nativeRect},
-        startUnitScale:stoneBlackUnitScale(startRect)
+        startUnitScale:stoneBlackUnitScale(startRect),
+        startQuat:state.orientation.clone(),
+        targetQuat:stoneNativeTargetQuat(),
+        orientationUserOwned:false
       };
       stoneCompositionBridgeEnabled=true;
       stoneReturnArmed=false;
       stoneReturnDwellStarted=0;
+      stoneReturnBlendStartQuat=null;
+      stoneReturnRecovery=null;
       stoneReturnReady=false;
       stoneProjectionRecovery=null;
       state.angularSpeed=0;
@@ -322,10 +326,24 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
     const stoneCancelReturnCapture=()=>{
       if(!stoneReturnArmed) return false;
       const startBlend=stoneProjectionBlend;
+      const recoveryTarget=stoneReturnDwellStarted&&stoneReturnBlendStartQuat
+        ? stoneReturnBlendStartQuat.clone()
+        : null;
       stoneReturnArmed=false;
       stoneReturnDwellStarted=0;
       stoneReturnReady=false;
-      stoneProjectionRecovery=startBlend>0.001?{started:performance.now(),startBlend}:null;
+      stoneProjectionRecovery=startBlend>0.001
+        ? {started:performance.now(),startBlend,duration:420}
+        : null;
+      stoneReturnRecovery=recoveryTarget?{
+        started:0,
+        duration:STONE_RETURN_RECOVERY_DURATION,
+        startQuat:null,
+        targetQuat:recoveryTarget,
+        cancelQuat:state.orientation.clone(),
+        abandoned:false
+      }:null;
+      stoneReturnBlendStartQuat=null;
       resetUprightStabilizer();
       invalidateRender();
       return true;
@@ -336,6 +354,8 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
       if(state.angularSpeed<STONE_RETURN_SPIN_MIN) return false;
       stoneReturnArmed=true;
       stoneReturnDwellStarted=0;
+      stoneReturnBlendStartQuat=null;
+      stoneReturnRecovery=null;
       stoneReturnReady=false;
       stoneProjectionRecovery=null;
       state.snapQuat=null;
@@ -364,19 +384,24 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
       const nativeScale=stoneNativeUnitScale(tr.endRect.height,state.distance);
       const desiredScale=tr.startUnitScale+(nativeScale-tr.startUnitScale)*t;
       stonePortalCameraDistance=stoneDistanceForScale(currentRect.height,desiredScale,stoneCurrentFov());
-      if(!state.rotating&&!state.gestureRotating&&!state.continuingGestureRotate){
-        state.orientation.slerp(stoneNativeTargetQuat(),0.008+0.048*t);
+      const rotating=state.rotating||state.gestureRotating||state.continuingGestureRotate;
+      if(rotating) stoneEntranceTransition.orientationUserOwned=true;
+      if(!stoneEntranceTransition.orientationUserOwned){
+        state.orientation.slerpQuaternions(tr.startQuat,tr.targetQuat,t);
+        state.angularSpeed=0;
+        state.snapQuat=null;
+        resetUprightStabilizer();
       }
       if(raw>=1){
-        if(!state.rotating&&!state.gestureRotating&&!state.continuingGestureRotate){
-          state.orientation.copy(stoneNativeTargetQuat());
+        if(!stoneEntranceTransition.orientationUserOwned){
+          state.orientation.copy(tr.targetQuat);
         }
         stoneFinishPortalLayout();
       }
     };
     const stoneApplyProjectionRecovery=now=>{
       if(!stoneProjectionRecovery||stoneReturnArmed||stoneEntranceTransition) return;
-      const raw=stoneClamp01((now-stoneProjectionRecovery.started)/180);
+      const raw=stoneClamp01((now-stoneProjectionRecovery.started)/(stoneProjectionRecovery.duration||180));
       const t=stoneSmoothstep(raw);
       stoneProjectionBlend=stoneProjectionRecovery.startBlend*(1-t);
       const {height}=getViewportSize();
@@ -393,15 +418,31 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
     const stoneApplyReturnCapture=now=>{
       if(!stoneReturnArmed) return;
       const target=stoneReturnTargetQuat();
-      const speedPhase=stoneClamp01(1-state.angularSpeed/STONE_RETURN_SPIN_MIN);
-      const gravity=0.0015+0.045*speedPhase*speedPhase;
-      state.orientation.slerp(target,gravity);
-      let distance=state.orientation.angleTo(target);
-      if(distance<STONE_RETURN_SETTLE_RADIUS&&state.angularSpeed<STONE_RETURN_SETTLE_SPEED){
-        state.orientation.copy(target);
+      const untouched=state.activePointers.size===0&&!state.rotating&&!state.gestureRotating&&!state.continuingGestureRotate;
+      if(stoneReturnDwellStarted&&stoneReturnBlendStartQuat){
+        const raw=stoneClamp01((now-stoneReturnDwellStarted)/STONE_RETURN_DWELL_MS);
+        const t=stoneSmoothstep(raw);
+        state.orientation.slerpQuaternions(stoneReturnBlendStartQuat,target,t);
         state.angularSpeed=0;
+        state.snapQuat=null;
         resetUprightStabilizer();
-        distance=0;
+        if(raw>=1){
+          state.orientation.copy(target);
+          stoneReturnReady=true;
+        }
+      }else{
+        const speedPhase=stoneClamp01(1-state.angularSpeed/STONE_RETURN_SPIN_MIN);
+        const gravity=0.0015+0.030*speedPhase*speedPhase;
+        state.orientation.slerp(target,gravity);
+        const distance=state.orientation.angleTo(target);
+        if(untouched&&distance<=STONE_RETURN_PREVIEW_RADIUS&&state.angularSpeed<=STONE_RETURN_BLEND_SPEED){
+          stoneReturnDwellStarted=now;
+          stoneReturnBlendStartQuat=state.orientation.clone();
+          stoneReturnReady=false;
+          state.angularSpeed=0;
+          state.snapQuat=null;
+          resetUprightStabilizer();
+        }
       }
       const amount=stoneReturnAmount();
       stoneProjectionBlend=amount;
@@ -410,19 +451,39 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
       stonePortalCameraDistance=amount>0.001
         ? stoneDistanceForScale(height,nativeScale,stoneCurrentFov())
         : null;
-      const untouched=state.activePointers.size===0&&!state.rotating&&!state.gestureRotating&&!state.continuingGestureRotate;
-      if(distance===0&&untouched){
-        if(!stoneReturnDwellStarted) stoneReturnDwellStarted=now;
-        if(now-stoneReturnDwellStarted>=STONE_RETURN_DWELL_MS) stoneReturnReady=true;
-      }else{
-        stoneReturnDwellStarted=0;
-        stoneReturnReady=false;
+    };
+    const stoneApplyReturnRecovery=now=>{
+      if(!stoneReturnRecovery||stoneReturnArmed||stoneEntranceTransition) return;
+      const recovery=stoneReturnRecovery;
+      const interacting=state.activePointers.size>0||state.rotating||state.gestureRotating||state.continuingGestureRotate;
+      if(interacting){
+        if(
+          state.orientation.angleTo(recovery.cancelQuat)>STONE_RETURN_CANCEL_ROTATION_EPS||
+          state.angularSpeed>0.0015
+        ) recovery.abandoned=true;
+        return;
       }
+      if(recovery.abandoned){
+        stoneReturnRecovery=null;
+        return;
+      }
+      if(!recovery.started){
+        recovery.started=now;
+        recovery.startQuat=state.orientation.clone();
+      }
+      const raw=stoneClamp01((now-recovery.started)/recovery.duration);
+      const t=stoneSmoothstep(raw);
+      state.orientation.slerpQuaternions(recovery.startQuat,recovery.targetQuat,t);
+      state.angularSpeed=0;
+      state.snapQuat=null;
+      resetUprightStabilizer();
+      if(raw>=1) stoneReturnRecovery=null;
     };
     const applyStonePortalDynamics=()=>{
       const now=performance.now();
       stoneApplyEntranceTransition(now);
       stoneApplyReturnCapture(now);
+      stoneApplyReturnRecovery(now);
       stoneApplyProjectionRecovery(now);
     };
     const stonePortalState=()=>{
@@ -486,6 +547,8 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
         stoneSetEntranceHeld(true);
         stoneReturnArmed=false;
         stoneReturnDwellStarted=0;
+        stoneReturnBlendStartQuat=null;
+        stoneReturnRecovery=null;
         stoneReturnReady=false;
         stoneProjectionRecovery=null;
         setStonePortalViewportRect(clean);
@@ -673,13 +736,14 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
         const movingReplacement=`      const moving =
         stoneReturnArmed ||
         Boolean(stoneEntranceTransition) ||
+        Boolean(stoneReturnRecovery) ||
         Boolean(stoneProjectionRecovery) ||
         state.rotating ||`;
         if(!core.includes(movingAnchor)) throw new Error('Animation moving anchor was not found.');
         core=core.replace(movingAnchor,movingReplacement);
 
         const pointerVisibilityAnchor="pointerMarker.visible = !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
-        const pointerVisibilityPatched="pointerMarker.visible = !stoneEntranceHeld && !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
+        const pointerVisibilityPatched="pointerMarker.visible = !stoneDoctrinePresentation && !stonePrejudicePresentation && !state.snappedTopBottom && state.uiMode !== 'editor' && state.uiMode !== 'questions';";
         if(!core.includes(pointerVisibilityAnchor)) throw new Error('Pointer visibility anchor was not found.');
         core=core.replace(pointerVisibilityAnchor,pointerVisibilityPatched);
 
