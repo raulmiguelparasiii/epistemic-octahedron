@@ -58,16 +58,11 @@ jobs:
           )
           text = text[:sync_start] + sync_block + text[sync_end:]
 
-          embedded_anchor = """        if(embeddedMode){
-                  const postEmbeddedState=()=>{"""
-          if embedded_anchor not in text:
-              embedded_anchor = """        if(embeddedMode){
-          const postEmbeddedState=()=>{"""
-          if text.count(embedded_anchor) != 1:
-              raise SystemExit(f'embedded bridge anchor count {text.count(embedded_anchor)}')
-          indent = embedded_anchor.split('\n')[1].split('const')[0]
-          bridge = """        if(embeddedMode){
-          window.STONE_EMBED={
+          marker = 'const postEmbeddedState=()=>{'
+          if text.count(marker) != 1:
+              raise SystemExit(f'embedded state marker count {text.count(marker)}')
+          marker_index = text.index(marker)
+          bridge = """window.STONE_EMBED={
             syncFromBlack(yaw,pitch,rect){
               return frame.contentWindow?.STONE_VIEW?.syncFromBlack?.(yaw,pitch,rect)??false;
             },
@@ -81,8 +76,8 @@ jobs:
               return frame.contentWindow?.STONE_VIEW?.portalState?.()??null;
             }
           };
-          const postEmbeddedState=()=>{"""
-          text = text.replace(embedded_anchor, bridge, 1)
+          """
+          text = text[:marker_index] + bridge + text[marker_index:]
           path.write_text(text)
 
           sw = Path('philosophers-stone-atlas/service-worker.js')
