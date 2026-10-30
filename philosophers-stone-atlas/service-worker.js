@@ -1,5 +1,5 @@
-const CACHE_NAME = 'philosophers-stone-atlas-offline-v11';
-// revision: 2026-10-29 Plot terminology and current paper assets.
+const CACHE_NAME = 'philosophers-stone-atlas-offline-v12';
+// revision: 2026-10-30 Portal phase synchronization and immediate seam rendering.
 const CACHE_PREFIX = 'philosophers-stone-atlas-offline-';
 
 const PRECACHE = [

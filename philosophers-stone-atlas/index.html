@@ -259,6 +259,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
     const stoneBlackUnitScale=rect=>rect.height*86/240;
     const stoneNativeUnitScale=(height,distance=state.distance)=>
       height/(2*Math.max(distance,0.0001)*Math.tan(THREE.MathUtils.degToRad(STONE_NATIVE_FOV)*0.5));
+    const stonePortalRendererSize=new THREE.Vector2();
     const applyStonePortalCamera=()=>{
       const {width,height}=getViewportSize();
       camera.aspect=width/height;
@@ -266,11 +267,21 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
       camera.near=0.01;
       camera.far=5000;
       camera.updateProjectionMatrix();
-      renderer.setSize(width,height);
+      renderer.getSize(stonePortalRendererSize);
+    if(
+      Math.abs(stonePortalRendererSize.x-width)>0.25||
+      Math.abs(stonePortalRendererSize.y-height)>0.25
+    ) renderer.setSize(width,height);
       syncSceneMatrices();
       camera.position.set(0,0,Number.isFinite(stonePortalCameraDistance)?stonePortalCameraDistance:state.distance);
       camera.lookAt(rootGroup.position);
       camera.updateMatrixWorld();
+    };
+    const renderStonePortalSnapshot=()=>{
+      pointerMarker.visible=stonePointerVisibility();
+      updateCrosshairAndLabels();
+      updatePointerLabelStacking();
+      renderer.render(scene,camera);
     };
     const stoneFinishPortalLayout=()=>{
       if(!stonePortalLayout) return;
@@ -562,6 +573,7 @@ core=core.replace(cameraDynamicsAnchor,cameraDynamicsReplacement);
         stoneProjectionBlend=1;
         stonePortalCameraDistance=stoneDistanceForScale(clean.height,stoneBlackUnitScale(clean),STONE_SEAM_FOV);
         applyStonePortalCamera();
+        renderStonePortalSnapshot();
         invalidateRender();
         return true;
       },
@@ -782,7 +794,21 @@ frame.srcdoc=core;
         frame.hidden=false;
         boot.remove();
         if(embeddedMode){
-          const postEmbeddedState=()=>{
+          window.STONE_EMBED={
+  syncFromBlack(yaw,pitch,rect){
+    return frame.contentWindow?.STONE_VIEW?.syncFromBlack?.(yaw,pitch,rect)??false;
+  },
+  cancelBlackPreview(){
+    return frame.contentWindow?.STONE_VIEW?.cancelPortalPreview?.()??false;
+  },
+  activateAtlas(){
+    return frame.contentWindow?.STONE_VIEW?.activateFromPortal?.()??false;
+  },
+  portalState(){
+    return frame.contentWindow?.STONE_VIEW?.portalState?.()??null;
+  }
+};
+const postEmbeddedState=()=>{
             const state=frame.contentWindow?.STONE_VIEW?.portalState?.()??null;
             if(state){
               window.parent.postMessage({
