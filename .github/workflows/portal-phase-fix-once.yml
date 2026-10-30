@@ -8,15 +8,144 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Patch Atlas
-        env:
-          PATCH_B64: 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgpwYXRoID0gUGF0aCgicGhpbG9zb3BoZXJzLXN0b25lLWF0bGFzL2luZGV4Lmh0bWwiKQp0ZXh0ID0gcGF0aC5yZWFkX3RleHQoKQoKb2xkID0gIiIiICAgIGNvbnN0IHN0b25lTmF0aXZlVW5pdFNjYWxlPShoZWlnaHQsZGlzdGFuY2U9c3RhdGUuZGlzdGFuY2UpPT4KICAgICAgaGVpZ2h0LygyKk1hdGgubWF4KGRpc3RhbmNlLDAuMDAwMSkqTWF0aC50YW4oVEhSRUUuTWF0aFV0aWxzLmRlZ1RvUmFkKF NUT05FX05BVElWRV9GT1YpKjAuNSkpOwogICAgY29uc3QgYXBwbHlTdG9uZVBvcnRhbENhbWVyYT0oKT0+ewogICAgICBjb25zdCB7d2lkdGgsaGVpZ2h0fT1nZXRWaWV3cG9ydFNpemUoKTsKICAgICAgY2FtZXJhLmFzcGVjdD13aWR0aC9oZWlnaHQ7CiAgICAgIGNhbWVyYS5mb3Y9c3RvbmVDdXJyZW50Rm92KCk7CiAgICAgIGNhbWVyYS5uZWFyPTAuMDE7CiAgICAgIGNhbWVyYS5mYXI9NTAwMDsKICAgICAgY2FtZXJhLnVwZGF0ZVByb2plY3Rpb25NYXRyaXgoKTsKICAgICAgcmVuZGVyZXIuc2V0U2l6ZSh3aWR0aCxoZWlnaHQpOwogICAgICBzeW5jU2NlbmVNYXRyaWNlcygpOwogICAgICBjYW1lcmEucG9zaXRpb24uc2V0KDAsMCxOdW1iZXIuaXNGaW5pdGUoc3RvbmVQb3J0YWxDYW1lcmFEaXN0YW5jZSk/c3RvbmVQb3J0YWxDYW1lcmFEaXN0YW5jZTpzdGF0ZS5kaXN0YW5jZSk7CiAgICAgIGNhbWVyYS5sb29rQXQocm9vdEdyb3VwLnBvc2l0aW9uKTsKICAgICAgY2FtZXJhLnVwZGF0ZU1hdHJpeFdvcmxkKCk7CiAgICB9OwoiIiIKbmV3ID0gIiIiICAgIGNvbnN0IHN0b25lTmF0aXZlVW5pdFNjYWxlPShoZWlnaHQsZGlzdGFuY2U9c3RhdGUuZGlzdGFuY2UpPT4KICAgICAgaGVpZ2h0LygyKk1hdGgubWF4KGRpc3RhbmNlLDAuMDAwMSkqTWF0aC50YW4oVEhSRUUuTWF0aFV0aWxzLmRlZ1RvUmFkKFNUT05FX05BVElWRV9GT1YpKjAuNSkpOwogICAgY29uc3Qgc3RvbmVQb3J0YWxSZW5kZXJlclNpemU9bmV3IFRIUkVFLlZlY3RvcjIoKTsKICAgIGNvbnN0IGFwcGx5U3RvbmVQb3J0YWxDYW1lcmE9KCk9PnsKICAgICAgY29uc3Qge3dpZHRoLGhlaWdodH09Z2V0Vmlld3BvcnRTaXplKCk7CiAgICAgIGNhbWVyYS5hc3BlY3Q9d2lkdGgvaGVpZ2h0OwogICAgICBjYW1lcmEuZm92PXN0b25lQ3VycmVudEZvdigpOwogICAgICBjYW1lcmEubmVhcj0wLjAxOwogICAgICBjYW1lcmEuZmFyPTUwMDA7CiAgICAgIGNhbWVyYS51cGRhdGVQcm9qZWN0aW9uTWF0cml4KCk7CiAgICAgIHJlbmRlcmVyLmdldFNpemUoc3RvbmVQb3J0YWxSZW5kZXJlclNpemUpOwogICAgICBpZigKICAgICAgICBNYXRoLmFicyhzdG9uZVBvcnRhbFJlbmRlcmVyU2l6ZS54LXdpZHRoKT4wLjI1fHwKICAgICAgICBNYXRoLmFicyhzdG9uZVBvcnRhbFJlbmRlcmVyU2l6ZS55LWhlaWdodCk+MC4yNQogICAgICApIHJlbmRlcmVyLnNldFNpemUod2lkdGgsaGVpZ2h0KTsKICAgICAgc3luY1NjZW5lTWF0cmljZXMoKTsKICAgICAgY2FtZXJhLnBvc2l0aW9uLnNldCgwLDAsTnVtYmVyLmlzRmluaXRlKHN0b25lUG9ydGFsQ2FtZXJhRGlzdGFuY2UpP3N0b25lUG9ydGFsQ2FtZXJhRGlzdGFuY2U6c3RhdGUuZGlzdGFuY2UpOwogICAgICBjYW1lcmEubG9va0F0KHJvb3RHcm91cC5wb3NpdGlvbik7CiAgICAgIGNhbWVyYS51cGRhdGVNYXRyaXhXb3JsZCgpOwogICAgfTsKICAgIGNvbnN0IHJlbmRlclN0b25lUG9ydGFsU25hcHNob3Q9KCk9PnsKICAgICAgcG9pbnRlck1hcmtlci52aXNpYmxlPXN0b25lUG9pbnRlclZpc2liaWxpdHkoKTsKICAgICAgdXBkYXRlQ3Jvc3NoYWlyQW5kTGFiZWxzKCk7CiAgICAgIHVwZGF0ZVBvaW50ZXJMYWJlbFN0YWNraW5nKCk7CiAgICAgIHJlbmRlcmVyLnJlbmRlcihzY2VuZSxjYW1lcmEpOwogICAgfTsKIiIiCmFzc2VydCB0ZXh0LmNvdW50KG9sZCkgPT0gMSwgZiJjYW1lcmEgYW5jaG9yIGNvdW50IHt0ZXh0LmNvdW50KG9sZCl9Igp0ZXh0ID0gdGV4dC5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKb2xkID0gIiIiICAgICAgICBhcHBseVN0b25lUG9ydGFsQ2FtZXJhKCk7CiAgICAgICAgaW52YWxpZGF0ZVJlbmRlcigpOwogICAgICAgIHJldHVybiB0cnVlOwogICAgICB9LAogICAgICBjYW5jZWxQb3J0YWxQcmV2aWV3KCl7CiIiIgpuZXcgPSAiIiIgICAgICAgIGFwcGx5U3RvbmVQb3J0YWxDYW1lcmEoKTsKICAgICAgICByZW5kZXJTdG9uZVBvcnRhbFNuYXBzaG90KCk7CiAgICAgICAgaW52YWxpZGF0ZVJlbmRlcigpOwogICAgICAgIHJldHVybiB0cnVlOwogICAgICB9LAogICAgICBjYW5jZWxQb3J0YWxQcmV2aWV3KCl7CiIiIgphc3NlcnQgdGV4dC5jb3VudChvbGQpID09IDEsIGYic3luYyByZW5kZXIgYW5jaG9yIGNvdW50IHt0ZXh0LmNvdW50KG9sZCl9Igp0ZXh0ID0gdGV4dC5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKb2xkID0gIiIiICAgICAgICBpZihlbWJlZGRlZE1vZGUpewogICAgICAgICAgY29uc3QgcG9zdEVtYmVkZGVkU3RhdGU9KCk9PnsKIiIiCm5ldyA9ICIiIiAgICAgICAgaWYoZW1iZWRkZWRNb2RlKXsKICAgICAgICAgIHdpbmRvdy5TVE9ORV9FTUJFRD17CiAgICAgICAgICAgIHN5bmNGcm9tQmxhY2soeWF3LHBpdGNoLHJlY3QpewogICAgICAgICAgICAgIHJldHVybiBmcmFtZS5jb250ZW50V2luZG93Py5TVE9ORV9WSUVXPy5zeW5jRnJvbUJsYWNrPy4oeWF3LHBpdGNoLHJlY3QpPz9mYWxzZTsKICAgICAgICAgICAgfSwKICAgICAgICAgICAgY2FuY2VsQmxhY2tQcmV2aWV3KCl7CiAgICAgICAgICAgICAgcmV0dXJuIGZyYW1lLmNvbnRlbnRXaW5kb3c/LlNUT05FX1ZJRVc/LmNhbmNlbFBvcnRhbFByZXZpZXc/LigpPz9mYWxzZTsKICAgICAgICAgICAgfSwKICAgICAgICAgICAgYWN0aXZhdGVBdGxhcygpewogICAgICAgICAgICAgIHJldHVybiBmcmFtZS5jb250ZW50V2luZG93Py5TVE9ORV9WSUVXPy5hY3RpdmF0ZUZyb21Qb3J0YWw/LigpPz9mYWxzZTsKICAgICAgICAgICAgfSwKICAgICAgICAgICAgcG9ydGFsU3RhdGUoKXsKICAgICAgICAgICAgICByZXR1cm4gZnJhbWUuY29udGVudFdpbmRvdz8uU1RPTkVfVklFVz8ucG9ydGFsU3RhdGU/LigpPz9udWxsOwogICAgICAgICAgICB9CiAgICAgICAgICB9OwogICAgICAgICAgY29uc3QgcG9zdEVtYmVkZGVkU3RhdGU9KCk9PnsKIiIiCmFzc2VydCB0ZXh0LmNvdW50KG9sZCkgPT0gMSwgZiJlbWJlZGRlZCBicmlkZ2UgYW5jaG9yIGNvdW50IHt0ZXh0LmNvdW50KG9sZCl9Igp0ZXh0ID0gdGV4dC5yZXBsYWNlKG9sZCwgbmV3LCAxKQpwYXRoLndyaXRlX3RleHQodGV4dCkKCnN3ID0gUGF0aCgicGhpbG9zb3BoZXJzLXN0b25lLWF0bGFzL3NlcnZpY2Utd29ya2VyLmpzIikKc3dfdGV4dCA9IHN3LnJlYWRfdGV4dCgpCm9sZF9jYWNoZSA9ICJjb25zdCBDQUNIRV9OQU1FID0gJ3BoaWxvc29waGVycy1zdG9uZS1hdGxhcy1vZmZsaW5lLXYxMSc7Igphc3NlcnQgc3dfdGV4dC5jb3VudChvbGRfY2FjaGUpID09IDEKc3dfdGV4dCA9IHN3X3RleHQucmVwbGFjZShvbGRfY2FjaGUsICJjb25zdCBDQUNIRV9OQU1FID0gJ3BoaWxvc29waGVycy1zdG9uZS1hdGxhcy1vZmZsaW5lLXYxMic7IiwgMSkKb2xkX3JldiA9ICIvLyByZXZpc2lvbjogMjAyNi0xMC0yOSBQbG90IHRlcm1pbm9sb2d5IGFuZCBjdXJyZW50IHBhcGVyIGFzc2V0cy4iCmFzc2VydCBzd190ZXh0LmNvdW50KG9sZF9yZXYpID09IDEKc3dfdGV4dCA9IHN3X3RleHQucmVwbGFjZShvbGRfcmV2LCAiLy8gcmV2aXNpb246IDIwMjYtMTAtMzAgUG9ydGFsIHBoYXNlIHN5bmNocm9uaXphdGlvbiBhbmQgaW1tZWRpYXRlIHNlYW0gcmVuZGVyaW5nLiIsIDEpCnN3LndyaXRlX3RleHQoc3dfdGV4dCkK'
+        shell: bash
         run: |
-          echo "$PATCH_B64" | base64 -d > /tmp/patch.py
-          python3 /tmp/patch.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('philosophers-stone-atlas/index.html')
+          text = path.read_text()
+
+          old = '''    const stoneNativeUnitScale=(height,distance=state.distance)=>
+            height/(2*Math.max(distance,0.0001)*Math.tan(THREE.MathUtils.degToRad(STONE_NATIVE_FOV)*0.5));
+          '''
+          if old not in text:
+              old = '''    const stoneNativeUnitScale=(height,distance=state.distance)=>
+              height/(2*Math.max(distance,0.0001)*Math.tan(THREE.MathUtils.degToRad(STONE_NATIVE_FOV)*0.5));
+          '''
+          anchor = '''    const stoneNativeUnitScale=(height,distance=state.distance)=>
+              height/(2*Math.max(distance,0.0001)*Math.tan(THREE.MathUtils.degToRad(STONE_NATIVE_FOV)*0.5));
+              const applyStonePortalCamera=()=>{
+                const {width,height}=getViewportSize();
+                camera.aspect=width/height;
+                camera.fov=stoneCurrentFov();
+                camera.near=0.01;
+                camera.far=5000;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width,height);
+                syncSceneMatrices();
+                camera.position.set(0,0,Number.isFinite(stonePortalCameraDistance)?stonePortalCameraDistance:state.distance);
+                camera.lookAt(rootGroup.position);
+                camera.updateMatrixWorld();
+              };
+          '''
+          # Preserve exact source indentation by using literal source snippets below.
+          anchor = """    const stoneNativeUnitScale=(height,distance=state.distance)=>
+              height/(2*Math.max(distance,0.0001)*Math.tan(THREE.MathUtils.degToRad(STONE_NATIVE_FOV)*0.5));
+            const applyStonePortalCamera=()=>{
+              const {width,height}=getViewportSize();
+              camera.aspect=width/height;
+              camera.fov=stoneCurrentFov();
+              camera.near=0.01;
+              camera.far=5000;
+              camera.updateProjectionMatrix();
+              renderer.setSize(width,height);
+              syncSceneMatrices();
+              camera.position.set(0,0,Number.isFinite(stonePortalCameraDistance)?stonePortalCameraDistance:state.distance);
+              camera.lookAt(rootGroup.position);
+              camera.updateMatrixWorld();
+            };
+          """
+          replacement = """    const stoneNativeUnitScale=(height,distance=state.distance)=>
+              height/(2*Math.max(distance,0.0001)*Math.tan(THREE.MathUtils.degToRad(STONE_NATIVE_FOV)*0.5));
+            const stonePortalRendererSize=new THREE.Vector2();
+            const applyStonePortalCamera=()=>{
+              const {width,height}=getViewportSize();
+              camera.aspect=width/height;
+              camera.fov=stoneCurrentFov();
+              camera.near=0.01;
+              camera.far=5000;
+              camera.updateProjectionMatrix();
+              renderer.getSize(stonePortalRendererSize);
+              if(
+                Math.abs(stonePortalRendererSize.x-width)>0.25||
+                Math.abs(stonePortalRendererSize.y-height)>0.25
+              ) renderer.setSize(width,height);
+              syncSceneMatrices();
+              camera.position.set(0,0,Number.isFinite(stonePortalCameraDistance)?stonePortalCameraDistance:state.distance);
+              camera.lookAt(rootGroup.position);
+              camera.updateMatrixWorld();
+            };
+            const renderStonePortalSnapshot=()=>{
+              pointerMarker.visible=stonePointerVisibility();
+              updateCrosshairAndLabels();
+              updatePointerLabelStacking();
+              renderer.render(scene,camera);
+            };
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit(f'camera anchor count {text.count(anchor)}')
+          text = text.replace(anchor, replacement, 1)
+
+          anchor = """        applyStonePortalCamera();
+                invalidateRender();
+                return true;
+              },
+              cancelPortalPreview(){
+          """
+          replacement = """        applyStonePortalCamera();
+                renderStonePortalSnapshot();
+                invalidateRender();
+                return true;
+              },
+              cancelPortalPreview(){
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit(f'sync render anchor count {text.count(anchor)}')
+          text = text.replace(anchor, replacement, 1)
+
+          anchor = """        if(embeddedMode){
+                  const postEmbeddedState=()=>{
+          """
+          replacement = """        if(embeddedMode){
+                  window.STONE_EMBED={
+                    syncFromBlack(yaw,pitch,rect){
+                      return frame.contentWindow?.STONE_VIEW?.syncFromBlack?.(yaw,pitch,rect)??false;
+                    },
+                    cancelBlackPreview(){
+                      return frame.contentWindow?.STONE_VIEW?.cancelPortalPreview?.()??false;
+                    },
+                    activateAtlas(){
+                      return frame.contentWindow?.STONE_VIEW?.activateFromPortal?.()??false;
+                    },
+                    portalState(){
+                      return frame.contentWindow?.STONE_VIEW?.portalState?.()??null;
+                    }
+                  };
+                  const postEmbeddedState=()=>{
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit(f'embedded bridge anchor count {text.count(anchor)}')
+          text = text.replace(anchor, replacement, 1)
+          path.write_text(text)
+
+          sw = Path('philosophers-stone-atlas/service-worker.js')
+          sw_text = sw.read_text()
+          old_cache = "const CACHE_NAME = 'philosophers-stone-atlas-offline-v11';"
+          if sw_text.count(old_cache) != 1:
+              raise SystemExit(f'cache anchor count {sw_text.count(old_cache)}')
+          sw_text = sw_text.replace(old_cache, "const CACHE_NAME = 'philosophers-stone-atlas-offline-v12';", 1)
+          old_rev = '// revision: 2026-10-29 Plot terminology and current paper assets.'
+          if sw_text.count(old_rev) != 1:
+              raise SystemExit(f'revision anchor count {sw_text.count(old_rev)}')
+          sw_text = sw_text.replace(old_rev, '// revision: 2026-10-30 Portal phase synchronization and immediate seam rendering.', 1)
+          sw.write_text(sw_text)
+          PY
           grep -F 'renderStonePortalSnapshot' philosophers-stone-atlas/index.html
           grep -F 'window.STONE_EMBED' philosophers-stone-atlas/index.html
           grep -F 'offline-v12' philosophers-stone-atlas/service-worker.js
       - name: Commit
+        shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
