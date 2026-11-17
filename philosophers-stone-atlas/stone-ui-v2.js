@@ -75,11 +75,11 @@
     if(!section){
       const base=document.baseURI;
       const previewUrl=new URL('paper/page-01.jpg',base).href;
-      const pdfUrl=new URL('paper/The-Philosophers-Stone-The-Objective-Structure-of-Maturity.pdf',base).href;
+      const pdfUrl=new URL('paper/The-Philosophers-Stone-The-Structure-of-Judgment.pdf',base).href;
       section=document.createElement('section');
       section.id='stonePaperSection';
       section.className='stone-paper';
-      section.innerHTML=`<div class="stone-paper-kicker">Research monograph</div><h3>The Philosopher’s Stone</h3><p class="stone-paper-subtitle">The Objective Structure of Maturity</p><a class="stone-paper-preview-link" href="${pdfUrl}" target="_blank" rel="noopener" aria-label="Open The Philosopher’s Stone PDF"><img class="stone-paper-preview" src="${previewUrl}" alt="First page of The Philosopher’s Stone: The Objective Structure of Maturity"></a><a class="stone-paper-download" href="${pdfUrl}" download="The-Philosophers-Stone-The-Objective-Structure-of-Maturity.pdf">Download PDF</a>`;
+      section.innerHTML=`<div class="stone-paper-kicker">Research monograph</div><h3>The Philosopher’s Stone</h3><p class="stone-paper-subtitle">The Structure of Judgment</p><a class="stone-paper-preview-link" href="${pdfUrl}" target="_blank" rel="noopener" aria-label="Open The Philosopher’s Stone PDF"><img class="stone-paper-preview" src="${previewUrl}" alt="First page of The Philosopher’s Stone: The Structure of Judgment"></a><a class="stone-paper-download" href="${pdfUrl}" download="The-Philosophers-Stone-The-Structure-of-Judgment.pdf">Download PDF</a>`;
       plotPanel.appendChild(section);
     }
 

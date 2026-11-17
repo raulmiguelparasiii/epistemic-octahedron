@@ -1,5 +1,5 @@
-const CACHE_NAME = 'philosophers-stone-atlas-offline-v12';
-// revision: 2026-10-30 Portal phase synchronization and immediate seam rendering.
+const CACHE_NAME = 'philosophers-stone-atlas-offline-v13';
+// revision: 2026-11-17 Updated full research monograph and page-one preview.
 const CACHE_PREFIX = 'philosophers-stone-atlas-offline-';
 
 const PRECACHE = [
@@ -29,7 +29,7 @@ const PRECACHE = [
   './stone-ui-v2.js',
   './worldview-layer.js',
   './paper/page-01.jpg',
-  './paper/The-Philosophers-Stone-The-Objective-Structure-of-Maturity.pdf'
+  './paper/The-Philosophers-Stone-The-Structure-of-Judgment.pdf'
 ];
 
 async function refreshPrecache() {
