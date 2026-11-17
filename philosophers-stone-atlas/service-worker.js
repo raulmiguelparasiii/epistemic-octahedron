@@ -1,5 +1,5 @@
-const CACHE_NAME = 'philosophers-stone-atlas-offline-v13';
-// revision: 2026-11-17 Updated full research monograph and page-one preview.
+const CACHE_NAME = 'philosophers-stone-atlas-offline-v14';
+// revision: 2026-11-17 Clarify prejudice and commitment in the Semantics tab.
 const CACHE_PREFIX = 'philosophers-stone-atlas-offline-';
 
 const PRECACHE = [
